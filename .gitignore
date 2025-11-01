@@ -1,0 +1,13 @@
+# Elm
+elm-stuff/
+index.html
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

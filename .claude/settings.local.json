@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:package.elm-lang.org)",
+      "Bash(elm search:*)",
+      "Bash(elm install:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(elm make:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
