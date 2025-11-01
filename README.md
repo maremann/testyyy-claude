@@ -73,9 +73,18 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Huge: 4×4 grid cells (256×256 pixels)
 - **Properties**:
   - HP: Building health points (current/max)
-  - Garrison Slots: Number of units that can be garrisoned (units not yet implemented)
+  - Garrison Slots: Number of units that can be garrisoned
   - Cost: Gold required to construct
   - Owner: Player or Enemy
+  - Behavior: State machine controlling actions (currently only Idle state)
+- **Entrance Tiles**: Each building has one designated entrance tile
+  - Purpose: Designated location for units to garrison into building
+  - Visual: Transparent brown overlay with dark outline (rgba(139, 69, 19, 0.5))
+  - Position by building size:
+    - Small (1×1): The tile itself
+    - Medium (2×2): Bottom left tile
+    - Large (3×3): Bottom center tile
+    - Huge (4×4): Bottom middle-left tile (second from left on bottom row)
 - **Minimap Representation**:
   - Player buildings: Aquamarine/Light Blue (#7FFFD4)
   - Enemy buildings: Red (#FF0000)
@@ -109,6 +118,76 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Build grid occupancy updated when building placed
   - Pathfinding grid occupancy updated automatically
   - Both grids use reference counting for overlapping detection
+
+### Units
+- **Selectable**: Units are selectable things that can be clicked to view/interact
+- **Mobile**: Units move across the map using pathfinding
+- **Appearance**: Circular placeholder graphics (16px diameter, half of pathfinding cell)
+  - Random colors for visual distinction
+  - Text label "U" in center
+- **Selection Radius**: 32px diameter (2x visual size) for easier clicking
+- **Properties**:
+  - HP: Unit health points (current/max)
+  - Movement Speed: Measured in grid cells per second (default: 2.5)
+  - Owner: Player or Enemy
+  - Location: OnMap (x, y coordinates) or Garrisoned (building ID)
+  - Behavior: State machine controlling unit actions
+  - Target Destination: Final pathfinding cell destination (when moving)
+- **Pathfinding Grid Occupancy**: Units occupy all pathfinding cells they touch
+  - Circular unit (16px diameter) occupies 1 pathfinding cell
+  - Occupancy updated automatically when units move or are created/destroyed
+- **Minimap Representation**:
+  - Player units: Aquamarine dots (3px, #7FFFD4)
+  - Enemy units: Red dots (3px, #FF0000)
+- **Path Visualization**: Selected unit's path shown as golden dots
+- **Available Units**:
+  - **Test Unit**: 100 HP, 2.5 cells/s speed, random behavior pattern
+
+### Behavior System
+- **Purpose**: State machines that govern actions of units and buildings
+- **Building Behaviors**:
+  - **Idle**: Default state, building performs no actions
+- **Unit Behaviors** (Test Unit):
+  - **Thinking**: Brief pause (0.1-0.5 seconds) before deciding next action
+    - Duration varies per unit using unit ID as seed
+    - Transitions to FindingRandomTarget when timer expires
+  - **FindingRandomTarget**: Request pathfinding to random location
+    - Picks random cell within 10 tiles of current position
+    - Transitions to MovingTowardTarget when path is assigned
+  - **MovingTowardTarget**: Following calculated path to destination
+    - Moves along path at unit's movement speed
+    - Returns to Thinking when destination reached
+- **State Display**: Current behavior shown in unit selection panel
+
+### Pathfinding
+- **Algorithm**: A* pathfinding with octile distance heuristic
+- **Movement**: 8-directional (orthogonal and diagonal)
+  - Orthogonal moves cost 1.0
+  - Diagonal moves cost √2 (1.414)
+- **Dynamic Recalculation**: Units recalculate paths every time they reach an intermediate cell
+  - Enables units to avoid each other dynamically
+  - Uses current occupancy grid state
+  - Smooth collision avoidance without unit-to-unit communication
+- **Occupancy Awareness**: Pathfinding avoids cells occupied by buildings or units
+- **Path Storage**: Each unit stores its current path as list of grid cells
+
+### Simulation
+- **Game Loop**: Fixed timestep simulation independent of render rate
+  - Simulation rate: 20 times per second (50ms timestep)
+  - Render rate: Uses requestAnimationFrame (typically 60 FPS)
+- **Speed Controls**: Radio buttons in debug menu control simulation speed
+  - 0x: Paused
+  - 1x: Normal speed
+  - 2x: Double speed
+  - 10x: 10x speed
+  - 100x: 100x speed
+- **Auto-Pause**: Simulation automatically pauses if delta time exceeds 1000ms
+  - Prevents time jumps when tab is hidden or system lags
+  - Visual indicator: "PAUSED" text appears next to gold counter
+- **Debug Statistics**:
+  - Simulation frame counter
+  - Running average of last 3 simulation deltas
+  - Available in Debug panel Stats tab
 
 ### Camera Controls
 - **Main Viewport Dragging**: Click and hold anywhere on the terrain to drag the camera
@@ -155,9 +234,13 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Scrollbar: 16px height, gray (#888) thumb on dark (#222) track with hover effect
   - Content based on current selection:
     - Nothing selected: Shows "No selection" message
-    - Debug button: Shows camera position, gold, grid toggles, and gold setter
+    - Debug button: Tabbed interface with three tabs
+      - Stats tab: Camera position, gold, simulation frame count, average delta time
+      - Visualization tab: Grid visualization checkboxes (Build Grid, PF Grid, occupancy overlays)
+      - Controls tab: Simulation speed radio buttons, gold setter, spawn test unit button
     - Build button: Shows available buildings (Test Building: 500g)
-    - Building selected: Shows building name, HP, and garrison info
+    - Building selected: Shows building name, HP, garrison info, owner
+    - Unit selected: Shows unit type, HP, speed, owner, location (rounded), current behavior
 - **Minimap**: 200x150px in bottom-right corner
   - Shows entire map overview
   - Red viewport indicator shows current camera position

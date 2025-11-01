@@ -49,13 +49,45 @@ type alias Model =
     , buildMode : Maybe BuildingTemplate
     , mouseWorldPos : Maybe ( Float, Float )
     , showBuildingOccupancy : Bool
+    , simulationFrameCount : Int
+    , accumulatedTime : Float
+    , lastSimulationDeltas : List Float
+    , simulationSpeed : SimulationSpeed
+    , units : List Unit
+    , nextUnitId : Int
+    , debugTab : DebugTab
     }
+
+
+type SimulationSpeed
+    = Pause
+    | Speed1x
+    | Speed2x
+    | Speed10x
+    | Speed100x
+
+
+type DebugTab
+    = StatsTab
+    | VisualizationTab
+    | ControlsTab
+
+
+type UnitBehavior
+    = Thinking
+    | FindingRandomTarget
+    | MovingTowardTarget
+
+
+type BuildingBehavior
+    = Idle
 
 
 type Selectable
     = GlobalButtonDebug
     | GlobalButtonBuild
     | BuildingSelected Int
+    | UnitSelected Int
 
 
 type BuildingSize
@@ -81,6 +113,7 @@ type alias Building =
     , garrisonSlots : Int
     , garrisonOccupied : Int
     , buildingType : String
+    , behavior : BuildingBehavior
     }
 
 
@@ -90,6 +123,27 @@ type alias BuildingTemplate =
     , cost : Int
     , maxHp : Int
     , garrisonSlots : Int
+    }
+
+
+type UnitLocation
+    = OnMap Float Float
+    | Garrisoned Int
+
+
+type alias Unit =
+    { id : Int
+    , owner : BuildingOwner
+    , location : UnitLocation
+    , hp : Int
+    , maxHp : Int
+    , movementSpeed : Float
+    , unitType : String
+    , color : String
+    , path : List ( Int, Int )
+    , behavior : UnitBehavior
+    , thinkingTimer : Float
+    , targetDestination : Maybe ( Int, Int )
     }
 
 
@@ -172,6 +226,13 @@ init _ =
             , buildMode = Nothing
             , mouseWorldPos = Nothing
             , showBuildingOccupancy = False
+            , simulationFrameCount = 0
+            , accumulatedTime = 0
+            , lastSimulationDeltas = []
+            , simulationSpeed = Speed1x
+            , units = []
+            , nextUnitId = 1
+            , debugTab = StatsTab
             }
     in
     ( initialModel
@@ -210,6 +271,35 @@ buildingSizeToGridCells size =
 
         Huge ->
             4
+
+
+{-| Generate a random color string for units -}
+randomUnitColor : Random.Generator String
+randomUnitColor =
+    let
+        colors =
+            [ "#FF6B6B"
+            , "#4ECDC4"
+            , "#45B7D1"
+            , "#FFA07A"
+            , "#98D8C8"
+            , "#F7DC6F"
+            , "#BB8FCE"
+            , "#85C1E2"
+            , "#F8B739"
+            , "#52C41A"
+            ]
+
+        randomIndex =
+            Random.int 0 (List.length colors - 1)
+    in
+    Random.map
+        (\idx ->
+            List.drop idx colors
+                |> List.head
+                |> Maybe.withDefault "#FF6B6B"
+        )
+        randomIndex
 
 
 
@@ -347,6 +437,7 @@ isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy
             , garrisonSlots = 0
             , garrisonOccupied = 0
             , buildingType = ""
+            , behavior = Idle
             }
 
         cellsWithSpacing =
@@ -406,6 +497,28 @@ getBuildingPathfindingCells gridConfig building =
             List.range startPfY endPfY
     in
     List.concatMap (\x -> List.map (\y -> ( x, y )) ys) xs
+
+
+{-| Get the entrance tile coordinates for a building in build grid space.
+    - Small (1x1): The tile itself (gridX, gridY)
+    - Medium (2x2): Bottom left tile (gridX, gridY + 1)
+    - Large (3x3): Bottom center tile (gridX + 1, gridY + 2)
+    - Huge (4x4): Bottom middle-left tile (gridX + 1, gridY + 3)
+-}
+getBuildingEntrance : Building -> ( Int, Int )
+getBuildingEntrance building =
+    case building.size of
+        Small ->
+            ( building.gridX, building.gridY )
+
+        Medium ->
+            ( building.gridX, building.gridY + 1 )
+
+        Large ->
+            ( building.gridX + 1, building.gridY + 2 )
+
+        Huge ->
+            ( building.gridX + 1, building.gridY + 3 )
 
 
 {-| Add a building's occupancy to the pathfinding grid -}
@@ -468,6 +581,577 @@ isPathfindingCellOccupied cell occupancy =
 
 
 
+-- UNIT OCCUPANCY
+
+
+{-| Calculate which pathfinding grid cells a unit occupies.
+    Unit diameter is half a pathfinding cell (16 pixels when pathfinding cell is 32).
+    A unit occupies all cells it touches.
+-}
+getUnitPathfindingCells : GridConfig -> Float -> Float -> List ( Int, Int )
+getUnitPathfindingCells gridConfig worldX worldY =
+    let
+        -- Unit radius is quarter of pathfinding grid (8 pixels)
+        unitRadius =
+            gridConfig.pathfindingGridSize / 4
+
+        -- Bounding box of the unit
+        minX =
+            worldX - unitRadius
+
+        maxX =
+            worldX + unitRadius
+
+        minY =
+            worldY - unitRadius
+
+        maxY =
+            worldY + unitRadius
+
+        -- Convert to pathfinding grid coordinates
+        startPfX =
+            floor (minX / gridConfig.pathfindingGridSize)
+
+        endPfX =
+            floor (maxX / gridConfig.pathfindingGridSize)
+
+        startPfY =
+            floor (minY / gridConfig.pathfindingGridSize)
+
+        endPfY =
+            floor (maxY / gridConfig.pathfindingGridSize)
+
+        -- Generate all cells
+        xs =
+            List.range startPfX endPfX
+
+        ys =
+            List.range startPfY endPfY
+    in
+    List.concatMap (\x -> List.map (\y -> ( x, y )) ys) xs
+
+
+{-| Add a unit's occupancy to the pathfinding grid -}
+addUnitOccupancy : GridConfig -> Float -> Float -> Dict ( Int, Int ) Int -> Dict ( Int, Int ) Int
+addUnitOccupancy gridConfig worldX worldY occupancy =
+    let
+        cells =
+            getUnitPathfindingCells gridConfig worldX worldY
+
+        incrementCell cell dict =
+            Dict.update cell
+                (\maybeCount ->
+                    case maybeCount of
+                        Just count ->
+                            Just (count + 1)
+
+                        Nothing ->
+                            Just 1
+                )
+                dict
+    in
+    List.foldl incrementCell occupancy cells
+
+
+{-| Remove a unit's occupancy from the pathfinding grid -}
+removeUnitOccupancy : GridConfig -> Float -> Float -> Dict ( Int, Int ) Int -> Dict ( Int, Int ) Int
+removeUnitOccupancy gridConfig worldX worldY occupancy =
+    let
+        cells =
+            getUnitPathfindingCells gridConfig worldX worldY
+
+        decrementCell cell dict =
+            Dict.update cell
+                (\maybeCount ->
+                    case maybeCount of
+                        Just count ->
+                            if count <= 1 then
+                                Nothing
+
+                            else
+                                Just (count - 1)
+
+                        Nothing ->
+                            Nothing
+                )
+                dict
+    in
+    List.foldl decrementCell occupancy cells
+
+
+{-| Find the nearest unoccupied pathfinding cell to a given world position -}
+findNearestUnoccupiedTile : GridConfig -> MapConfig -> Dict ( Int, Int ) Int -> Float -> Float -> ( Float, Float )
+findNearestUnoccupiedTile gridConfig mapConfig occupancy targetX targetY =
+    let
+        -- Convert target to pathfinding grid
+        targetPfX =
+            floor (targetX / gridConfig.pathfindingGridSize)
+
+        targetPfY =
+            floor (targetY / gridConfig.pathfindingGridSize)
+
+        -- Search in expanding rings
+        searchRadius maxRadius currentRadius =
+            if currentRadius > maxRadius then
+                -- Fallback to center if no unoccupied cell found
+                ( targetX, targetY )
+
+            else
+                let
+                    -- Generate cells in a ring at currentRadius
+                    ringCells =
+                        if currentRadius == 0 then
+                            [ ( targetPfX, targetPfY ) ]
+
+                        else
+                            List.range -currentRadius currentRadius
+                                |> List.concatMap
+                                    (\dx ->
+                                        List.range -currentRadius currentRadius
+                                            |> List.filterMap
+                                                (\dy ->
+                                                    if abs dx == currentRadius || abs dy == currentRadius then
+                                                        Just ( targetPfX + dx, targetPfY + dy )
+
+                                                    else
+                                                        Nothing
+                                                )
+                                    )
+
+                    -- Find first unoccupied cell in ring
+                    unoccupiedCell =
+                        ringCells
+                            |> List.filter
+                                (\cell ->
+                                    not (isPathfindingCellOccupied cell occupancy)
+                                        && isWithinMapBounds gridConfig mapConfig cell
+                                )
+                            |> List.head
+                in
+                case unoccupiedCell of
+                    Just ( pfX, pfY ) ->
+                        -- Convert back to world coordinates (center of cell)
+                        ( toFloat pfX * gridConfig.pathfindingGridSize + gridConfig.pathfindingGridSize / 2
+                        , toFloat pfY * gridConfig.pathfindingGridSize + gridConfig.pathfindingGridSize / 2
+                        )
+
+                    Nothing ->
+                        searchRadius maxRadius (currentRadius + 1)
+
+        isWithinMapBounds : GridConfig -> MapConfig -> ( Int, Int ) -> Bool
+        isWithinMapBounds gc mc ( pfX, pfY ) =
+            let
+                worldX =
+                    toFloat pfX * gc.pathfindingGridSize
+
+                worldY =
+                    toFloat pfY * gc.pathfindingGridSize
+            in
+            worldX >= 0 && worldX < mc.width && worldY >= 0 && worldY < mc.height
+    in
+    searchRadius 50 0
+
+
+
+-- A* PATHFINDING
+
+
+type alias PathNode =
+    { position : ( Int, Int )
+    , gCost : Float
+    , hCost : Float
+    , parent : Maybe ( Int, Int )
+    }
+
+
+{-| Calculate octile distance between two grid cells
+    This is the true distance heuristic for 8-directional movement
+    where diagonal moves cost √2 and orthogonal moves cost 1
+-}
+octileDistance : ( Int, Int ) -> ( Int, Int ) -> Float
+octileDistance ( x1, y1 ) ( x2, y2 ) =
+    let
+        dx =
+            abs (x1 - x2)
+
+        dy =
+            abs (y1 - y2)
+
+        minDist =
+            min dx dy
+
+        maxDist =
+            max dx dy
+    in
+    -- Diagonal moves for the minimum distance, orthogonal for the rest
+    toFloat minDist * 1.414 + toFloat (maxDist - minDist)
+
+
+{-| Get neighboring pathfinding cells (8-directional with costs)
+    Returns list of (position, moveCost) tuples
+    Orthogonal moves cost 1.0, diagonal moves cost √2 (≈1.414)
+-}
+getNeighbors : ( Int, Int ) -> List ( ( Int, Int ), Float )
+getNeighbors ( x, y ) =
+    [ ( ( x + 1, y ), 1.0 )       -- Right
+    , ( ( x - 1, y ), 1.0 )       -- Left
+    , ( ( x, y + 1 ), 1.0 )       -- Down
+    , ( ( x, y - 1 ), 1.0 )       -- Up
+    , ( ( x + 1, y + 1 ), 1.414 ) -- Down-Right
+    , ( ( x + 1, y - 1 ), 1.414 ) -- Up-Right
+    , ( ( x - 1, y + 1 ), 1.414 ) -- Down-Left
+    , ( ( x - 1, y - 1 ), 1.414 ) -- Up-Left
+    ]
+
+
+{-| Find a node in a list by position -}
+findNode : ( Int, Int ) -> List PathNode -> Maybe PathNode
+findNode pos nodes =
+    List.filter (\n -> n.position == pos) nodes
+        |> List.head
+
+
+{-| Remove a node from a list -}
+removeNode : ( Int, Int ) -> List PathNode -> List PathNode
+removeNode pos nodes =
+    List.filter (\n -> n.position /= pos) nodes
+
+
+{-| Get the node with the lowest fCost from a list -}
+getLowestFCostNode : List PathNode -> Maybe PathNode
+getLowestFCostNode nodes =
+    case nodes of
+        [] ->
+            Nothing
+
+        _ ->
+            List.sortBy (\n -> n.gCost + n.hCost) nodes
+                |> List.head
+
+
+{-| Reconstruct path from end node back to start -}
+reconstructPath : ( Int, Int ) -> Dict ( Int, Int ) ( Int, Int ) -> List ( Int, Int )
+reconstructPath endPos parentMap =
+    let
+        buildPath current acc =
+            case Dict.get current parentMap of
+                Just parent ->
+                    buildPath parent (current :: acc)
+
+                Nothing ->
+                    current :: acc
+    in
+    buildPath endPos []
+
+
+{-| A* pathfinding algorithm
+    Returns a list of pathfinding grid cells from start to goal (excluding start, including goal)
+-}
+findPath : GridConfig -> MapConfig -> Dict ( Int, Int ) Int -> ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int )
+findPath gridConfig mapConfig occupancy start goal =
+    let
+        -- Check if a cell is walkable
+        isWalkable ( x, y ) =
+            let
+                worldX =
+                    toFloat x * gridConfig.pathfindingGridSize
+
+                worldY =
+                    toFloat y * gridConfig.pathfindingGridSize
+
+                inBounds =
+                    worldX >= 0 && worldX < mapConfig.width && worldY >= 0 && worldY < mapConfig.height
+            in
+            inBounds && not (isPathfindingCellOccupied ( x, y ) occupancy)
+
+        -- A* main loop
+        astar openSet closedSet parentMap =
+            case getLowestFCostNode openSet of
+                Nothing ->
+                    -- No path found
+                    []
+
+                Just currentNode ->
+                    if currentNode.position == goal then
+                        -- Found the goal, reconstruct path
+                        reconstructPath goal parentMap
+                            |> List.tail
+                            |> Maybe.withDefault []
+
+                    else
+                        let
+                            newOpenSet =
+                                removeNode currentNode.position openSet
+
+                            newClosedSet =
+                                currentNode.position :: closedSet
+
+                            neighbors =
+                                getNeighbors currentNode.position
+                                    |> List.filter (\( pos, _ ) -> isWalkable pos)
+                                    |> List.filter (\( pos, _ ) -> not (List.member pos newClosedSet))
+
+                            -- Process each neighbor
+                            ( updatedOpenSet, updatedParentMap ) =
+                                List.foldl
+                                    (\( neighborPos, moveCost ) ( accOpenSet, accParentMap ) ->
+                                        let
+                                            tentativeGCost =
+                                                currentNode.gCost + moveCost
+
+                                            existingNode =
+                                                findNode neighborPos accOpenSet
+                                        in
+                                        case existingNode of
+                                            Just existing ->
+                                                if tentativeGCost < existing.gCost then
+                                                    -- Found a better path to this neighbor
+                                                    let
+                                                        updatedNode =
+                                                            { position = neighborPos
+                                                            , gCost = tentativeGCost
+                                                            , hCost = octileDistance neighborPos goal
+                                                            , parent = Just currentNode.position
+                                                            }
+
+                                                        newOpenSet_ =
+                                                            removeNode neighborPos accOpenSet
+                                                                |> (::) updatedNode
+                                                    in
+                                                    ( newOpenSet_, Dict.insert neighborPos currentNode.position accParentMap )
+
+                                                else
+                                                    ( accOpenSet, accParentMap )
+
+                                            Nothing ->
+                                                -- Add new node to open set
+                                                let
+                                                    newNode =
+                                                        { position = neighborPos
+                                                        , gCost = tentativeGCost
+                                                        , hCost = octileDistance neighborPos goal
+                                                        , parent = Just currentNode.position
+                                                        }
+                                                in
+                                                ( newNode :: accOpenSet, Dict.insert neighborPos currentNode.position accParentMap )
+                                    )
+                                    ( newOpenSet, parentMap )
+                                    neighbors
+                        in
+                        astar updatedOpenSet newClosedSet updatedParentMap
+
+        -- Initialize with start node
+        startNode =
+            { position = start
+            , gCost = 0
+            , hCost = octileDistance start goal
+            , parent = Nothing
+            }
+    in
+    if start == goal then
+        []
+
+    else if not (isWalkable goal) then
+        -- Goal is not walkable
+        []
+
+    else
+        astar [ startNode ] [] Dict.empty
+
+
+{-| Calculate path for a unit from its current position to a target grid cell -}
+calculateUnitPath : GridConfig -> MapConfig -> Dict ( Int, Int ) Int -> Float -> Float -> ( Int, Int ) -> List ( Int, Int )
+calculateUnitPath gridConfig mapConfig occupancy unitX unitY targetCell =
+    let
+        -- Get current pathfinding cell of the unit
+        currentCell =
+            ( floor (unitX / gridConfig.pathfindingGridSize)
+            , floor (unitY / gridConfig.pathfindingGridSize)
+            )
+    in
+    findPath gridConfig mapConfig occupancy currentCell targetCell
+
+
+
+-- UNIT MOVEMENT AND BEHAVIOR
+
+
+{-| Update a unit's position, moving it along its path. Recalculates path when reaching intermediate cells. -}
+updateUnitMovement : GridConfig -> MapConfig -> Dict ( Int, Int ) Int -> Float -> Unit -> Unit
+updateUnitMovement gridConfig mapConfig occupancy deltaSeconds unit =
+    case unit.location of
+        OnMap x y ->
+            case unit.path of
+                [] ->
+                    -- No path, unit stays in place
+                    unit
+
+                nextCell :: restOfPath ->
+                    let
+                        -- Target position (center of next pathfinding cell)
+                        targetX =
+                            toFloat (Tuple.first nextCell) * gridConfig.pathfindingGridSize + gridConfig.pathfindingGridSize / 2
+
+                        targetY =
+                            toFloat (Tuple.second nextCell) * gridConfig.pathfindingGridSize + gridConfig.pathfindingGridSize / 2
+
+                        -- Direction vector
+                        dx =
+                            targetX - x
+
+                        dy =
+                            targetY - y
+
+                        distance =
+                            sqrt (dx * dx + dy * dy)
+
+                        -- Movement distance this frame (cells/second * pixels per cell * seconds)
+                        moveDistance =
+                            unit.movementSpeed * gridConfig.pathfindingGridSize * deltaSeconds
+                    in
+                    if distance <= moveDistance then
+                        -- Reached the target cell, recalculate path if we have a target destination
+                        case ( unit.targetDestination, restOfPath ) of
+                            ( Just targetCell, _ :: _ ) ->
+                                -- Have a destination and more cells to go - recalculate path
+                                let
+                                    newPath =
+                                        calculateUnitPath gridConfig mapConfig occupancy targetX targetY targetCell
+                                in
+                                { unit
+                                    | location = OnMap targetX targetY
+                                    , path = newPath
+                                }
+
+                            _ ->
+                                -- No destination or reached final cell - just pop the cell
+                                { unit
+                                    | location = OnMap targetX targetY
+                                    , path = restOfPath
+                                }
+
+                    else
+                        -- Move towards the target
+                        let
+                            -- Normalize direction
+                            normalizedDx =
+                                dx / distance
+
+                            normalizedDy =
+                                dy / distance
+
+                            newX =
+                                x + normalizedDx * moveDistance
+
+                            newY =
+                                y + normalizedDy * moveDistance
+                        in
+                        { unit | location = OnMap newX newY }
+
+        Garrisoned _ ->
+            -- Garrisoned units don't move
+            unit
+
+
+{-| Generate a random target cell within radius of current position -}
+randomNearbyCell : GridConfig -> Float -> Float -> Int -> Random.Generator ( Int, Int )
+randomNearbyCell gridConfig unitX unitY radius =
+    let
+        currentCellX =
+            floor (unitX / gridConfig.pathfindingGridSize)
+
+        currentCellY =
+            floor (unitY / gridConfig.pathfindingGridSize)
+
+        minX =
+            currentCellX - radius
+
+        maxX =
+            currentCellX + radius
+
+        minY =
+            currentCellY - radius
+
+        maxY =
+            currentCellY + radius
+    in
+    Random.map2 (\x y -> ( x, y ))
+        (Random.int minX maxX)
+        (Random.int minY maxY)
+
+
+{-| Update unit behavior state machine. Returns (updatedUnit, shouldGeneratePath).
+    - Thinking: Increment timer, transition to FindingRandomTarget after 0-500ms
+    - FindingRandomTarget: Request new path generation (handled by caller)
+    - MovingTowardTarget: When path is empty (destination reached), transition to Thinking
+-}
+updateUnitBehavior : Float -> Unit -> ( Unit, Bool )
+updateUnitBehavior deltaSeconds unit =
+    case unit.behavior of
+        Thinking ->
+            let
+                newTimer =
+                    unit.thinkingTimer + deltaSeconds
+
+                -- Random duration between 0 and 0.5 seconds (using unit ID as seed for variety)
+                thinkingDuration =
+                    0.1 + (toFloat (modBy 400 unit.id) / 1000.0)
+            in
+            if newTimer >= thinkingDuration then
+                -- Transition to FindingRandomTarget
+                ( { unit | behavior = FindingRandomTarget, thinkingTimer = 0 }, True )
+
+            else
+                -- Still thinking
+                ( { unit | thinkingTimer = newTimer }, False )
+
+        FindingRandomTarget ->
+            -- This state is briefly entered to trigger path generation
+            -- The unit will be transitioned to MovingTowardTarget when path is assigned
+            ( unit, False )
+
+        MovingTowardTarget ->
+            -- Check if destination reached (path is empty)
+            if List.isEmpty unit.path then
+                -- Transition back to Thinking, clear target destination
+                ( { unit | behavior = Thinking, thinkingTimer = 0, targetDestination = Nothing }, False )
+
+            else
+                -- Still moving
+                ( unit, False )
+
+
+{-| Recalculate paths for all units (called when occupancy changes) -}
+recalculateAllPaths : GridConfig -> MapConfig -> Dict ( Int, Int ) Int -> List Unit -> List Unit
+recalculateAllPaths gridConfig mapConfig occupancy units =
+    List.map
+        (\unit ->
+            if List.isEmpty unit.path then
+                -- No path, nothing to recalculate
+                unit
+
+            else
+                case unit.location of
+                    OnMap x y ->
+                        case List.reverse unit.path |> List.head of
+                            Just goalCell ->
+                                -- Recalculate path to the same goal
+                                let
+                                    newPath =
+                                        calculateUnitPath gridConfig mapConfig occupancy x y goalCell
+                                in
+                                { unit | path = newPath }
+
+                            Nothing ->
+                                unit
+
+                    Garrisoned _ ->
+                        unit
+        )
+        units
+
+
+
 -- UPDATE
 
 
@@ -491,6 +1175,12 @@ type Msg
     | WorldMouseMove Float Float
     | PlaceBuilding
     | ToggleBuildingOccupancy
+    | Frame Float
+    | SetSimulationSpeed SimulationSpeed
+    | SpawnTestUnit
+    | TestUnitColorGenerated String
+    | AssignUnitDestination Int ( Int, Int )
+    | SetDebugTab DebugTab
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -725,6 +1415,7 @@ update msg model =
                                 , garrisonSlots = template.garrisonSlots
                                 , garrisonOccupied = 0
                                 , buildingType = template.name
+                                , behavior = Idle
                                 }
 
                             newBuildingOccupancy =
@@ -732,6 +1423,10 @@ update msg model =
 
                             newPathfindingOccupancy =
                                 addBuildingOccupancy model.gridConfig newBuilding model.pathfindingOccupancy
+
+                            -- Recalculate paths for all units due to occupancy change
+                            updatedUnits =
+                                recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy model.units
                         in
                         ( { model
                             | buildings = newBuilding :: model.buildings
@@ -740,6 +1435,7 @@ update msg model =
                             , nextBuildingId = model.nextBuildingId + 1
                             , gold = model.gold - template.cost
                             , buildMode = Nothing
+                            , units = updatedUnits
                           }
                         , Cmd.none
                         )
@@ -752,6 +1448,211 @@ update msg model =
 
         ToggleBuildingOccupancy ->
             ( { model | showBuildingOccupancy = not model.showBuildingOccupancy }, Cmd.none )
+
+        SetSimulationSpeed speed ->
+            ( { model | simulationSpeed = speed }, Cmd.none )
+
+        SpawnTestUnit ->
+            -- Generate random color for the unit
+            ( model, Random.generate TestUnitColorGenerated randomUnitColor )
+
+        TestUnitColorGenerated color ->
+            let
+                -- Get center of screen in world coordinates
+                ( winWidth, winHeight ) =
+                    model.windowSize
+
+                spawnX =
+                    model.camera.x + toFloat winWidth / 2
+
+                spawnY =
+                    model.camera.y + toFloat winHeight / 2
+
+                -- Find nearest unoccupied position
+                ( finalX, finalY ) =
+                    findNearestUnoccupiedTile model.gridConfig model.mapConfig model.pathfindingOccupancy spawnX spawnY
+
+                newUnit =
+                    { id = model.nextUnitId
+                    , owner = Player
+                    , location = OnMap finalX finalY
+                    , hp = 100
+                    , maxHp = 100
+                    , movementSpeed = 2.5
+                    , unitType = "Test Unit"
+                    , color = color
+                    , path = []
+                    , behavior = Thinking
+                    , thinkingTimer = 0
+                    , targetDestination = Nothing
+                    }
+
+                -- Add unit occupancy to pathfinding grid
+                newOccupancy =
+                    addUnitOccupancy model.gridConfig finalX finalY model.pathfindingOccupancy
+            in
+            ( { model
+                | units = newUnit :: model.units
+                , nextUnitId = model.nextUnitId + 1
+                , pathfindingOccupancy = newOccupancy
+              }
+            , Cmd.none
+            )
+
+        AssignUnitDestination unitId targetCell ->
+            let
+                -- Update the specific unit with a new path, target destination, and transition to MovingTowardTarget
+                updatedUnits =
+                    List.map
+                        (\unit ->
+                            if unit.id == unitId then
+                                case unit.location of
+                                    OnMap x y ->
+                                        let
+                                            newPath =
+                                                calculateUnitPath model.gridConfig model.mapConfig model.pathfindingOccupancy x y targetCell
+                                        in
+                                        { unit | path = newPath, behavior = MovingTowardTarget, targetDestination = Just targetCell }
+
+                                    Garrisoned _ ->
+                                        unit
+
+                            else
+                                unit
+                        )
+                        model.units
+            in
+            ( { model | units = updatedUnits }, Cmd.none )
+
+        SetDebugTab tab ->
+            ( { model | debugTab = tab }, Cmd.none )
+
+        Frame delta ->
+            let
+                -- Pause if delta > 1000ms (indicates tab was hidden or system lag)
+                isPaused =
+                    delta > 1000 || model.simulationSpeed == Pause
+
+                -- Get speed multiplier
+                speedMultiplier =
+                    case model.simulationSpeed of
+                        Pause ->
+                            0
+
+                        Speed1x ->
+                            1
+
+                        Speed2x ->
+                            2
+
+                        Speed10x ->
+                            10
+
+                        Speed100x ->
+                            100
+
+                -- Accumulate time since last frame (scaled by speed)
+                newAccumulatedTime =
+                    if isPaused then
+                        model.accumulatedTime
+
+                    else
+                        model.accumulatedTime + (delta * toFloat speedMultiplier)
+
+                -- Fixed timestep: 50ms = 20 times per second
+                simulationTimestep =
+                    50.0
+
+                -- Check if we should run simulation
+                shouldSimulate =
+                    newAccumulatedTime >= simulationTimestep && not isPaused
+            in
+            if shouldSimulate then
+                let
+                    -- Run simulation and track the delta
+                    newSimulationDeltas =
+                        (newAccumulatedTime :: model.lastSimulationDeltas)
+                            |> List.take 3
+
+                    -- Reset accumulated time
+                    remainingTime =
+                        newAccumulatedTime - simulationTimestep
+
+                    -- Delta in seconds for this simulation frame
+                    deltaSeconds =
+                        simulationTimestep / 1000.0
+
+                    -- Update unit behaviors, positions, and occupancy
+                    ( updatedUnits, updatedOccupancy, unitsNeedingPaths ) =
+                        List.foldl
+                            (\unit ( accUnits, accOccupancy, accNeedingPaths ) ->
+                                case unit.location of
+                                    OnMap oldX oldY ->
+                                        let
+                                            -- Update behavior state
+                                            ( behaviorUpdatedUnit, shouldGeneratePath ) =
+                                                updateUnitBehavior deltaSeconds unit
+
+                                            -- Remove old occupancy
+                                            occupancyWithoutUnit =
+                                                removeUnitOccupancy model.gridConfig oldX oldY accOccupancy
+
+                                            -- Move unit (with path recalculation on cell arrival)
+                                            movedUnit =
+                                                updateUnitMovement model.gridConfig model.mapConfig occupancyWithoutUnit deltaSeconds behaviorUpdatedUnit
+
+                                            -- Add new occupancy
+                                            newOccupancyForUnit =
+                                                case movedUnit.location of
+                                                    OnMap newX newY ->
+                                                        addUnitOccupancy model.gridConfig newX newY occupancyWithoutUnit
+
+                                                    Garrisoned _ ->
+                                                        occupancyWithoutUnit
+
+                                            -- Collect units that need path generation
+                                            needsPath =
+                                                if shouldGeneratePath then
+                                                    movedUnit :: accNeedingPaths
+
+                                                else
+                                                    accNeedingPaths
+                                        in
+                                        ( movedUnit :: accUnits, newOccupancyForUnit, needsPath )
+
+                                    Garrisoned _ ->
+                                        ( unit :: accUnits, accOccupancy, accNeedingPaths )
+                            )
+                            ( [], model.pathfindingOccupancy, [] )
+                            model.units
+
+                    -- Generate random destinations for units that need them
+                    cmds =
+                        List.map
+                            (\unit ->
+                                case unit.location of
+                                    OnMap x y ->
+                                        Random.generate
+                                            (AssignUnitDestination unit.id)
+                                            (randomNearbyCell model.gridConfig x y 10)
+
+                                    Garrisoned _ ->
+                                        Cmd.none
+                            )
+                            unitsNeedingPaths
+                in
+                ( { model
+                    | accumulatedTime = remainingTime
+                    , simulationFrameCount = model.simulationFrameCount + 1
+                    , lastSimulationDeltas = newSimulationDeltas
+                    , units = updatedUnits
+                    , pathfindingOccupancy = updatedOccupancy
+                  }
+                , Cmd.batch cmds
+                )
+
+            else
+                ( { model | accumulatedTime = newAccumulatedTime }, Cmd.none )
 
 
 constrainCamera : MapConfig -> ( Int, Int ) -> Camera -> Camera
@@ -926,13 +1827,17 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.dragState of
         NotDragging ->
-            E.onResize WindowResize
+            Sub.batch
+                [ E.onResize WindowResize
+                , E.onAnimationFrameDelta Frame
+                ]
 
         DraggingViewport _ ->
             Sub.batch
                 [ E.onResize WindowResize
                 , E.onMouseMove (D.map2 MouseMove (D.field "clientX" D.float) (D.field "clientY" D.float))
                 , E.onMouseUp (D.succeed MouseUp)
+                , E.onAnimationFrameDelta Frame
                 ]
 
         DraggingMinimap _ ->
@@ -940,6 +1845,7 @@ subscriptions model =
                 [ E.onResize WindowResize
                 , E.onMouseMove (D.map2 MinimapMouseMove (D.field "clientX" D.float) (D.field "clientY" D.float))
                 , E.onMouseUp (D.succeed MouseUp)
+                , E.onAnimationFrameDelta Frame
                 ]
 
 
@@ -1103,6 +2009,8 @@ viewMainViewport model cursor viewportWidth viewportHeight =
         [ viewTerrain model viewportWidth viewportHeight
         , viewDecorativeShapes model viewportWidth viewportHeight
         , viewBuildings model
+        , viewUnits model
+        , viewSelectedUnitPath model
         , viewGrids model viewportWidth viewportHeight
         , viewPathfindingOccupancy model viewportWidth viewportHeight
         , viewBuildingOccupancy model viewportWidth viewportHeight
@@ -1214,6 +2122,20 @@ viewBuilding model building =
 
                 _ ->
                     False
+
+        -- Get entrance tile position
+        ( entranceGridX, entranceGridY ) =
+            getBuildingEntrance building
+
+        -- Calculate entrance overlay position relative to building
+        entranceOffsetX =
+            toFloat (entranceGridX - building.gridX) * model.gridConfig.buildGridSize
+
+        entranceOffsetY =
+            toFloat (entranceGridY - building.gridY) * model.gridConfig.buildGridSize
+
+        entranceTileSize =
+            model.gridConfig.buildGridSize
     in
     div
         [ style "position" "absolute"
@@ -1234,6 +2156,18 @@ viewBuilding model building =
         , Html.Events.onClick (SelectThing (BuildingSelected building.id))
         ]
         [ text building.buildingType
+        , -- Entrance overlay
+          div
+            [ style "position" "absolute"
+            , style "left" (String.fromFloat entranceOffsetX ++ "px")
+            , style "top" (String.fromFloat entranceOffsetY ++ "px")
+            , style "width" (String.fromFloat entranceTileSize ++ "px")
+            , style "height" (String.fromFloat entranceTileSize ++ "px")
+            , style "background-color" "rgba(139, 69, 19, 0.5)"
+            , style "border" "1px solid rgba(0, 0, 0, 0.4)"
+            , style "pointer-events" "none"
+            ]
+            []
         , if isSelected then
             div
                 [ style "position" "absolute"
@@ -1248,6 +2182,157 @@ viewBuilding model building =
           else
             text ""
         ]
+
+
+viewUnits : Model -> Html Msg
+viewUnits model =
+    div []
+        (List.filterMap
+            (\unit ->
+                case unit.location of
+                    OnMap x y ->
+                        Just (viewUnit model unit x y)
+
+                    Garrisoned _ ->
+                        Nothing
+            )
+            model.units
+        )
+
+
+viewUnit : Model -> Unit -> Float -> Float -> Html Msg
+viewUnit model unit worldX worldY =
+    let
+        screenX =
+            worldX - model.camera.x
+
+        screenY =
+            worldY - model.camera.y
+
+        -- Unit visual diameter is half of pathfinding grid (16 pixels)
+        visualDiameter =
+            model.gridConfig.pathfindingGridSize / 2
+
+        visualRadius =
+            visualDiameter / 2
+
+        -- Selection area is twice as large (32 pixels diameter)
+        selectionDiameter =
+            visualDiameter * 2
+
+        selectionRadius =
+            selectionDiameter / 2
+
+        isSelected =
+            case model.selected of
+                Just (UnitSelected id) ->
+                    id == unit.id
+
+                _ ->
+                    False
+    in
+    -- Outer clickable area (larger)
+    div
+        [ style "position" "absolute"
+        , style "left" (String.fromFloat (screenX - selectionRadius) ++ "px")
+        , style "top" (String.fromFloat (screenY - selectionRadius) ++ "px")
+        , style "width" (String.fromFloat selectionDiameter ++ "px")
+        , style "height" (String.fromFloat selectionDiameter ++ "px")
+        , style "cursor" "pointer"
+        , style "user-select" "none"
+        , Html.Events.onClick (SelectThing (UnitSelected unit.id))
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "center"
+        ]
+        [ -- Inner visual representation (smaller)
+          div
+            [ style "width" (String.fromFloat visualDiameter ++ "px")
+            , style "height" (String.fromFloat visualDiameter ++ "px")
+            , style "background-color" unit.color
+            , style "border" "2px solid #333"
+            , style "border-radius" "50%"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "justify-content" "center"
+            , style "color" "#fff"
+            , style "font-size" "8px"
+            , style "font-weight" "bold"
+            , style "pointer-events" "none"
+            ]
+            [ text "U" ]
+        , if isSelected then
+            div
+                [ style "position" "absolute"
+                , style "width" (String.fromFloat visualDiameter ++ "px")
+                , style "height" (String.fromFloat visualDiameter ++ "px")
+                , style "border-radius" "50%"
+                , style "background-color" "rgba(255, 215, 0, 0.3)"
+                , style "pointer-events" "none"
+                , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
+                ]
+                []
+
+          else
+            text ""
+        ]
+
+
+viewSelectedUnitPath : Model -> Html Msg
+viewSelectedUnitPath model =
+    case model.selected of
+        Just (UnitSelected unitId) ->
+            let
+                maybeUnit =
+                    List.filter (\u -> u.id == unitId) model.units
+                        |> List.head
+            in
+            case maybeUnit of
+                Just unit ->
+                    div []
+                        (List.map
+                            (\( cellX, cellY ) ->
+                                let
+                                    -- Center of the pathfinding cell in world coordinates
+                                    worldX =
+                                        toFloat cellX * model.gridConfig.pathfindingGridSize + model.gridConfig.pathfindingGridSize / 2
+
+                                    worldY =
+                                        toFloat cellY * model.gridConfig.pathfindingGridSize + model.gridConfig.pathfindingGridSize / 2
+
+                                    -- Convert to screen coordinates
+                                    screenX =
+                                        worldX - model.camera.x
+
+                                    screenY =
+                                        worldY - model.camera.y
+
+                                    -- Dot size
+                                    dotSize =
+                                        6
+                                in
+                                div
+                                    [ style "position" "absolute"
+                                    , style "left" (String.fromFloat (screenX - dotSize / 2) ++ "px")
+                                    , style "top" (String.fromFloat (screenY - dotSize / 2) ++ "px")
+                                    , style "width" (String.fromFloat dotSize ++ "px")
+                                    , style "height" (String.fromFloat dotSize ++ "px")
+                                    , style "background-color" "#FFD700"
+                                    , style "border-radius" "50%"
+                                    , style "border" "1px solid #FFA500"
+                                    , style "pointer-events" "none"
+                                    , style "opacity" "0.8"
+                                    ]
+                                    []
+                            )
+                            unit.path
+                        )
+
+                Nothing ->
+                    text ""
+
+        _ ->
+            text ""
 
 
 viewGrids : Model -> Float -> Float -> Html Msg
@@ -1605,7 +2690,343 @@ viewSelectionPanel model panelWidth =
         panelHeight =
             120
 
+        debugTabbedContent : Model -> Html Msg
+        debugTabbedContent m =
+            let
+                tabButton tab label =
+                    let
+                        isActive =
+                            m.debugTab == tab
+                    in
+                    div
+                        [ style "padding" "6px 12px"
+                        , style "background-color"
+                            (if isActive then
+                                "#0f0"
+
+                             else
+                                "#222"
+                            )
+                        , style "color"
+                            (if isActive then
+                                "#000"
+
+                             else
+                                "#0f0"
+                            )
+                        , style "cursor" "pointer"
+                        , style "border-radius" "3px"
+                        , style "font-family" "monospace"
+                        , style "font-size" "10px"
+                        , style "font-weight" "bold"
+                        , style "user-select" "none"
+                        , Html.Events.onClick (SetDebugTab tab)
+                        ]
+                        [ text label ]
+
+                tabsColumn =
+                    div
+                        [ style "display" "flex"
+                        , style "flex-direction" "column"
+                        , style "gap" "4px"
+                        , style "padding" "8px"
+                        , style "border-right" "1px solid #0f0"
+                        , style "flex-shrink" "0"
+                        ]
+                        [ tabButton StatsTab "STATS"
+                        , tabButton VisualizationTab "VISUAL"
+                        , tabButton ControlsTab "CONTROLS"
+                        ]
+
+                tabContent =
+                    case m.debugTab of
+                        StatsTab ->
+                            debugStatsContent m
+
+                        VisualizationTab ->
+                            debugVisualizationContent
+
+                        ControlsTab ->
+                            debugControlsContent
+            in
+            div
+                [ style "display" "flex"
+                , style "flex-direction" "row"
+                ]
+                [ tabsColumn, tabContent ]
+
+        debugStatsContent m =
+            let
+                avgDelta =
+                    if List.isEmpty m.lastSimulationDeltas then
+                        0
+
+                    else
+                        (List.sum m.lastSimulationDeltas) / toFloat (List.length m.lastSimulationDeltas)
+            in
+            div
+                [ style "padding" "12px"
+                , style "color" "#0f0"
+                , style "font-family" "monospace"
+                , style "font-size" "11px"
+                , style "display" "flex"
+                , style "flex-direction" "row"
+                , style "gap" "16px"
+                , style "align-items" "center"
+                ]
+                [ div []
+                    [ text "Camera: ("
+                    , text (String.fromFloat m.camera.x)
+                    , text ", "
+                    , text (String.fromFloat m.camera.y)
+                    , text ")"
+                    ]
+                , div []
+                    [ text "Gold: "
+                    , text (String.fromInt m.gold)
+                    ]
+                , div []
+                    [ text "Sim Frame: "
+                    , text (String.fromInt m.simulationFrameCount)
+                    ]
+                , div []
+                    [ text "Avg Delta: "
+                    , text (String.fromFloat (round (avgDelta * 10) |> toFloat |> (\x -> x / 10)))
+                    , text "ms"
+                    ]
+                ]
+
+        debugVisualizationContent =
+            div
+                [ style "padding" "12px"
+                , style "color" "#0f0"
+                , style "font-family" "monospace"
+                , style "font-size" "11px"
+                , style "display" "flex"
+                , style "flex-direction" "row"
+                , style "gap" "12px"
+                , style "align-items" "center"
+                ]
+                [ div
+                    [ style "display" "flex"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    , style "cursor" "pointer"
+                    , Html.Events.onClick ToggleBuildGrid
+                    ]
+                    [ div
+                        [ style "width" "14px"
+                        , style "height" "14px"
+                        , style "border" "2px solid #0f0"
+                        , style "border-radius" "2px"
+                        , style "background-color"
+                            (if model.showBuildGrid then
+                                "#0f0"
+
+                             else
+                                "transparent"
+                            )
+                        ]
+                        []
+                    , text "Build Grid"
+                    ]
+                , div
+                    [ style "display" "flex"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    , style "cursor" "pointer"
+                    , Html.Events.onClick TogglePathfindingGrid
+                    ]
+                    [ div
+                        [ style "width" "14px"
+                        , style "height" "14px"
+                        , style "border" "2px solid #0f0"
+                        , style "border-radius" "2px"
+                        , style "background-color"
+                            (if model.showPathfindingGrid then
+                                "#0f0"
+
+                             else
+                                "transparent"
+                            )
+                        ]
+                        []
+                    , text "Pathfinding Grid"
+                    ]
+                , div
+                    [ style "display" "flex"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    , style "cursor" "pointer"
+                    , Html.Events.onClick TogglePathfindingOccupancy
+                    ]
+                    [ div
+                        [ style "width" "14px"
+                        , style "height" "14px"
+                        , style "border" "2px solid #0f0"
+                        , style "border-radius" "2px"
+                        , style "background-color"
+                            (if model.showPathfindingOccupancy then
+                                "#0f0"
+
+                             else
+                                "transparent"
+                            )
+                        ]
+                        []
+                    , text "PF Occupancy"
+                    ]
+                , div
+                    [ style "display" "flex"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    , style "cursor" "pointer"
+                    , Html.Events.onClick ToggleBuildingOccupancy
+                    ]
+                    [ div
+                        [ style "width" "14px"
+                        , style "height" "14px"
+                        , style "border" "2px solid #0f0"
+                        , style "border-radius" "2px"
+                        , style "background-color"
+                            (if model.showBuildingOccupancy then
+                                "#0f0"
+
+                             else
+                                "transparent"
+                            )
+                        ]
+                        []
+                    , text "Build Occupancy"
+                    ]
+                ]
+
+        debugControlsContent =
+            let
+                speedRadio speed label =
+                    let
+                        isSelected =
+                            model.simulationSpeed == speed
+                    in
+                    div
+                        [ style "display" "flex"
+                        , style "gap" "6px"
+                        , style "align-items" "center"
+                        , style "cursor" "pointer"
+                        , Html.Events.onClick (SetSimulationSpeed speed)
+                        ]
+                        [ div
+                            [ style "width" "12px"
+                            , style "height" "12px"
+                            , style "border" "2px solid #0f0"
+                            , style "border-radius" "50%"
+                            , style "display" "flex"
+                            , style "align-items" "center"
+                            , style "justify-content" "center"
+                            ]
+                            [ if isSelected then
+                                div
+                                    [ style "width" "6px"
+                                    , style "height" "6px"
+                                    , style "background-color" "#0f0"
+                                    , style "border-radius" "50%"
+                                    ]
+                                    []
+
+                              else
+                                text ""
+                            ]
+                        , text label
+                        ]
+            in
+            div
+                [ style "padding" "12px"
+                , style "color" "#0f0"
+                , style "font-family" "monospace"
+                , style "font-size" "11px"
+                , style "display" "flex"
+                , style "flex-direction" "row"
+                , style "gap" "16px"
+                , style "align-items" "center"
+                ]
+                [ div
+                    [ style "display" "flex"
+                    , style "flex-direction" "row"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    ]
+                    [ div [] [ text "Speed:" ]
+                    , speedRadio Pause "0x"
+                    , speedRadio Speed1x "1x"
+                    , speedRadio Speed2x "2x"
+                    , speedRadio Speed10x "10x"
+                    , speedRadio Speed100x "100x"
+                    ]
+                , div
+                    [ style "border-left" "1px solid #0f0"
+                    , style "padding-left" "16px"
+                    , style "display" "flex"
+                    , style "flex-direction" "row"
+                    , style "gap" "8px"
+                    , style "align-items" "center"
+                    ]
+                    [ div [] [ text "Gold:" ]
+                    , Html.input
+                        [ Html.Attributes.type_ "text"
+                        , Html.Attributes.value model.goldInputValue
+                        , Html.Attributes.placeholder "Amount"
+                        , Html.Events.onInput GoldInputChanged
+                        , style "width" "80px"
+                        , style "padding" "4px"
+                        , style "background-color" "#222"
+                        , style "color" "#0f0"
+                        , style "border" "1px solid #0f0"
+                        , style "border-radius" "2px"
+                        , style "font-family" "monospace"
+                        , style "font-size" "11px"
+                        ]
+                        []
+                    , div
+                        [ style "padding" "4px 8px"
+                        , style "background-color" "#0f0"
+                        , style "color" "#000"
+                        , style "border-radius" "2px"
+                        , style "cursor" "pointer"
+                        , style "font-weight" "bold"
+                        , style "font-size" "10px"
+                        , Html.Events.onClick SetGoldFromInput
+                        ]
+                        [ text "SET" ]
+                    ]
+                , div
+                    [ style "border-left" "1px solid #0f0"
+                    , style "padding-left" "16px"
+                    ]
+                    [ div
+                        [ style "padding" "6px 10px"
+                        , style "background-color" "#0f0"
+                        , style "color" "#000"
+                        , style "border-radius" "2px"
+                        , style "cursor" "pointer"
+                        , style "font-weight" "bold"
+                        , style "font-size" "10px"
+                        , style "text-align" "center"
+                        , Html.Events.onClick SpawnTestUnit
+                        ]
+                        [ text "SPAWN TEST UNIT" ]
+                    ]
+                ]
+
         debugInfoSection =
+            let
+                -- Calculate running average of last 3 simulation deltas
+                avgDelta =
+                    if List.isEmpty model.lastSimulationDeltas then
+                        0
+
+                    else
+                        (List.sum model.lastSimulationDeltas) / toFloat (List.length model.lastSimulationDeltas)
+            in
             div
                 [ style "padding" "12px"
                 , style "color" "#0f0"
@@ -1626,6 +3047,15 @@ viewSelectionPanel model panelWidth =
                 , div []
                     [ text "Gold: "
                     , text (String.fromInt model.gold)
+                    ]
+                , div []
+                    [ text "Sim Frame: "
+                    , text (String.fromInt model.simulationFrameCount)
+                    ]
+                , div []
+                    [ text "Avg Delta: "
+                    , text (String.fromFloat (round (avgDelta * 10) |> toFloat |> (\x -> x / 10)))
+                    , text "ms"
                     ]
                 ]
 
@@ -1735,6 +3165,63 @@ viewSelectionPanel model panelWidth =
                     ]
                 ]
 
+        debugSpeedSection =
+            let
+                speedRadio speed label =
+                    let
+                        isSelected =
+                            model.simulationSpeed == speed
+                    in
+                    div
+                        [ style "display" "flex"
+                        , style "gap" "6px"
+                        , style "align-items" "center"
+                        , style "cursor" "pointer"
+                        , Html.Events.onClick (SetSimulationSpeed speed)
+                        ]
+                        [ div
+                            [ style "width" "12px"
+                            , style "height" "12px"
+                            , style "border" "2px solid #0f0"
+                            , style "border-radius" "50%"
+                            , style "display" "flex"
+                            , style "align-items" "center"
+                            , style "justify-content" "center"
+                            ]
+                            [ if isSelected then
+                                div
+                                    [ style "width" "6px"
+                                    , style "height" "6px"
+                                    , style "background-color" "#0f0"
+                                    , style "border-radius" "50%"
+                                    ]
+                                    []
+
+                              else
+                                text ""
+                            ]
+                        , text label
+                        ]
+            in
+            div
+                [ style "padding" "12px"
+                , style "color" "#0f0"
+                , style "font-family" "monospace"
+                , style "font-size" "11px"
+                , style "display" "flex"
+                , style "flex-direction" "column"
+                , style "gap" "6px"
+                , style "flex-shrink" "0"
+                , style "border-left" "1px solid #0f0"
+                ]
+                [ div [] [ text "Sim Speed:" ]
+                , speedRadio Pause "0x"
+                , speedRadio Speed1x "1x"
+                , speedRadio Speed2x "2x"
+                , speedRadio Speed10x "10x"
+                , speedRadio Speed100x "100x"
+                ]
+
         debugGoldSection =
             div
                 [ style "padding" "12px"
@@ -1780,6 +3267,18 @@ viewSelectionPanel model panelWidth =
                         ]
                         [ text "SET" ]
                     ]
+                , div
+                    [ style "padding" "6px 10px"
+                    , style "background-color" "#0f0"
+                    , style "color" "#000"
+                    , style "border-radius" "2px"
+                    , style "cursor" "pointer"
+                    , style "font-weight" "bold"
+                    , style "font-size" "10px"
+                    , style "text-align" "center"
+                    , Html.Events.onClick SpawnTestUnit
+                    ]
+                    [ text "SPAWN TEST UNIT" ]
                 ]
 
         buildContent =
@@ -1965,19 +3464,78 @@ viewSelectionPanel model panelWidth =
                         ]
                         [ text "Building not found" ]
 
+        unitSelectedContent unitId =
+            let
+                maybeUnit =
+                    List.filter (\u -> u.id == unitId) model.units
+                        |> List.head
+            in
+            case maybeUnit of
+                Just unit ->
+                    div
+                        [ style "padding" "12px"
+                        , style "color" "#fff"
+                        , style "font-family" "monospace"
+                        , style "font-size" "11px"
+                        , style "display" "flex"
+                        , style "flex-direction" "row"
+                        , style "gap" "16px"
+                        , style "align-items" "center"
+                        ]
+                        [ div
+                            [ style "font-weight" "bold"
+                            , style "font-size" "12px"
+                            ]
+                            [ text unit.unitType ]
+                        , div []
+                            [ text ("HP: " ++ String.fromInt unit.hp ++ "/" ++ String.fromInt unit.maxHp) ]
+                        , div []
+                            [ text ("Speed: " ++ String.fromFloat unit.movementSpeed ++ " cells/s") ]
+                        , div []
+                            [ text ("Owner: " ++ (case unit.owner of
+                                Player -> "Player"
+                                Enemy -> "Enemy"
+                                ))
+                            ]
+                        , div []
+                            [ text ("Location: " ++ (case unit.location of
+                                OnMap x y -> "(" ++ String.fromInt (round x) ++ ", " ++ String.fromInt (round y) ++ ")"
+                                Garrisoned buildingId -> "Garrisoned in #" ++ String.fromInt buildingId
+                                ))
+                            ]
+                        , div []
+                            [ text ("Behavior: " ++ (case unit.behavior of
+                                Thinking -> "Thinking"
+                                FindingRandomTarget -> "Finding Target"
+                                MovingTowardTarget -> "Moving"
+                                ))
+                            ]
+                        ]
+
+                Nothing ->
+                    div
+                        [ style "padding" "12px"
+                        , style "color" "#f00"
+                        , style "font-size" "12px"
+                        ]
+                        [ text "Unit not found" ]
+
         content =
             case model.selected of
                 Nothing ->
                     [ noSelectionContent ]
 
                 Just GlobalButtonDebug ->
-                    [ debugInfoSection, debugGridSection, debugGoldSection ]
+                    [ debugTabbedContent model ]
 
                 Just GlobalButtonBuild ->
                     [ buildContent ]
 
                 Just (BuildingSelected buildingId) ->
                     [ buildingSelectedContent buildingId ]
+
+                Just (UnitSelected unitId) ->
+                    [ unitSelectedContent unitId ]
     in
     div
         [ style "position" "absolute"
@@ -2006,6 +3564,10 @@ viewSelectionPanel model panelWidth =
 
 viewGoldCounter : Model -> Html Msg
 viewGoldCounter model =
+    let
+        isPaused =
+            model.simulationSpeed == Pause
+    in
     div
         [ style "position" "absolute"
         , style "bottom" "190px"
@@ -2033,6 +3595,17 @@ viewGoldCounter model =
             , style "font-weight" "bold"
             ]
             [ text (String.fromInt model.gold) ]
+        , if isPaused then
+            div
+                [ style "color" "#FF6B6B"
+                , style "font-family" "monospace"
+                , style "font-size" "12px"
+                , style "font-weight" "bold"
+                ]
+                [ text "PAUSED" ]
+
+          else
+            text ""
         ]
 
 
@@ -2099,6 +3672,7 @@ viewMinimap model =
             , style "border" "1px solid #fff"
             ]
             (List.map (viewMinimapBuilding scale model.gridConfig.buildGridSize) model.buildings
+                ++ List.map (viewMinimapUnit scale) model.units
                 ++ [ div
                         [ style "position" "absolute"
                         , style "left" (String.fromFloat (model.camera.x * scale) ++ "px")
@@ -2163,6 +3737,45 @@ viewMinimapBuilding scale buildGridSize building =
         , style "pointer-events" "none"
         ]
         []
+
+
+viewMinimapUnit : Float -> Unit -> Html Msg
+viewMinimapUnit scale unit =
+    case unit.location of
+        OnMap worldX worldY ->
+            let
+                minimapX =
+                    worldX * scale
+
+                minimapY =
+                    worldY * scale
+
+                -- Unit dot size on minimap
+                dotSize =
+                    3
+
+                unitColor =
+                    case unit.owner of
+                        Player ->
+                            "#7FFFD4"
+
+                        Enemy ->
+                            "#FF0000"
+            in
+            div
+                [ style "position" "absolute"
+                , style "left" (String.fromFloat (minimapX - dotSize / 2) ++ "px")
+                , style "top" (String.fromFloat (minimapY - dotSize / 2) ++ "px")
+                , style "width" (String.fromFloat dotSize ++ "px")
+                , style "height" (String.fromFloat dotSize ++ "px")
+                , style "background-color" unitColor
+                , style "border-radius" "50%"
+                , style "pointer-events" "none"
+                ]
+                []
+
+        Garrisoned _ ->
+            text ""
 
 
 decodeMinimapMouseEvent : (Float -> Float -> Msg) -> D.Decoder ( Msg, Bool )
