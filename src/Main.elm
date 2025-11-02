@@ -105,7 +105,7 @@ type UnitBehavior
     | GoingToSleep
     | Sleeping
     | LookForBuildRepairTarget
-    | BuildingConstruction
+    | MovingToBuildRepairTarget
     | Repairing
     | LookForTaxTarget
     | CollectingTaxes
@@ -1195,8 +1195,19 @@ calculateUnitPath gridConfig mapConfig occupancy unitX unitY targetCell =
             ( floor (unitX / gridConfig.pathfindingGridSize)
             , floor (unitY / gridConfig.pathfindingGridSize)
             )
+
+        _ =
+            Debug.log "calculateUnitPath details"
+                { currentCell = currentCell
+                , targetCell = targetCell
+                , isCurrentOccupied = Dict.get currentCell occupancy
+                , isTargetOccupied = Dict.get targetCell occupancy
+                }
+
+        path =
+            findPath gridConfig mapConfig occupancy currentCell targetCell
     in
-    findPath gridConfig mapConfig occupancy currentCell targetCell
+    path
 
 
 
@@ -1215,6 +1226,15 @@ updateUnitMovement gridConfig mapConfig occupancy deltaSeconds unit =
 
                 nextCell :: restOfPath ->
                     let
+                        _ =
+                            Debug.log "updateUnitMovement"
+                                { unitId = unit.id
+                                , unitType = unit.unitType
+                                , position = (x, y)
+                                , pathLength = List.length unit.path
+                                , nextCell = nextCell
+                                }
+
                         -- Target position (center of next pathfinding cell)
                         targetX =
                             toFloat (Tuple.first nextCell) * gridConfig.pathfindingGridSize + gridConfig.pathfindingGridSize / 2
@@ -1383,18 +1403,25 @@ updateUnitBehavior deltaSeconds buildings unit =
                                         buildGridSize =
                                             64
 
-                                        entranceX =
-                                            toFloat entranceGridX * toFloat buildGridSize + toFloat buildGridSize / 2
+                                        -- Calculate exit position (one tile below entrance, outside building)
+                                        exitGridX =
+                                            entranceGridX
 
-                                        entranceY =
-                                            toFloat entranceGridY * toFloat buildGridSize + toFloat buildGridSize / 2
+                                        exitGridY =
+                                            entranceGridY + 1
 
-                                        -- Check if at entrance
+                                        exitX =
+                                            toFloat exitGridX * toFloat buildGridSize + toFloat buildGridSize / 2
+
+                                        exitY =
+                                            toFloat exitGridY * toFloat buildGridSize + toFloat buildGridSize / 2
+
+                                        -- Check if at exit position (entry point)
                                         dx =
-                                            x - entranceX
+                                            x - exitX
 
                                         dy =
-                                            y - entranceY
+                                            y - exitY
 
                                         distance =
                                             sqrt (dx * dx + dy * dy)
@@ -1407,13 +1434,13 @@ updateUnitBehavior deltaSeconds buildings unit =
                                         ( { unit | location = Garrisoned homeBuildingId, behavior = Sleeping, behaviorTimer = 0 }, False )
 
                                     else
-                                        -- Not at entrance yet, request path
+                                        -- Not at entrance yet, request path to exit position
                                         let
                                             targetCellX =
-                                                floor (entranceX / 32)
+                                                floor (exitX / 32)
 
                                             targetCellY =
-                                                floor (entranceY / 32)
+                                                floor (exitY / 32)
                                         in
                                         ( { unit | targetDestination = Just ( targetCellX, targetCellY ) }, True )
 
@@ -1460,7 +1487,7 @@ updateUnitBehavior deltaSeconds buildings unit =
                             in
                             case findNearestDamagedBuilding finalX finalY buildings of
                                 Just targetBuilding ->
-                                    -- Found a target, move to it and switch to repair behavior
+                                    -- Found a target, start moving toward it
                                     let
                                         -- Calculate target position (building center)
                                         buildGridSize =
@@ -1478,9 +1505,17 @@ updateUnitBehavior deltaSeconds buildings unit =
 
                                         targetCellY =
                                             floor (targetY / 32)
+
+                                        _ =
+                                            Debug.log "Peasant exiting garrison"
+                                                { unitId = exitedUnit.id
+                                                , position = (finalX, finalY)
+                                                , targetBuilding = targetBuilding.buildingType
+                                                , targetCell = (targetCellX, targetCellY)
+                                                }
                                     in
                                     ( { exitedUnit
-                                        | behavior = Repairing
+                                        | behavior = MovingToBuildRepairTarget
                                         , targetDestination = Just ( targetCellX, targetCellY )
                                         , behaviorTimer = 0
                                       }
@@ -1499,7 +1534,7 @@ updateUnitBehavior deltaSeconds buildings unit =
                     -- Already on map, find nearest damaged building
                     case findNearestDamagedBuilding x y buildings of
                         Just targetBuilding ->
-                            -- Found a target, move to it and switch to repair behavior
+                            -- Found a target, start moving toward it
                             let
                                 -- Calculate target position (building center)
                                 buildGridSize =
@@ -1519,7 +1554,7 @@ updateUnitBehavior deltaSeconds buildings unit =
                                     floor (targetY / 32)
                             in
                             ( { unit
-                                | behavior = Repairing
+                                | behavior = MovingToBuildRepairTarget
                                 , targetDestination = Just ( targetCellX, targetCellY )
                                 , behaviorTimer = 0
                               }
@@ -1530,9 +1565,62 @@ updateUnitBehavior deltaSeconds buildings unit =
                             -- No damaged buildings, go to sleep
                             ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
 
-        BuildingConstruction ->
-            -- Building construction, don't change behavior
-            ( unit, False )
+        MovingToBuildRepairTarget ->
+            -- Moving toward build/repair target
+            case unit.location of
+                OnMap x y ->
+                    let
+                        _ =
+                            Debug.log "MovingToBuildRepairTarget"
+                                { unitId = unit.id
+                                , position = (x, y)
+                                , path = unit.path
+                                , targetDestination = unit.targetDestination
+                                }
+                    in
+                    -- Find the target building
+                    case findNearestDamagedBuilding x y buildings of
+                        Just targetBuilding ->
+                            let
+                                buildGridSize =
+                                    64
+
+                                -- Calculate building bounds
+                                buildingMinX =
+                                    toFloat targetBuilding.gridX * toFloat buildGridSize
+
+                                buildingMinY =
+                                    toFloat targetBuilding.gridY * toFloat buildGridSize
+
+                                buildingSize =
+                                    toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize
+
+                                buildingMaxX =
+                                    buildingMinX + buildingSize
+
+                                buildingMaxY =
+                                    buildingMinY + buildingSize
+
+                                -- Check if unit is adjacent to building (within 48 pixels)
+                                isNear =
+                                    (x >= buildingMinX - 48 && x <= buildingMaxX + 48)
+                                        && (y >= buildingMinY - 48 && y <= buildingMaxY + 48)
+                            in
+                            if isNear then
+                                -- Arrived at building, switch to Repairing
+                                ( { unit | behavior = Repairing, behaviorTimer = 0 }, False )
+
+                            else
+                                -- Still moving, keep going
+                                ( unit, False )
+
+                        Nothing ->
+                            -- Target building no longer needs repair, look for another
+                            ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
+
+                Garrisoned _ ->
+                    -- Shouldn't be garrisoned while moving
+                    ( { unit | behavior = DebugError "Moving while garrisoned" }, False )
 
         Repairing ->
             -- Repairing: use Build ability when near damaged building
@@ -1709,12 +1797,20 @@ exitGarrison homeBuilding unit =
         buildGridSize =
             64
 
-        -- Calculate world position at center of entrance tile
+        -- Place unit one tile below entrance (outside building collision)
+        -- Entrance is at bottom edge, so +1 tile southward (Y+1) is outside
+        exitGridX =
+            entranceGridX
+
+        exitGridY =
+            entranceGridY + 1
+
+        -- Calculate world position at center of exit tile
         worldX =
-            toFloat entranceGridX * toFloat buildGridSize + toFloat buildGridSize / 2
+            toFloat exitGridX * toFloat buildGridSize + toFloat buildGridSize / 2
 
         worldY =
-            toFloat entranceGridY * toFloat buildGridSize + toFloat buildGridSize / 2
+            toFloat exitGridY * toFloat buildGridSize + toFloat buildGridSize / 2
     in
     { unit | location = OnMap worldX worldY }
 
@@ -2606,6 +2702,15 @@ update msg model =
                                         let
                                             newPath =
                                                 calculateUnitPath model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses x y targetCell
+
+                                            _ =
+                                                Debug.log "Path calculated"
+                                                    { unitId = unit.id
+                                                    , unitType = unit.unitType
+                                                    , from = (x, y)
+                                                    , to = targetCell
+                                                    , pathLength = List.length newPath
+                                                    }
                                         in
                                         { unit | path = newPath }
 
@@ -4876,7 +4981,7 @@ viewSelectionPanel model panelWidth =
                                         GoingToSleep -> "Going to Sleep"
                                         Sleeping -> "Sleeping"
                                         LookForBuildRepairTarget -> "Looking for Build/Repair"
-                                        BuildingConstruction -> "Building"
+                                        MovingToBuildRepairTarget -> "Moving to Building"
                                         Repairing -> "Repairing"
                                         LookForTaxTarget -> "Looking for Tax Target"
                                         CollectingTaxes -> "Collecting Taxes"
@@ -4896,7 +5001,7 @@ viewSelectionPanel model panelWidth =
                                     GoingToSleep -> "Going to Sleep"
                                     Sleeping -> "Sleeping"
                                     LookForBuildRepairTarget -> "Looking for Build/Repair"
-                                    BuildingConstruction -> "Building"
+                                    MovingToBuildRepairTarget -> "Moving to Building"
                                     Repairing -> "Repairing"
                                     LookForTaxTarget -> "Looking for Tax Target"
                                     CollectingTaxes -> "Collecting Taxes"
