@@ -43,6 +43,7 @@ type alias Model =
     , windowSize : ( Int, Int )
     , decorativeShapes : List DecorativeShape
     , mapConfig : MapConfig
+    , gameState : GameState
     , gold : Int
     , selected : Maybe Selectable
     , gridConfig : GridConfig
@@ -64,10 +65,17 @@ type alias Model =
     , units : List Unit
     , nextUnitId : Int
     , debugTab : DebugTab
+    , buildingTab : BuildingTab
     , showCityActiveArea : Bool
     , showCitySearchArea : Bool
     , tooltipHover : Maybe TooltipState
     }
+
+
+type GameState
+    = PreGame
+    | Playing
+    | GameOver
 
 
 type SimulationSpeed
@@ -84,14 +92,37 @@ type DebugTab
     | ControlsTab
 
 
+type BuildingTab
+    = MainTab
+    | InfoTab
+
+
 type UnitBehavior
     = Thinking
     | FindingRandomTarget
     | MovingTowardTarget
+    | Dead
+    | DebugError String
+    | WithoutHome
+    | LookingForTask
+    | GoingToSleep
+    | Sleeping
+    | LookForBuildRepairTarget
+    | BuildingConstruction
+    | Repairing
+    | LookForTaxTarget
+    | CollectingTaxes
+    | ReturnToCastle
+    | DeliveringGold
 
 
 type BuildingBehavior
     = Idle
+    | UnderConstruction
+    | SpawnHouse
+    | GenerateGold
+    | BuildingDead
+    | BuildingDebugError String
 
 
 type UnitKind
@@ -103,6 +134,9 @@ type Tag
     = BuildingTag
     | HeroTag
     | HenchmanTag
+    | GuildTag
+    | ObjectiveTag
+    | CofferTag
 
 
 type Selectable
@@ -124,6 +158,14 @@ type BuildingOwner
     | Enemy
 
 
+type alias GarrisonSlotConfig =
+    { unitType : String
+    , maxCount : Int
+    , currentCount : Int
+    , spawnTimer : Float
+    }
+
+
 type alias Building =
     { id : Int
     , owner : BuildingOwner
@@ -136,6 +178,10 @@ type alias Building =
     , garrisonOccupied : Int
     , buildingType : String
     , behavior : BuildingBehavior
+    , behaviorTimer : Float
+    , behaviorDuration : Float
+    , coffer : Int
+    , garrisonConfig : List GarrisonSlotConfig
     , activeRadius : Float
     , searchRadius : Float
     , tags : List Tag
@@ -168,7 +214,12 @@ type alias Unit =
     , color : String
     , path : List ( Int, Int )
     , behavior : UnitBehavior
+    , behaviorTimer : Float
+    , behaviorDuration : Float
     , thinkingTimer : Float
+    , thinkingDuration : Float
+    , homeBuilding : Maybe Int
+    , carriedGold : Int
     , targetDestination : Maybe ( Int, Int )
     , activeRadius : Float
     , searchRadius : Float
@@ -241,6 +292,7 @@ init _ =
             , windowSize = ( 800, 600 )
             , decorativeShapes = []
             , mapConfig = mapConfig
+            , gameState = PreGame
             , gold = 10000
             , selected = Nothing
             , gridConfig = gridConfig
@@ -262,6 +314,7 @@ init _ =
             , units = []
             , nextUnitId = 1
             , debugTab = StatsTab
+            , buildingTab = MainTab
             , showCityActiveArea = False
             , showCitySearchArea = False
             , tooltipHover = Nothing
@@ -286,6 +339,36 @@ testBuildingTemplate =
     , cost = 500
     , maxHp = 500
     , garrisonSlots = 5
+    }
+
+
+castleTemplate : BuildingTemplate
+castleTemplate =
+    { name = "Castle"
+    , size = Huge
+    , cost = 10000
+    , maxHp = 5000
+    , garrisonSlots = 6
+    }
+
+
+houseTemplate : BuildingTemplate
+houseTemplate =
+    { name = "House"
+    , size = Medium
+    , cost = 0
+    , maxHp = 500
+    , garrisonSlots = 0
+    }
+
+
+warriorsGuildTemplate : BuildingTemplate
+warriorsGuildTemplate =
+    { name = "Warrior's Guild"
+    , size = Large
+    , cost = 1500
+    , maxHp = 1000
+    , garrisonSlots = 0
     }
 
 
@@ -470,6 +553,10 @@ isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy
             , garrisonOccupied = 0
             , buildingType = ""
             , behavior = Idle
+            , behaviorTimer = 0
+            , behaviorDuration = 0
+            , coffer = 0
+            , garrisonConfig = []
             , activeRadius = 192
             , searchRadius = 384
             , tags = [ BuildingTag ]
@@ -578,6 +665,30 @@ getBuildingEntrance building =
 
         Huge ->
             ( building.gridX + 1, building.gridY + 3 )
+
+
+{-| Find a valid adjacent location to spawn a House near existing buildings.
+    Returns Nothing if no valid location found.
+-}
+findAdjacentHouseLocation : MapConfig -> GridConfig -> List Building -> Dict ( Int, Int ) Int -> Maybe ( Int, Int )
+findAdjacentHouseLocation mapConfig gridConfig buildings buildingOccupancy =
+    let
+        houseSize =
+            Medium
+
+        -- Get all cells adjacent to all buildings (with 1 cell spacing)
+        adjacentCells =
+            buildings
+                |> List.concatMap (\b -> getBuildingAreaCells b 1)
+                |> List.filter (\( gx, gy ) ->
+                    -- Check if this would be valid for a house
+                    isValidBuildingPlacement gx gy houseSize mapConfig gridConfig buildingOccupancy buildings
+                )
+                |> List.take 100  -- Limit to first 100 candidates for performance
+
+        -- Pick the first valid one (could randomize in future)
+    in
+    List.head adjacentCells
 
 
 {-| Calculate all build grid cells within a certain distance (in build grid cells) of a building.
@@ -1200,7 +1311,7 @@ randomNearbyCell gridConfig unitX unitY radius =
 
 
 {-| Update unit behavior state machine. Returns (updatedUnit, shouldGeneratePath).
-    - Thinking: Increment timer, transition to FindingRandomTarget after 0-500ms
+    - Thinking: Increment timer, transition to FindingRandomTarget after 1-2 seconds
     - FindingRandomTarget: Request new path generation (handled by caller)
     - MovingTowardTarget: When path is empty (destination reached), transition to Thinking
 -}
@@ -1211,12 +1322,8 @@ updateUnitBehavior deltaSeconds unit =
             let
                 newTimer =
                     unit.thinkingTimer + deltaSeconds
-
-                -- Random duration between 0 and 0.5 seconds (using unit ID as seed for variety)
-                thinkingDuration =
-                    0.1 + (toFloat (modBy 400 unit.id) / 1000.0)
             in
-            if newTimer >= thinkingDuration then
+            if newTimer >= unit.thinkingDuration then
                 -- Transition to FindingRandomTarget
                 ( { unit | behavior = FindingRandomTarget, thinkingTimer = 0 }, True )
 
@@ -1233,11 +1340,233 @@ updateUnitBehavior deltaSeconds unit =
             -- Check if destination reached (path is empty)
             if List.isEmpty unit.path then
                 -- Transition back to Thinking, clear target destination
-                ( { unit | behavior = Thinking, thinkingTimer = 0, targetDestination = Nothing }, False )
+                -- Random duration between 1.0 and 2.0 seconds (using unit ID as seed for variety)
+                let
+                    newThinkingDuration =
+                        1.0 + (toFloat (modBy 1000 unit.id) / 1000.0)
+                in
+                ( { unit | behavior = Thinking, thinkingTimer = 0, thinkingDuration = newThinkingDuration, targetDestination = Nothing }, False )
 
             else
                 -- Still moving
                 ( unit, False )
+
+        Dead ->
+            -- Dead units don't change behavior
+            ( unit, False )
+
+        DebugError _ ->
+            -- Error state, don't change behavior
+            ( unit, False )
+
+        WithoutHome ->
+            -- Unit without home, don't change behavior
+            ( unit, False )
+
+        LookingForTask ->
+            -- Looking for task, don't change behavior
+            ( unit, False )
+
+        GoingToSleep ->
+            -- Going to sleep, don't change behavior
+            ( unit, False )
+
+        Sleeping ->
+            -- Sleeping, don't change behavior
+            ( unit, False )
+
+        LookForBuildRepairTarget ->
+            -- Looking for build/repair target, don't change behavior
+            ( unit, False )
+
+        BuildingConstruction ->
+            -- Building construction, don't change behavior
+            ( unit, False )
+
+        Repairing ->
+            -- Repairing, don't change behavior
+            ( unit, False )
+
+        LookForTaxTarget ->
+            -- Looking for tax target, don't change behavior
+            ( unit, False )
+
+        CollectingTaxes ->
+            -- Collecting taxes, don't change behavior
+            ( unit, False )
+
+        ReturnToCastle ->
+            -- Returning to castle, don't change behavior
+            ( unit, False )
+
+        DeliveringGold ->
+            -- Delivering gold, don't change behavior
+            ( unit, False )
+
+
+{-| Update building behavior based on timer
+    Returns (Building, Bool) where Bool indicates if a house should be spawned
+-}
+updateBuildingBehavior : Float -> Building -> ( Building, Bool )
+updateBuildingBehavior deltaSeconds building =
+    case building.behavior of
+        Idle ->
+            ( building, False )
+
+        UnderConstruction ->
+            -- Not implemented yet
+            ( building, False )
+
+        SpawnHouse ->
+            let
+                newTimer =
+                    building.behaviorTimer + deltaSeconds
+            in
+            if newTimer >= building.behaviorDuration then
+                -- Time to spawn a house
+                -- Reset timer with new pseudo-random duration (30-45s)
+                let
+                    -- Use building ID and current timer to generate pseudo-random duration
+                    randomValue =
+                        toFloat (modBy 15000 (building.id * 1000 + round (building.behaviorTimer * 1000)))
+                            / 1000.0
+
+                    newDuration =
+                        30.0 + randomValue
+                in
+                ( { building | behaviorTimer = 0, behaviorDuration = newDuration }, True )
+
+            else
+                ( { building | behaviorTimer = newTimer }, False )
+
+        GenerateGold ->
+            let
+                newTimer =
+                    building.behaviorTimer + deltaSeconds
+            in
+            if newTimer >= building.behaviorDuration then
+                -- Time to generate gold
+                -- Reset timer with new pseudo-random duration (15-45s)
+                let
+                    -- Use building ID and current timer to generate pseudo-random values
+                    randomSeed =
+                        building.id * 1000 + round (building.behaviorTimer * 1000)
+
+                    durationRandomValue =
+                        toFloat (modBy 30000 randomSeed) / 1000.0
+
+                    newDuration =
+                        15.0 + durationRandomValue
+
+                    -- Different gold amounts for House (45-90) vs Guild (450-900)
+                    ( minGold, maxGold ) =
+                        if building.buildingType == "House" then
+                            ( 45, 90 )
+
+                        else
+                            ( 450, 900 )
+
+                    goldRange =
+                        maxGold - minGold
+
+                    goldRandomValue =
+                        modBy (goldRange + 1) (randomSeed + 12345)
+
+                    goldAmount =
+                        minGold + goldRandomValue
+                in
+                ( { building | behaviorTimer = 0, behaviorDuration = newDuration, coffer = building.coffer + goldAmount }, False )
+
+            else
+                ( { building | behaviorTimer = newTimer }, False )
+
+        BuildingDead ->
+            ( building, False )
+
+        BuildingDebugError _ ->
+            ( building, False )
+
+
+{-| Create a henchman unit of the specified type
+-}
+createHenchman : String -> Int -> Int -> Building -> Unit
+createHenchman unitType unitId buildingId homeBuilding =
+    let
+        ( hp, speed, tags ) =
+            case unitType of
+                "Peasant" ->
+                    ( 50, 2.0, [ HenchmanTag ] )
+
+                "Tax Collector" ->
+                    ( 50, 1.5, [ HenchmanTag ] )
+
+                "Castle Guard" ->
+                    ( 100, 2.0, [ HenchmanTag ] )
+
+                _ ->
+                    ( 50, 2.0, [ HenchmanTag ] )
+    in
+    { id = unitId
+    , owner = Player
+    , location = Garrisoned buildingId
+    , hp = hp
+    , maxHp = hp
+    , movementSpeed = speed
+    , unitType = unitType
+    , unitKind = Henchman
+    , color = "#888"
+    , path = []
+    , behavior = Sleeping
+    , behaviorTimer = 0
+    , behaviorDuration = 0
+    , thinkingTimer = 0
+    , thinkingDuration = 0
+    , homeBuilding = Just buildingId
+    , carriedGold = 0
+    , targetDestination = Nothing
+    , activeRadius = 192
+    , searchRadius = 384
+    , tags = tags
+    }
+
+
+{-| Update garrison spawn timers and return units that need to be spawned
+    Returns (Building, List (unitType, buildingId))
+-}
+updateGarrisonSpawning : Float -> Building -> ( Building, List ( String, Int ) )
+updateGarrisonSpawning deltaSeconds building =
+    let
+        -- Update each garrison slot's spawn timer
+        ( updatedConfig, unitsToSpawn ) =
+            List.foldl
+                (\slot ( accConfig, accSpawn ) ->
+                    if slot.currentCount < slot.maxCount then
+                        let
+                            newTimer =
+                                slot.spawnTimer + deltaSeconds
+                        in
+                        if newTimer >= 30.0 then
+                            -- Time to spawn - reset timer and add to spawn list
+                            ( { slot | spawnTimer = 0, currentCount = slot.currentCount + 1 } :: accConfig
+                            , ( slot.unitType, building.id ) :: accSpawn
+                            )
+
+                        else
+                            -- Still waiting - update timer
+                            ( { slot | spawnTimer = newTimer } :: accConfig
+                            , accSpawn
+                            )
+
+                    else
+                        -- Slot is full - don't update timer
+                        ( slot :: accConfig
+                        , accSpawn
+                        )
+                )
+                ( [], [] )
+                building.garrisonConfig
+    in
+    ( { building | garrisonConfig = List.reverse updatedConfig }, List.reverse unitsToSpawn )
 
 
 {-| Recalculate paths for all units (called when occupancy changes) -}
@@ -1304,6 +1633,7 @@ type Msg
     | TestUnitColorGenerated String
     | AssignUnitDestination Int ( Int, Int )
     | SetDebugTab DebugTab
+    | SetBuildingTab BuildingTab
     | PlaceTestBuilding
 
 
@@ -1528,6 +1858,47 @@ update msg model =
                     in
                     if isValid && canAfford then
                         let
+                            -- Determine building-specific properties
+                            ( buildingBehavior, buildingTags ) =
+                                case template.name of
+                                    "Castle" ->
+                                        ( SpawnHouse, [ BuildingTag, ObjectiveTag ] )
+
+                                    "House" ->
+                                        ( GenerateGold, [ BuildingTag, CofferTag ] )
+
+                                    "Warrior's Guild" ->
+                                        ( GenerateGold, [ BuildingTag, GuildTag, CofferTag ] )
+
+                                    _ ->
+                                        ( Idle, [ BuildingTag ] )
+
+                            -- Initialize behavior duration based on behavior type
+                            initialDuration =
+                                case buildingBehavior of
+                                    SpawnHouse ->
+                                        -- 30-45 seconds, use building ID for pseudo-random
+                                        30.0 + toFloat (modBy 15000 (model.nextBuildingId * 1000)) / 1000.0
+
+                                    GenerateGold ->
+                                        -- 15-45 seconds, use building ID for pseudo-random
+                                        15.0 + toFloat (modBy 30000 (model.nextBuildingId * 1000)) / 1000.0
+
+                                    _ ->
+                                        0
+
+                            -- Initialize garrison configuration based on building type
+                            initialGarrisonConfig =
+                                case template.name of
+                                    "Castle" ->
+                                        [ { unitType = "Castle Guard", maxCount = 2, currentCount = 0, spawnTimer = 0 }
+                                        , { unitType = "Tax Collector", maxCount = 1, currentCount = 0, spawnTimer = 0 }
+                                        , { unitType = "Peasant", maxCount = 3, currentCount = 0, spawnTimer = 0 }
+                                        ]
+
+                                    _ ->
+                                        []
+
                             newBuilding =
                                 { id = model.nextBuildingId
                                 , owner = Player
@@ -1539,10 +1910,14 @@ update msg model =
                                 , garrisonSlots = template.garrisonSlots
                                 , garrisonOccupied = 0
                                 , buildingType = template.name
-                                , behavior = Idle
+                                , behavior = buildingBehavior
+                                , behaviorTimer = 0
+                                , behaviorDuration = initialDuration
+                                , coffer = 0
+                                , garrisonConfig = initialGarrisonConfig
                                 , activeRadius = 192
                                 , searchRadius = 384
-                                , tags = [ BuildingTag ]
+                                , tags = buildingTags
                                 }
 
                             newBuildingOccupancy =
@@ -1554,6 +1929,14 @@ update msg model =
                             -- Recalculate paths for all units due to occupancy change
                             updatedUnits =
                                 recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy model.units
+
+                            -- Transition from PreGame to Playing when Castle is placed
+                            newGameState =
+                                if model.gameState == PreGame && template.name == "Castle" then
+                                    Playing
+
+                                else
+                                    model.gameState
                         in
                         ( { model
                             | buildings = newBuilding :: model.buildings
@@ -1563,6 +1946,7 @@ update msg model =
                             , gold = model.gold - template.cost
                             , buildMode = Nothing
                             , units = updatedUnits
+                            , gameState = newGameState
                           }
                         , Cmd.none
                         )
@@ -1623,7 +2007,12 @@ update msg model =
                     , color = color
                     , path = []
                     , behavior = Thinking
+                    , behaviorTimer = 0
+                    , behaviorDuration = 0
                     , thinkingTimer = 0
+                    , thinkingDuration = 1.0 + (toFloat (modBy 1000 model.nextUnitId) / 1000.0)
+                    , homeBuilding = Nothing
+                    , carriedGold = 0
                     , targetDestination = Nothing
                     , activeRadius = 192
                     , searchRadius = 384
@@ -1669,6 +2058,9 @@ update msg model =
 
         SetDebugTab tab ->
             ( { model | debugTab = tab }, Cmd.none )
+
+        SetBuildingTab tab ->
+            ( { model | buildingTab = tab }, Cmd.none )
 
         PlaceTestBuilding ->
             let
@@ -1724,6 +2116,10 @@ update msg model =
                         , garrisonOccupied = 0
                         , buildingType = template.name
                         , behavior = Idle
+                        , behaviorTimer = 0
+                        , behaviorDuration = 0
+                        , coffer = 0
+                        , garrisonConfig = []
                         , activeRadius = 192
                         , searchRadius = 384
                         , tags = [ BuildingTag ]
@@ -1863,6 +2259,110 @@ update msg model =
                             ( [], model.pathfindingOccupancy, [] )
                             model.units
 
+                    -- Update building behaviors and garrison spawning
+                    ( updatedBuildings, buildingsNeedingHouseSpawn, henchmenToSpawn ) =
+                        List.foldl
+                            (\building ( accBuildings, accNeedingHouseSpawn, accHenchmenSpawn ) ->
+                                let
+                                    ( behaviorUpdatedBuilding, shouldSpawnHouse ) =
+                                        updateBuildingBehavior deltaSeconds building
+
+                                    ( garrisonUpdatedBuilding, unitsToSpawn ) =
+                                        updateGarrisonSpawning deltaSeconds behaviorUpdatedBuilding
+
+                                    needsHouseSpawn =
+                                        if shouldSpawnHouse then
+                                            garrisonUpdatedBuilding :: accNeedingHouseSpawn
+
+                                        else
+                                            accNeedingHouseSpawn
+                                in
+                                ( garrisonUpdatedBuilding :: accBuildings, needsHouseSpawn, unitsToSpawn ++ accHenchmenSpawn )
+                            )
+                            ( [], [], [] )
+                            model.buildings
+
+                    -- Spawn henchmen units
+                    ( newHenchmen, nextUnitIdAfterSpawning ) =
+                        List.foldl
+                            (\( unitType, buildingId ) ( accUnits, currentUnitId ) ->
+                                -- Find the home building to get its entrance position
+                                case List.filter (\b -> b.id == buildingId) updatedBuildings |> List.head of
+                                    Just homeBuilding ->
+                                        let
+                                            newUnit =
+                                                createHenchman unitType currentUnitId buildingId homeBuilding
+                                        in
+                                        ( newUnit :: accUnits, currentUnitId + 1 )
+
+                                    Nothing ->
+                                        -- Building not found, skip spawning
+                                        ( accUnits, currentUnitId )
+                            )
+                            ( [], model.nextUnitId )
+                            henchmenToSpawn
+
+                    -- Combine existing units with new henchmen
+                    allUnits =
+                        updatedUnits ++ newHenchmen
+
+                    -- Spawn houses for buildings that need them
+                    ( ( buildingsAfterHouseSpawn, buildingOccupancyAfterHouses ), ( pathfindingOccupancyAfterHouses, nextBuildingIdAfterHouses ) ) =
+                        List.foldl
+                            (\castleBuilding ( ( accBuildings, accBuildOcc ), ( accPfOcc, currentBuildingId ) ) ->
+                                case findAdjacentHouseLocation model.mapConfig model.gridConfig accBuildings accBuildOcc of
+                                    Just ( gridX, gridY ) ->
+                                        let
+                                            newHouse =
+                                                { id = currentBuildingId
+                                                , owner = Player
+                                                , gridX = gridX
+                                                , gridY = gridY
+                                                , size = Medium
+                                                , hp = 500
+                                                , maxHp = 500
+                                                , garrisonSlots = 0
+                                                , garrisonOccupied = 0
+                                                , buildingType = "House"
+                                                , behavior = GenerateGold
+                                                , behaviorTimer = 0
+                                                , behaviorDuration = 15.0 + toFloat (modBy 30000 (currentBuildingId * 1000)) / 1000.0
+                                                , coffer = 0
+                                                , garrisonConfig = []
+                                                , activeRadius = 192
+                                                , searchRadius = 384
+                                                , tags = [ BuildingTag, CofferTag ]
+                                                }
+
+                                            newBuildOcc =
+                                                addBuildingGridOccupancy newHouse accBuildOcc
+
+                                            newPfOcc =
+                                                addBuildingOccupancy model.gridConfig newHouse accPfOcc
+                                        in
+                                        ( ( newHouse :: accBuildings, newBuildOcc ), ( newPfOcc, currentBuildingId + 1 ) )
+
+                                    Nothing ->
+                                        -- No valid location found, skip spawning
+                                        ( ( accBuildings, accBuildOcc ), ( accPfOcc, currentBuildingId ) )
+                            )
+                            ( ( updatedBuildings, model.buildingOccupancy ), ( updatedOccupancy, model.nextBuildingId ) )
+                            buildingsNeedingHouseSpawn
+
+                    -- Recalculate unit paths due to new house placement
+                    unitsAfterHouseSpawn =
+                        if List.isEmpty buildingsNeedingHouseSpawn then
+                            allUnits
+                        else
+                            recalculateAllPaths model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses allUnits
+
+                    -- Check for Game Over (Castle destroyed)
+                    newGameState =
+                        if List.any (\b -> List.member ObjectiveTag b.tags && b.hp <= 0) buildingsAfterHouseSpawn then
+                            GameOver
+                        else
+                            model.gameState
+
                     -- Generate random destinations for units that need them
                     cmds =
                         List.map
@@ -1882,9 +2382,14 @@ update msg model =
                     | accumulatedTime = remainingTime
                     , simulationFrameCount = model.simulationFrameCount + 1
                     , lastSimulationDeltas = newSimulationDeltas
-                    , units = updatedUnits
-                    , pathfindingOccupancy = updatedOccupancy
+                    , units = unitsAfterHouseSpawn
+                    , buildings = buildingsAfterHouseSpawn
+                    , buildingOccupancy = buildingOccupancyAfterHouses
+                    , pathfindingOccupancy = pathfindingOccupancyAfterHouses
                     , tooltipHover = updatedTooltipHover
+                    , nextUnitId = nextUnitIdAfterSpawning
+                    , nextBuildingId = nextBuildingIdAfterHouses
+                    , gameState = newGameState
                   }
                 , Cmd.batch cmds
                 )
@@ -2200,6 +2705,8 @@ view model =
         , viewSelectionPanel model selectionPanelWidth
         , viewMinimap model
         , viewTooltip model
+        , viewPreGameOverlay model
+        , viewGameOverOverlay model
         ]
 
 
@@ -2559,6 +3066,42 @@ viewUnit model unit worldX worldY =
                 ]
                 []
             ]
+        , -- Thinking animation (shrinking circle)
+          if unit.behavior == Thinking then
+            let
+                -- Calculate animation progress (0 = just started, 1 = finished)
+                progress =
+                    if unit.thinkingDuration > 0 then
+                        unit.thinkingTimer / unit.thinkingDuration
+                    else
+                        1.0
+
+                -- Remaining progress determines size (1 = full size, 0 = shrunk to nothing)
+                remainingProgress =
+                    1.0 - progress
+
+                -- Start at 2x unit size (32px diameter) and shrink to 0
+                maxRadius =
+                    visualDiameter
+
+                currentRadius =
+                    maxRadius * remainingProgress
+            in
+            div
+                [ style "position" "absolute"
+                , style "width" (String.fromFloat (currentRadius * 2) ++ "px")
+                , style "height" (String.fromFloat (currentRadius * 2) ++ "px")
+                , style "border-radius" "50%"
+                , style "background-color" "rgba(255, 255, 255, 0.3)"
+                , style "border" "2px solid rgba(255, 255, 255, 0.6)"
+                , style "pointer-events" "none"
+                , style "top" (String.fromFloat (selectionRadius - currentRadius) ++ "px")
+                , style "left" (String.fromFloat (selectionRadius - currentRadius) ++ "px")
+                ]
+                []
+
+          else
+            text ""
         ]
 
 
@@ -3631,15 +4174,154 @@ viewSelectionPanel model panelWidth =
                     ]
                 ]
 
-        buildContent =
+        buildingOption : BuildingTemplate -> Html Msg
+        buildingOption template =
+            let
+                canAfford =
+                    model.gold >= template.cost
+
+                isActive =
+                    case model.buildMode of
+                        Just activeTemplate ->
+                            activeTemplate.name == template.name
+
+                        Nothing ->
+                            False
+
+                sizeLabel =
+                    case template.size of
+                        Small ->
+                            "1×1"
+
+                        Medium ->
+                            "2×2"
+
+                        Large ->
+                            "3×3"
+
+                        Huge ->
+                            "4×4"
+
+                clickHandler =
+                    if canAfford then
+                        if isActive then
+                            Html.Events.onClick ExitBuildMode
+
+                        else
+                            Html.Events.onClick (EnterBuildMode template)
+
+                    else
+                        Html.Attributes.class ""
+            in
             div
-                [ style "padding" "12px"
-                , style "color" "#aaa"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "font-style" "italic"
+                [ style "display" "flex"
+                , style "flex-direction" "column"
+                , style "align-items" "center"
+                , style "gap" "4px"
+                , style "padding" "8px"
+                , style "background-color"
+                    (if canAfford then
+                        "#333"
+
+                     else
+                        "#222"
+                    )
+                , style "border"
+                    (if canAfford then
+                        "2px solid #666"
+
+                     else
+                        "2px solid #444"
+                    )
+                , style "border-radius" "4px"
+                , style "cursor"
+                    (if canAfford then
+                        "pointer"
+
+                     else
+                        "not-allowed"
+                    )
+                , style "flex-shrink" "0"
+                , style "opacity"
+                    (if canAfford then
+                        "1"
+
+                     else
+                        "0.5"
+                    )
+                , style "position" "relative"
+                , clickHandler
+                , on "mouseenter"
+                    (D.map2 (\x y -> TooltipEnter ("building-" ++ template.name) x y)
+                        (D.field "clientX" D.float)
+                        (D.field "clientY" D.float)
+                    )
+                , Html.Events.onMouseLeave TooltipLeave
                 ]
-                [ text "No buildings available" ]
+                [ div
+                    [ style "font-size" "12px"
+                    , style "color" "#fff"
+                    , style "font-weight" "bold"
+                    ]
+                    [ text template.name ]
+                , div
+                    [ style "font-size" "10px"
+                    , style "color" "#aaa"
+                    ]
+                    [ text sizeLabel ]
+                , div
+                    [ style "color" "#FFD700"
+                    , style "font-size" "12px"
+                    , style "font-weight" "bold"
+                    ]
+                    [ text (String.fromInt template.cost ++ "g") ]
+                , if isActive then
+                    div
+                        [ style "position" "absolute"
+                        , style "inset" "0"
+                        , style "border-radius" "4px"
+                        , style "background-color" "rgba(255, 255, 255, 0.3)"
+                        , style "pointer-events" "none"
+                        , style "box-shadow" "inset 0 0 10px rgba(255, 255, 255, 0.6)"
+                        ]
+                        []
+
+                  else
+                    text ""
+                ]
+
+        buildContent =
+            case model.gameState of
+                PreGame ->
+                    -- Only show Castle during pre-game
+                    div
+                        [ style "display" "flex"
+                        , style "gap" "8px"
+                        , style "padding" "8px"
+                        ]
+                        [ buildingOption castleTemplate ]
+
+                Playing ->
+                    -- Show all buildings except Castle
+                    div
+                        [ style "display" "flex"
+                        , style "gap" "8px"
+                        , style "padding" "8px"
+                        ]
+                        [ buildingOption testBuildingTemplate
+                        , buildingOption warriorsGuildTemplate
+                        ]
+
+                GameOver ->
+                    -- Show nothing during game over
+                    div
+                        [ style "padding" "12px"
+                        , style "color" "#f00"
+                        , style "font-family" "monospace"
+                        , style "font-size" "14px"
+                        , style "font-weight" "bold"
+                        ]
+                        [ text "GAME OVER" ]
 
         noSelectionContent =
             div
@@ -3672,78 +4354,223 @@ viewSelectionPanel model panelWidth =
 
                                 HenchmanTag ->
                                     "Henchman"
+
+                                GuildTag ->
+                                    "Guild"
+
+                                ObjectiveTag ->
+                                    "Objective"
+
+                                CofferTag ->
+                                    "Coffer"
+
+                        -- Tab buttons
+                        tabButton label tab =
+                            div
+                                [ style "padding" "6px 12px"
+                                , style "background-color" (if model.buildingTab == tab then "#555" else "#333")
+                                , style "cursor" "pointer"
+                                , style "border-radius" "4px 4px 0 0"
+                                , style "font-size" "10px"
+                                , style "font-weight" "bold"
+                                , style "user-select" "none"
+                                , Html.Events.onClick (SetBuildingTab tab)
+                                ]
+                                [ text label ]
+
+                        tabContent =
+                            case model.buildingTab of
+                                MainTab ->
+                                    div
+                                        [ style "display" "flex"
+                                        , style "flex-direction" "row"
+                                        , style "gap" "16px"
+                                        , style "align-items" "flex-start"
+                                        ]
+                                        [ -- Column 1: Name, HP, Owner
+                                          div
+                                            [ style "display" "flex"
+                                            , style "flex-direction" "column"
+                                            , style "gap" "4px"
+                                            ]
+                                            [ div
+                                                [ style "font-weight" "bold"
+                                                , style "font-size" "12px"
+                                                ]
+                                                [ text building.buildingType ]
+                                            , div
+                                                [ style "font-size" "9px"
+                                                , style "color" "#aaa"
+                                                , style "display" "flex"
+                                                , style "gap" "4px"
+                                                ]
+                                                ([ text "[" ]
+                                                    ++ (building.tags
+                                                            |> List.map
+                                                                (\tag ->
+                                                                    div
+                                                                        [ style "cursor" "help"
+                                                                        , on "mouseenter"
+                                                                            (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
+                                                                                (D.field "clientX" D.float)
+                                                                                (D.field "clientY" D.float)
+                                                                            )
+                                                                        , Html.Events.onMouseLeave TooltipLeave
+                                                                        ]
+                                                                        [ text (tagToString tag) ]
+                                                                )
+                                                            |> List.intersperse (text ", ")
+                                                       )
+                                                    ++ [ text "]" ]
+                                                )
+                                            , div []
+                                                [ text ("HP: " ++ String.fromInt building.hp ++ "/" ++ String.fromInt building.maxHp) ]
+                                            , div []
+                                                [ text ("Owner: " ++ (case building.owner of
+                                                    Player -> "Player"
+                                                    Enemy -> "Enemy"
+                                                    ))
+                                                ]
+                                            ]
+                                        , -- Column 2: Garrison
+                                          div
+                                            [ style "display" "flex"
+                                            , style "flex-direction" "column"
+                                            , style "gap" "4px"
+                                            ]
+                                            (if List.isEmpty building.garrisonConfig then
+                                                [ div
+                                                    [ style "cursor" "help"
+                                                    , on "mouseenter"
+                                                        (D.map2 (\x y -> TooltipEnter ("garrison-" ++ String.fromInt building.id) x y)
+                                                            (D.field "clientX" D.float)
+                                                            (D.field "clientY" D.float)
+                                                        )
+                                                    , Html.Events.onMouseLeave TooltipLeave
+                                                    ]
+                                                    [ text ("Garrison: " ++ String.fromInt building.garrisonOccupied ++ "/" ++ String.fromInt building.garrisonSlots) ]
+                                                ]
+                                            else
+                                                [ div []
+                                                    [ text "Garrison:" ]
+                                                ]
+                                                ++ List.map
+                                                    (\slot ->
+                                                        div
+                                                            [ style "font-size" "10px"
+                                                            , style "color" "#aaa"
+                                                            , style "padding-left" "8px"
+                                                            ]
+                                                            [ text ("  " ++ slot.unitType ++ ": " ++ String.fromInt slot.currentCount ++ "/" ++ String.fromInt slot.maxCount) ]
+                                                    )
+                                                    building.garrisonConfig
+                                            )
+                                        ]
+
+                                InfoTab ->
+                                    div
+                                        [ style "display" "flex"
+                                        , style "flex-direction" "row"
+                                        , style "gap" "16px"
+                                        , style "align-items" "flex-start"
+                                        ]
+                                        [ -- Column 1: Behavior, Timer, Coffer
+                                          div
+                                            [ style "display" "flex"
+                                            , style "flex-direction" "column"
+                                            , style "gap" "8px"
+                                            ]
+                                            ([ div
+                                                [ style "cursor" "help"
+                                                , on "mouseenter"
+                                                    (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case building.behavior of
+                                                        Idle -> "Idle"
+                                                        UnderConstruction -> "Under Construction"
+                                                        SpawnHouse -> "Spawn House"
+                                                        GenerateGold -> "Generate Gold"
+                                                        BuildingDead -> "Dead"
+                                                        BuildingDebugError msg -> "Error: " ++ msg
+                                                        )) x y)
+                                                        (D.field "clientX" D.float)
+                                                        (D.field "clientY" D.float)
+                                                    )
+                                                , Html.Events.onMouseLeave TooltipLeave
+                                                ]
+                                                [ text ("Behavior: " ++ (case building.behavior of
+                                                    Idle -> "Idle"
+                                                    UnderConstruction -> "Under Construction"
+                                                    SpawnHouse -> "Spawn House"
+                                                    GenerateGold -> "Generate Gold"
+                                                    BuildingDead -> "Dead"
+                                                    BuildingDebugError msg -> "Error: " ++ msg
+                                                    ))
+                                                ]
+                                            , div
+                                                [ style "font-size" "10px"
+                                                , style "color" "#aaa"
+                                                ]
+                                                [ text ("Timer: " ++ String.fromFloat (round (building.behaviorTimer * 10) |> toFloat |> (\x -> x / 10)) ++ "s / " ++ String.fromFloat (round (building.behaviorDuration * 10) |> toFloat |> (\x -> x / 10)) ++ "s") ]
+                                            ]
+                                            ++ (if List.member CofferTag building.tags then
+                                                [ div []
+                                                    [ text ("Coffer: " ++ String.fromInt building.coffer ++ " gold") ]
+                                                ]
+                                            else
+                                                []
+                                            )
+                                            )
+                                        , -- Column 2: Garrison Cooldowns
+                                          div
+                                            [ style "display" "flex"
+                                            , style "flex-direction" "column"
+                                            , style "gap" "4px"
+                                            ]
+                                            (if not (List.isEmpty building.garrisonConfig) then
+                                                [ div []
+                                                    [ text "Garrison Cooldowns:" ]
+                                                ]
+                                                ++ List.map
+                                                    (\slot ->
+                                                        div
+                                                            [ style "font-size" "10px"
+                                                            , style "color" "#aaa"
+                                                            , style "padding-left" "8px"
+                                                            ]
+                                                            [ text ("  " ++ slot.unitType ++ ": " ++
+                                                                (if slot.currentCount < slot.maxCount then
+                                                                    String.fromFloat (round (slot.spawnTimer * 10) |> toFloat |> (\x -> x / 10)) ++ "s / 30.0s"
+                                                                else
+                                                                    "Full"
+                                                                ))
+                                                            ]
+                                                    )
+                                                    building.garrisonConfig
+                                            else
+                                                []
+                                            )
+                                        ]
                     in
                     div
-                        [ style "padding" "12px"
-                        , style "color" "#fff"
-                        , style "font-family" "monospace"
-                        , style "font-size" "11px"
-                        , style "display" "flex"
-                        , style "flex-direction" "row"
-                        , style "gap" "16px"
-                        , style "align-items" "center"
+                        [ style "display" "flex"
+                        , style "flex-direction" "column"
                         ]
-                        [ div
+                        [ -- Tab buttons
+                          div
                             [ style "display" "flex"
-                            , style "flex-direction" "column"
                             , style "gap" "4px"
+                            , style "padding" "8px 8px 0 8px"
                             ]
-                            [ div
-                                [ style "font-weight" "bold"
-                                , style "font-size" "12px"
-                                ]
-                                [ text building.buildingType ]
-                            , div
-                                [ style "font-size" "9px"
-                                , style "color" "#aaa"
-                                , style "display" "flex"
-                                , style "gap" "4px"
-                                ]
-                                ([ text "[" ]
-                                    ++ (building.tags
-                                            |> List.map
-                                                (\tag ->
-                                                    div
-                                                        [ style "cursor" "help"
-                                                        , on "mouseenter"
-                                                            (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
-                                                                (D.field "clientX" D.float)
-                                                                (D.field "clientY" D.float)
-                                                            )
-                                                        , Html.Events.onMouseLeave TooltipLeave
-                                                        ]
-                                                        [ text (tagToString tag) ]
-                                                )
-                                            |> List.intersperse (text ", ")
-                                       )
-                                    ++ [ text "]" ]
-                                )
+                            [ tabButton "Main" MainTab
+                            , tabButton "Info" InfoTab
                             ]
-                        , div []
-                            [ text ("HP: " ++ String.fromInt building.hp ++ "/" ++ String.fromInt building.maxHp) ]
-                        , div []
-                            [ text ("Garrison: " ++ String.fromInt building.garrisonOccupied ++ "/" ++ String.fromInt building.garrisonSlots) ]
-                        , div []
-                            [ text ("Owner: " ++ (case building.owner of
-                                Player -> "Player"
-                                Enemy -> "Enemy"
-                                ))
+                        , -- Tab content
+                          div
+                            [ style "padding" "12px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
                             ]
-                        , div
-                            [ style "cursor" "help"
-                            , on "mouseenter"
-                                (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case building.behavior of
-                                    Idle -> "Idle"
-                                    )) x y)
-                                    (D.field "clientX" D.float)
-                                    (D.field "clientY" D.float)
-                                )
-                            , Html.Events.onMouseLeave TooltipLeave
-                            ]
-                            [ text ("Behavior: " ++ (case building.behavior of
-                                Idle -> "Idle"
-                                ))
-                            ]
+                            [ tabContent ]
                         ]
 
                 Nothing ->
@@ -3773,6 +4600,15 @@ viewSelectionPanel model panelWidth =
 
                                 HenchmanTag ->
                                     "Henchman"
+
+                                GuildTag ->
+                                    "Guild"
+
+                                ObjectiveTag ->
+                                    "Objective"
+
+                                CofferTag ->
+                                    "Coffer"
                     in
                     div
                         [ style "padding" "12px"
@@ -3782,9 +4618,9 @@ viewSelectionPanel model panelWidth =
                         , style "display" "flex"
                         , style "flex-direction" "row"
                         , style "gap" "16px"
-                        , style "align-items" "center"
                         ]
-                        [ div
+                        [ -- Column 1: Name and HP
+                          div
                             [ style "display" "flex"
                             , style "flex-direction" "column"
                             , style "gap" "4px"
@@ -3819,41 +4655,74 @@ viewSelectionPanel model panelWidth =
                                        )
                                     ++ [ text "]" ]
                                 )
+                            , div []
+                                [ text ("HP: " ++ String.fromInt unit.hp ++ "/" ++ String.fromInt unit.maxHp) ]
                             ]
-                        , div []
-                            [ text ("HP: " ++ String.fromInt unit.hp ++ "/" ++ String.fromInt unit.maxHp) ]
-                        , div []
-                            [ text ("Speed: " ++ String.fromFloat unit.movementSpeed ++ " cells/s") ]
-                        , div []
-                            [ text ("Owner: " ++ (case unit.owner of
-                                Player -> "Player"
-                                Enemy -> "Enemy"
-                                ))
+                        , -- Column 2: Everything else
+                          div
+                            [ style "display" "flex"
+                            , style "flex-direction" "column"
+                            , style "gap" "4px"
                             ]
-                        , div []
-                            [ text ("Location: " ++ (case unit.location of
-                                OnMap x y -> "(" ++ String.fromInt (round x) ++ ", " ++ String.fromInt (round y) ++ ")"
-                                Garrisoned buildingId -> "Garrisoned in #" ++ String.fromInt buildingId
-                                ))
-                            ]
-                        , div
-                            [ style "cursor" "help"
-                            , on "mouseenter"
-                                (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
+                            [ div []
+                                [ text ("Speed: " ++ String.fromFloat unit.movementSpeed ++ " cells/s") ]
+                            , div []
+                                [ text ("Owner: " ++ (case unit.owner of
+                                    Player -> "Player"
+                                    Enemy -> "Enemy"
+                                    ))
+                                ]
+                            , div []
+                                [ text ("Location: " ++ (case unit.location of
+                                    OnMap x y -> "(" ++ String.fromInt (round x) ++ ", " ++ String.fromInt (round y) ++ ")"
+                                    Garrisoned buildingId -> "Garrisoned in #" ++ String.fromInt buildingId
+                                    ))
+                                ]
+                            , div
+                                [ style "cursor" "help"
+                                , on "mouseenter"
+                                    (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
+                                        Thinking -> "Thinking"
+                                        FindingRandomTarget -> "Finding Target"
+                                        MovingTowardTarget -> "Moving"
+                                        Dead -> "Dead"
+                                        DebugError msg -> "Error: " ++ msg
+                                        WithoutHome -> "Without Home"
+                                        LookingForTask -> "Looking for Task"
+                                        GoingToSleep -> "Going to Sleep"
+                                        Sleeping -> "Sleeping"
+                                        LookForBuildRepairTarget -> "Looking for Build/Repair"
+                                        BuildingConstruction -> "Building"
+                                        Repairing -> "Repairing"
+                                        LookForTaxTarget -> "Looking for Tax Target"
+                                        CollectingTaxes -> "Collecting Taxes"
+                                        ReturnToCastle -> "Returning to Castle"
+                                        DeliveringGold -> "Delivering Gold"
+                                        )) x y)
+                                        (D.field "clientX" D.float)
+                                        (D.field "clientY" D.float)
+                                    )
+                                , Html.Events.onMouseLeave TooltipLeave
+                                ]
+                                [ text ("Behavior: " ++ (case unit.behavior of
                                     Thinking -> "Thinking"
                                     FindingRandomTarget -> "Finding Target"
                                     MovingTowardTarget -> "Moving"
-                                    )) x y)
-                                    (D.field "clientX" D.float)
-                                    (D.field "clientY" D.float)
-                                )
-                            , Html.Events.onMouseLeave TooltipLeave
-                            ]
-                            [ text ("Behavior: " ++ (case unit.behavior of
-                                Thinking -> "Thinking"
-                                FindingRandomTarget -> "Finding Target"
-                                MovingTowardTarget -> "Moving"
-                                ))
+                                    Dead -> "Dead"
+                                    DebugError msg -> "Error: " ++ msg
+                                    WithoutHome -> "Without Home"
+                                    LookingForTask -> "Looking for Task"
+                                    GoingToSleep -> "Going to Sleep"
+                                    Sleeping -> "Sleeping"
+                                    LookForBuildRepairTarget -> "Looking for Build/Repair"
+                                    BuildingConstruction -> "Building"
+                                    Repairing -> "Repairing"
+                                    LookForTaxTarget -> "Looking for Tax Target"
+                                    CollectingTaxes -> "Collecting Taxes"
+                                    ReturnToCastle -> "Returning to Castle"
+                                    DeliveringGold -> "Delivering Gold"
+                                    ))
+                                ]
                             ]
                         ]
 
@@ -4156,6 +5025,86 @@ viewTooltip model =
                                 [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
                             ]
 
+                    "building-Castle" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 120) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "8px 12px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            ]
+                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
+                                [ text "Castle" ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("HP: " ++ String.fromInt castleTemplate.maxHp) ]
+                            , div [ style "color" "#aaa" ]
+                                [ text "Size: 4×4" ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("Garrison: " ++ String.fromInt castleTemplate.garrisonSlots ++ " henchmen") ]
+                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
+                                [ text "Mission-critical building" ]
+                            ]
+
+                    "building-House" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "8px 12px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            ]
+                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
+                                [ text "House" ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("HP: " ++ String.fromInt houseTemplate.maxHp) ]
+                            , div [ style "color" "#aaa" ]
+                                [ text "Size: 2×2" ]
+                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
+                                [ text "Generates gold" ]
+                            ]
+
+                    "building-Warrior's Guild" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "8px 12px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            ]
+                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
+                                [ text "Warrior's Guild" ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("HP: " ++ String.fromInt warriorsGuildTemplate.maxHp) ]
+                            , div [ style "color" "#aaa" ]
+                                [ text "Size: 3×3" ]
+                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
+                                [ text "Trains warriors, generates gold" ]
+                            ]
+
                     "tag-Building" ->
                         div
                             [ style "position" "fixed"
@@ -4213,6 +5162,63 @@ viewTooltip model =
                             ]
                             [ text "This is a henchman" ]
 
+                    "tag-Guild" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "This building produces and houses Heroes" ]
+
+                    "tag-Objective" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "If this dies, the player loses the game" ]
+
+                    "tag-Coffer" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "This building has a Gold Coffer" ]
+
                     "behavior-Idle" ->
                         div
                             [ style "position" "fixed"
@@ -4231,6 +5237,63 @@ viewTooltip model =
                             , style "white-space" "nowrap"
                             ]
                             [ text "The building is not performing any actions" ]
+
+                    "behavior-Under Construction" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The building is under construction" ]
+
+                    "behavior-Spawn House" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The Castle is periodically spawning Houses for the kingdom" ]
+
+                    "behavior-Generate Gold" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The building is generating gold into its coffer" ]
 
                     "behavior-Thinking" ->
                         div
@@ -4290,12 +5353,113 @@ viewTooltip model =
                             [ text "The unit is following its path to the destination" ]
 
                     _ ->
-                        text ""
+                        -- Check if it's a garrison tooltip
+                        if String.startsWith "garrison-" tooltipState.elementId then
+                            let
+                                buildingIdStr =
+                                    String.dropLeft 9 tooltipState.elementId
+
+                                maybeBuildingId =
+                                    String.toInt buildingIdStr
+
+                                maybeBuilding =
+                                    case maybeBuildingId of
+                                        Just buildingId ->
+                                            List.filter (\b -> b.id == buildingId) model.buildings
+                                                |> List.head
+
+                                        Nothing ->
+                                            Nothing
+                            in
+                            case maybeBuilding of
+                                Just building ->
+                                    div
+                                        [ style "position" "fixed"
+                                        , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                                        , style "top" (String.fromFloat (tooltipState.mouseY - 80) ++ "px")
+                                        , style "transform" "translateX(-50%)"
+                                        , style "background-color" "rgba(0, 0, 0, 0.9)"
+                                        , style "border" "2px solid #666"
+                                        , style "border-radius" "4px"
+                                        , style "padding" "8px 12px"
+                                        , style "color" "#fff"
+                                        , style "font-family" "monospace"
+                                        , style "font-size" "11px"
+                                        , style "pointer-events" "none"
+                                        , style "z-index" "1000"
+                                        ]
+                                        [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
+                                            [ text "Garrison" ]
+                                        , div [ style "color" "#aaa" ]
+                                            [ text ("Current: " ++ String.fromInt building.garrisonOccupied) ]
+                                        , div [ style "color" "#aaa" ]
+                                            [ text ("Capacity: " ++ String.fromInt building.garrisonSlots) ]
+                                        , div [ style "color" "#aaa" ]
+                                            [ text "Next unit: Not implemented" ]
+                                        ]
+
+                                Nothing ->
+                                    text ""
+
+                        else
+                            text ""
 
             else
                 text ""
 
         Nothing ->
+            text ""
+
+
+viewPreGameOverlay : Model -> Html Msg
+viewPreGameOverlay model =
+    case model.gameState of
+        PreGame ->
+            div
+                [ style "position" "fixed"
+                , style "top" "20px"
+                , style "right" "20px"
+                , style "background-color" "rgba(0, 0, 0, 0.8)"
+                , style "border" "3px solid #FFD700"
+                , style "border-radius" "8px"
+                , style "padding" "16px 24px"
+                , style "color" "#FFD700"
+                , style "font-family" "monospace"
+                , style "font-size" "18px"
+                , style "font-weight" "bold"
+                , style "pointer-events" "none"
+                , style "z-index" "1000"
+                ]
+                [ text "Site your Castle" ]
+
+        _ ->
+            text ""
+
+
+viewGameOverOverlay : Model -> Html Msg
+viewGameOverOverlay model =
+    case model.gameState of
+        GameOver ->
+            div
+                [ style "position" "fixed"
+                , style "top" "0"
+                , style "left" "0"
+                , style "width" "100vw"
+                , style "height" "100vh"
+                , style "background-color" "rgba(0, 0, 0, 0.9)"
+                , style "display" "flex"
+                , style "align-items" "center"
+                , style "justify-content" "center"
+                , style "color" "#f00"
+                , style "font-family" "monospace"
+                , style "font-size" "64px"
+                , style "font-weight" "bold"
+                , style "z-index" "2000"
+                , style "pointer-events" "none"
+                ]
+                [ text "GAME OVER" ]
+
+        _ ->
             text ""
 
 

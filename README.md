@@ -159,8 +159,9 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 - **Building Behaviors**:
   - **Idle**: Default state, building performs no actions
 - **Unit Behaviors** (Test Unit):
-  - **Thinking**: Brief pause (0.1-0.5 seconds) before deciding next action
+  - **Thinking**: Pause (1.0-2.0 seconds) before deciding next action
     - Duration varies per unit using unit ID as seed
+    - Visual: Shrinking white circle animation (starts 2x unit size, shrinks to point)
     - Transitions to FindingRandomTarget when timer expires
   - **FindingRandomTarget**: Request pathfinding to random location
     - Picks random cell within 10 tiles of current position
@@ -186,6 +187,7 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Test Building button shows HP, Size, and Garrison information in tooltip
   - Tags show descriptions (e.g., "This is a building", "This is a hero", "This is a henchman")
   - Behaviors show state explanations (e.g., "The unit is pausing before deciding on next action")
+  - Garrison display shows current units, capacity, and production time (not yet implemented)
 - **Future Expansion**: Tooltips can expand right (extra info) or up (unit production)
 
 ### Health Bars
@@ -193,6 +195,18 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 - **Color**: Dark blue (#2E4272)
 - **Size**: 4px height for buildings, 3px for units
 - **Display**: Percentage of current HP vs max HP shown as filled portion of bar
+
+### Visual Animations
+- **Purpose**: Show progress of time-based actions
+- **Animation Timer**: Uses frame delta (separate from game simulation timer)
+- **Time Guarantee**: Animation completes exactly when the timed action finishes
+- **Shrinking Circle Animation**:
+  - **Appearance**: Semi-transparent white circle with border
+  - **Behavior**: Starts at maximum size and shrinks to a point over the duration
+  - **Size**: Initial radius is 2x the visual size of the animated object
+  - **Color**: rgba(255, 255, 255, 0.3) with rgba(255, 255, 255, 0.6) border
+  - **Current Usage**: Displays on units during Thinking behavior (1-2 seconds)
+  - **Position**: Centered on the animated object
 
 ### Pathfinding
 - **Algorithm**: A* pathfinding with octile distance heuristic

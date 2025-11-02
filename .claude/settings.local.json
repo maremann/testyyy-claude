@@ -6,7 +6,9 @@
       "Bash(elm install:*)",
       "WebFetch(domain:github.com)",
       "Bash(elm make:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(timeout 60 elm make:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
