@@ -293,7 +293,7 @@ init _ =
             , decorativeShapes = []
             , mapConfig = mapConfig
             , gameState = PreGame
-            , gold = 10000
+            , gold = 50000
             , selected = Nothing
             , gridConfig = gridConfig
             , showBuildGrid = False
@@ -1315,8 +1315,8 @@ randomNearbyCell gridConfig unitX unitY radius =
     - FindingRandomTarget: Request new path generation (handled by caller)
     - MovingTowardTarget: When path is empty (destination reached), transition to Thinking
 -}
-updateUnitBehavior : Float -> Unit -> ( Unit, Bool )
-updateUnitBehavior deltaSeconds unit =
+updateUnitBehavior : Float -> List Building -> Unit -> ( Unit, Bool )
+updateUnitBehavior deltaSeconds buildings unit =
     case unit.behavior of
         Thinking ->
             let
@@ -1360,32 +1360,242 @@ updateUnitBehavior deltaSeconds unit =
             ( unit, False )
 
         WithoutHome ->
-            -- Unit without home, don't change behavior
-            ( unit, False )
+            -- Unit without home: die after 15-30 seconds
+            let
+                newTimer =
+                    unit.behaviorTimer + deltaSeconds
+            in
+            if newTimer >= unit.behaviorDuration then
+                -- Time to die
+                ( { unit | behavior = Dead, behaviorTimer = 0, behaviorDuration = 45.0 + (toFloat (modBy 15000 unit.id) / 1000.0) }, False )
+
+            else
+                ( { unit | behaviorTimer = newTimer }, False )
 
         LookingForTask ->
-            -- Looking for task, don't change behavior
-            ( unit, False )
+            -- Looking for task: check unit type and find appropriate work
+            case unit.unitType of
+                "Peasant" ->
+                    -- Peasant looks for damaged buildings or construction sites
+                    ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
+
+                "Tax Collector" ->
+                    -- Tax Collector looks for buildings with gold in coffer
+                    ( { unit | behavior = LookForTaxTarget, behaviorTimer = 0 }, False )
+
+                "Castle Guard" ->
+                    -- Castle Guard has no tasks yet, go back to sleep
+                    ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
+
+                _ ->
+                    -- Unknown unit type, go back to sleep
+                    ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
 
         GoingToSleep ->
-            -- Going to sleep, don't change behavior
-            ( unit, False )
+            -- Going to sleep: move back to home building
+            case unit.homeBuilding of
+                Nothing ->
+                    -- No home, transition to WithoutHome
+                    ( { unit | behavior = WithoutHome, behaviorTimer = 0, behaviorDuration = 15.0 + (toFloat (modBy 15000 unit.id) / 1000.0) }, False )
+
+                Just homeBuildingId ->
+                    case List.filter (\b -> b.id == homeBuildingId) buildings |> List.head of
+                        Nothing ->
+                            -- Home building destroyed, transition to WithoutHome
+                            ( { unit | behavior = WithoutHome, homeBuilding = Nothing, behaviorTimer = 0, behaviorDuration = 15.0 + (toFloat (modBy 15000 unit.id) / 1000.0) }, False )
+
+                        Just homeBuilding ->
+                            case unit.location of
+                                Garrisoned _ ->
+                                    -- Already garrisoned, transition to Sleeping
+                                    ( { unit | behavior = Sleeping, behaviorTimer = 0 }, False )
+
+                                OnMap x y ->
+                                    let
+                                        -- Get entrance position
+                                        ( entranceGridX, entranceGridY ) =
+                                            getBuildingEntrance homeBuilding
+
+                                        buildGridSize =
+                                            64
+
+                                        entranceX =
+                                            toFloat entranceGridX * toFloat buildGridSize + toFloat buildGridSize / 2
+
+                                        entranceY =
+                                            toFloat entranceGridY * toFloat buildGridSize + toFloat buildGridSize / 2
+
+                                        -- Check if at entrance
+                                        dx =
+                                            x - entranceX
+
+                                        dy =
+                                            y - entranceY
+
+                                        distance =
+                                            sqrt (dx * dx + dy * dy)
+
+                                        isAtEntrance =
+                                            distance < 32  -- Within half a build grid cell
+                                    in
+                                    if isAtEntrance then
+                                        -- Enter garrison and sleep
+                                        ( { unit | location = Garrisoned homeBuildingId, behavior = Sleeping, behaviorTimer = 0 }, False )
+
+                                    else
+                                        -- Not at entrance yet, request path
+                                        let
+                                            targetCellX =
+                                                floor (entranceX / 32)
+
+                                            targetCellY =
+                                                floor (entranceY / 32)
+                                        in
+                                        ( { unit | targetDestination = Just ( targetCellX, targetCellY ) }, True )
 
         Sleeping ->
-            -- Sleeping, don't change behavior
-            ( unit, False )
+            -- Sleeping: heal 10% max HP per second, check for tasks every 1s
+            let
+                -- Heal 10% of max HP per second
+                healAmount =
+                    toFloat unit.maxHp * 0.1 * deltaSeconds
+
+                newHp =
+                    min unit.maxHp (unit.hp + round healAmount)
+
+                -- Increment behavior timer
+                newTimer =
+                    unit.behaviorTimer + deltaSeconds
+
+                -- Check for task every 1 second
+                shouldLookForTask =
+                    newTimer >= 1.0
+            in
+            if shouldLookForTask then
+                ( { unit | hp = newHp, behavior = LookingForTask, behaviorTimer = 0 }, False )
+
+            else
+                ( { unit | hp = newHp, behaviorTimer = newTimer }, False )
 
         LookForBuildRepairTarget ->
-            -- Looking for build/repair target, don't change behavior
-            ( unit, False )
+            -- Looking for build/repair target
+            case unit.location of
+                Garrisoned buildingId ->
+                    -- Exit garrison first
+                    case List.filter (\b -> b.id == buildingId) buildings |> List.head of
+                        Just homeBuilding ->
+                            let
+                                exitedUnit =
+                                    exitGarrison homeBuilding unit
+                            in
+                            ( exitedUnit, False )
+
+                        Nothing ->
+                            -- Home building not found, error state
+                            ( { unit | behavior = DebugError "Home building not found" }, False )
+
+                OnMap x y ->
+                    -- Already on map, find nearest damaged building
+                    case findNearestDamagedBuilding x y buildings of
+                        Just targetBuilding ->
+                            -- Found a target, move to it and switch to repair behavior
+                            let
+                                -- Calculate target position (building center)
+                                buildGridSize =
+                                    64
+
+                                targetX =
+                                    toFloat targetBuilding.gridX * toFloat buildGridSize + (toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize / 2)
+
+                                targetY =
+                                    toFloat targetBuilding.gridY * toFloat buildGridSize + (toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize / 2)
+
+                                -- Calculate pathfinding cell
+                                targetCellX =
+                                    floor (targetX / 32)
+
+                                targetCellY =
+                                    floor (targetY / 32)
+                            in
+                            ( { unit
+                                | behavior = Repairing
+                                , targetDestination = Just ( targetCellX, targetCellY )
+                                , behaviorTimer = 0
+                              }
+                            , True  -- Request path
+                            )
+
+                        Nothing ->
+                            -- No damaged buildings, go to sleep
+                            ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
 
         BuildingConstruction ->
             -- Building construction, don't change behavior
             ( unit, False )
 
         Repairing ->
-            -- Repairing, don't change behavior
-            ( unit, False )
+            -- Repairing: use Build ability when near damaged building
+            case unit.location of
+                OnMap x y ->
+                    -- Find the target building
+                    case findNearestDamagedBuilding x y buildings of
+                        Just targetBuilding ->
+                            let
+                                buildGridSize =
+                                    64
+
+                                -- Calculate building bounds
+                                buildingMinX =
+                                    toFloat targetBuilding.gridX * toFloat buildGridSize
+
+                                buildingMinY =
+                                    toFloat targetBuilding.gridY * toFloat buildGridSize
+
+                                buildingSize =
+                                    toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize
+
+                                buildingMaxX =
+                                    buildingMinX + buildingSize
+
+                                buildingMaxY =
+                                    buildingMinY + buildingSize
+
+                                -- Check if unit is adjacent to building (within 48 pixels)
+                                isNear =
+                                    (x >= buildingMinX - 48 && x <= buildingMaxX + 48)
+                                        && (y >= buildingMinY - 48 && y <= buildingMaxY + 48)
+
+                                -- Build ability: 0.15 second cooldown
+                                newTimer =
+                                    unit.behaviorTimer + deltaSeconds
+
+                                canBuild =
+                                    newTimer >= 0.15
+                            in
+                            if isNear && canBuild then
+                                -- Repair complete, look for another target
+                                if targetBuilding.hp + 5 >= targetBuilding.maxHp then
+                                    ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
+
+                                else
+                                    -- Continue repairing
+                                    ( { unit | behaviorTimer = 0 }, False )
+
+                            else if isNear then
+                                -- Near but cooldown not ready
+                                ( { unit | behaviorTimer = newTimer }, False )
+
+                            else
+                                -- Not near, keep moving (path should already be set)
+                                ( unit, False )
+
+                        Nothing ->
+                            -- No damaged buildings anymore, look for another task
+                            ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
+
+                Garrisoned _ ->
+                    -- Shouldn't be garrisoned while repairing
+                    ( { unit | behavior = DebugError "Repairing while garrisoned" }, False )
 
         LookForTaxTarget ->
             -- Looking for tax target, don't change behavior
@@ -1487,6 +1697,66 @@ updateBuildingBehavior deltaSeconds building =
             ( building, False )
 
 
+{-| Exit a unit from garrison to the building's entrance
+-}
+exitGarrison : Building -> Unit -> Unit
+exitGarrison homeBuilding unit =
+    let
+        ( entranceGridX, entranceGridY ) =
+            getBuildingEntrance homeBuilding
+
+        buildGridSize =
+            64
+
+        -- Calculate world position at center of entrance tile
+        worldX =
+            toFloat entranceGridX * toFloat buildGridSize + toFloat buildGridSize / 2
+
+        worldY =
+            toFloat entranceGridY * toFloat buildGridSize + toFloat buildGridSize / 2
+    in
+    { unit | location = OnMap worldX worldY }
+
+
+{-| Find the nearest damaged building (HP < max HP) for repair
+-}
+findNearestDamagedBuilding : Float -> Float -> List Building -> Maybe Building
+findNearestDamagedBuilding unitX unitY buildings =
+    let
+        buildGridSize =
+            64
+
+        damagedBuildings =
+            List.filter (\b -> b.hp < b.maxHp) buildings
+
+        buildingWithDistance b =
+            let
+                buildingCenterX =
+                    toFloat b.gridX * toFloat buildGridSize + (toFloat (buildingSizeToGridCells b.size) * toFloat buildGridSize / 2)
+
+                buildingCenterY =
+                    toFloat b.gridY * toFloat buildGridSize + (toFloat (buildingSizeToGridCells b.size) * toFloat buildGridSize / 2)
+
+                dx =
+                    unitX - buildingCenterX
+
+                dy =
+                    unitY - buildingCenterY
+
+                distance =
+                    sqrt (dx * dx + dy * dy)
+            in
+            ( b, distance )
+
+        sortedByDistance =
+            damagedBuildings
+                |> List.map buildingWithDistance
+                |> List.sortBy Tuple.second
+                |> List.map Tuple.first
+    in
+    List.head sortedByDistance
+
+
 {-| Create a henchman unit of the specified type
 -}
 createHenchman : String -> Int -> Int -> Building -> Unit
@@ -1565,8 +1835,12 @@ updateGarrisonSpawning deltaSeconds building =
                 )
                 ( [], [] )
                 building.garrisonConfig
+
+        -- Calculate total garrison occupied from config
+        totalOccupied =
+            List.foldl (\slot acc -> acc + slot.currentCount) 0 updatedConfig
     in
-    ( { building | garrisonConfig = List.reverse updatedConfig }, List.reverse unitsToSpawn )
+    ( { building | garrisonConfig = List.reverse updatedConfig, garrisonOccupied = totalOccupied }, List.reverse unitsToSpawn )
 
 
 {-| Recalculate paths for all units (called when occupancy changes) -}
@@ -1858,20 +2132,18 @@ update msg model =
                     in
                     if isValid && canAfford then
                         let
+                            -- Check if this is Castle (builds immediately) or construction site
+                            isCastle =
+                                template.name == "Castle"
+
                             -- Determine building-specific properties
                             ( buildingBehavior, buildingTags ) =
-                                case template.name of
-                                    "Castle" ->
-                                        ( SpawnHouse, [ BuildingTag, ObjectiveTag ] )
+                                if isCastle then
+                                    ( SpawnHouse, [ BuildingTag, ObjectiveTag ] )
 
-                                    "House" ->
-                                        ( GenerateGold, [ BuildingTag, CofferTag ] )
-
-                                    "Warrior's Guild" ->
-                                        ( GenerateGold, [ BuildingTag, GuildTag, CofferTag ] )
-
-                                    _ ->
-                                        ( Idle, [ BuildingTag ] )
+                                else
+                                    -- All other buildings start as construction sites
+                                    ( UnderConstruction, [ BuildingTag ] )
 
                             -- Initialize behavior duration based on behavior type
                             initialDuration =
@@ -1889,15 +2161,22 @@ update msg model =
 
                             -- Initialize garrison configuration based on building type
                             initialGarrisonConfig =
-                                case template.name of
-                                    "Castle" ->
-                                        [ { unitType = "Castle Guard", maxCount = 2, currentCount = 0, spawnTimer = 0 }
-                                        , { unitType = "Tax Collector", maxCount = 1, currentCount = 0, spawnTimer = 0 }
-                                        , { unitType = "Peasant", maxCount = 3, currentCount = 0, spawnTimer = 0 }
-                                        ]
+                                if isCastle then
+                                    [ { unitType = "Castle Guard", maxCount = 2, currentCount = 0, spawnTimer = 0 }
+                                    , { unitType = "Tax Collector", maxCount = 1, currentCount = 0, spawnTimer = 0 }
+                                    , { unitType = "Peasant", maxCount = 3, currentCount = 0, spawnTimer = 0 }
+                                    ]
 
-                                    _ ->
-                                        []
+                                else
+                                    []
+
+                            -- Calculate initial HP (10% for construction sites, 100% for Castle)
+                            initialHp =
+                                if isCastle then
+                                    template.maxHp
+
+                                else
+                                    max 1 (template.maxHp // 10)
 
                             newBuilding =
                                 { id = model.nextBuildingId
@@ -1905,7 +2184,7 @@ update msg model =
                                 , gridX = centeredGridX
                                 , gridY = centeredGridY
                                 , size = template.size
-                                , hp = template.maxHp
+                                , hp = initialHp
                                 , maxHp = template.maxHp
                                 , garrisonSlots = template.garrisonSlots
                                 , garrisonOccupied = 0
@@ -2224,7 +2503,7 @@ update msg model =
                                         let
                                             -- Update behavior state
                                             ( behaviorUpdatedUnit, shouldGeneratePath ) =
-                                                updateUnitBehavior deltaSeconds unit
+                                                updateUnitBehavior deltaSeconds model.buildings unit
 
                                             -- Remove old occupancy
                                             occupancyWithoutUnit =
@@ -2356,9 +2635,97 @@ update msg model =
                         else
                             recalculateAllPaths model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses allUnits
 
+                    -- Apply building repairs from Peasants
+                    buildingsAfterRepairs =
+                        List.map
+                            (\building ->
+                                let
+                                    -- Find all peasants repairing this building
+                                    repairingPeasants =
+                                        List.filter
+                                            (\unit ->
+                                                case ( unit.behavior, unit.location ) of
+                                                    ( Repairing, OnMap x y ) ->
+                                                        let
+                                                            buildGridSize =
+                                                                64
+
+                                                            buildingMinX =
+                                                                toFloat building.gridX * toFloat buildGridSize
+
+                                                            buildingMinY =
+                                                                toFloat building.gridY * toFloat buildGridSize
+
+                                                            buildingSize =
+                                                                toFloat (buildingSizeToGridCells building.size) * toFloat buildGridSize
+
+                                                            buildingMaxX =
+                                                                buildingMinX + buildingSize
+
+                                                            buildingMaxY =
+                                                                buildingMinY + buildingSize
+
+                                                            isNear =
+                                                                (x >= buildingMinX - 48 && x <= buildingMaxX + 48)
+                                                                    && (y >= buildingMinY - 48 && y <= buildingMaxY + 48)
+
+                                                            canBuild =
+                                                                unit.behaviorTimer >= 0.15
+                                                        in
+                                                        isNear && canBuild && building.hp < building.maxHp
+
+                                                    _ ->
+                                                        False
+                                            )
+                                            unitsAfterHouseSpawn
+
+                                    -- Each peasant adds 5 HP
+                                    hpGain =
+                                        List.length repairingPeasants * 5
+
+                                    newHp =
+                                        min building.maxHp (building.hp + hpGain)
+
+                                    -- Check if construction is complete
+                                    isConstructionComplete =
+                                        building.behavior == UnderConstruction && newHp >= building.maxHp
+
+                                    -- Determine completed building properties based on building type
+                                    ( completedBehavior, completedTags, completedDuration ) =
+                                        if isConstructionComplete then
+                                            case building.buildingType of
+                                                "Warrior's Guild" ->
+                                                    ( GenerateGold
+                                                    , [ BuildingTag, GuildTag, CofferTag ]
+                                                    , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
+                                                    )
+
+                                                "House" ->
+                                                    ( GenerateGold
+                                                    , [ BuildingTag, CofferTag ]
+                                                    , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
+                                                    )
+
+                                                _ ->
+                                                    -- Default: keep as-is (shouldn't happen)
+                                                    ( building.behavior, building.tags, building.behaviorDuration )
+
+                                        else
+                                            ( building.behavior, building.tags, building.behaviorDuration )
+                                in
+                                { building
+                                    | hp = newHp
+                                    , behavior = completedBehavior
+                                    , tags = completedTags
+                                    , behaviorDuration = completedDuration
+                                    , behaviorTimer = 0
+                                }
+                            )
+                            buildingsAfterHouseSpawn
+
                     -- Check for Game Over (Castle destroyed)
                     newGameState =
-                        if List.any (\b -> List.member ObjectiveTag b.tags && b.hp <= 0) buildingsAfterHouseSpawn then
+                        if List.any (\b -> List.member ObjectiveTag b.tags && b.hp <= 0) buildingsAfterRepairs then
                             GameOver
                         else
                             model.gameState
@@ -2383,7 +2750,7 @@ update msg model =
                     , simulationFrameCount = model.simulationFrameCount + 1
                     , lastSimulationDeltas = newSimulationDeltas
                     , units = unitsAfterHouseSpawn
-                    , buildings = buildingsAfterHouseSpawn
+                    , buildings = buildingsAfterRepairs
                     , buildingOccupancy = buildingOccupancyAfterHouses
                     , pathfindingOccupancy = pathfindingOccupancyAfterHouses
                     , tooltipHover = updatedTooltipHover
@@ -2904,7 +3271,12 @@ viewBuilding model building =
         , style "user-select" "none"
         , Html.Events.onClick (SelectThing (BuildingSelected building.id))
         ]
-        [ text building.buildingType
+        [ text (building.buildingType ++
+            (if building.behavior == UnderConstruction then
+                " (under construction)"
+             else
+                ""
+            ))
         , -- Entrance overlay
           div
             [ style "position" "absolute"
@@ -4397,7 +4769,13 @@ viewSelectionPanel model panelWidth =
                                                 [ style "font-weight" "bold"
                                                 , style "font-size" "12px"
                                                 ]
-                                                [ text building.buildingType ]
+                                                [ text (building.buildingType ++
+                                                    (if building.behavior == UnderConstruction then
+                                                        " (under construction)"
+                                                     else
+                                                        ""
+                                                    ))
+                                                ]
                                             , div
                                                 [ style "font-size" "9px"
                                                 , style "color" "#aaa"

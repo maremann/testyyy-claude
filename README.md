@@ -23,9 +23,12 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 
 ### Resources
 - **Gold**: The primary resource in the game
-  - Starting amount: 10,000
+  - Starting amount: 50,000
   - Displayed in top-right corner above minimap
   - Visual representation: Yellow circular coin icon with gold-colored number
+  - Generated passively by Houses and Guilds into building coffers
+  - Collected by Tax Collectors and delivered to Castle
+  - Spent on building construction
 
 ### Grids
 - **Purpose**: Logical organization systems for building placement and unit pathfinding
@@ -73,11 +76,12 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Huge: 4×4 grid cells (256×256 pixels)
 - **Properties**:
   - HP: Building health points (current/max), displayed via health bar below building
-  - Garrison Slots: Number of units that can be garrisoned
+  - Garrison: Houses henchmen via garrison slot configuration
+  - Coffer: Gold storage (if building has Coffer tag)
   - Cost: Gold required to construct
   - Owner: Player or Enemy
-  - Behavior: State machine controlling actions (currently only Idle state)
-  - Tags: Collection of gameplay tags (Building tag)
+  - Behavior: State machine controlling actions
+  - Tags: Collection of gameplay tags
   - Active/Search Radius: 192px/384px (approximately 3/6 build tiles)
 - **Entrance Tiles**: Each building has one designated entrance tile
   - Purpose: Designated location for units to garrison into building
@@ -96,13 +100,33 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Pathfinding grid occupancy updated automatically when buildings placed/removed
   - Enables efficient proximity queries and placement validation
 - **Available Buildings**:
-  - **Test Building**: 500 gold, 2×2 size, 500 HP, 5 garrison slots (placed via debug controls)
+  - **Castle**: 4×4 Huge, 5000 HP, 10,000 gold
+    - Player's main objective building (game over if destroyed)
+    - Houses 3 Peasants, 1 Tax Collector, 2 Castle Guards
+    - Spawns Houses automatically every 30-45 seconds
+    - Must be placed first to start the game
+    - Tags: Building, Objective
+  - **House**: 2×2 Medium, 500 HP (not player-buildable)
+    - Spawned automatically by Castle
+    - Generates 45-90 gold every 15-45 seconds
+    - Gold stored in building coffer for Tax Collector pickup
+    - Tags: Building, Coffer
+  - **Warrior's Guild**: 3×3 Large, 1000 HP, 1500 gold
+    - Player-buildable guild for Warrior heroes (not yet implemented)
+    - Generates 450-900 gold every 15-45 seconds
+    - Gold stored in building coffer for Tax Collector pickup
+    - Tags: Building, Guild, Coffer
 
 ### Build Mode
-- **Status**: Currently empty - no buildings available in the build menu
-- **Activation**: Click a building button in the Build menu (only enabled if sufficient gold)
-- **Visual Indicator**: Active building button shows white semi-transparent highlight overlay
-- **Cancellation**: Click the active building button again, or switch away from Build menu
+- **Castle Placement** (Pre-Game):
+  - At game start, only Castle available in build menu
+  - Text displays "Site your Castle" in top-right
+  - Castle can be placed anywhere on map
+  - Game begins when Castle is placed (exits Pre-Game state)
+- **Regular Building Placement** (Playing state):
+  - Activation: Click a building button in the Build menu (only enabled if sufficient gold)
+  - Visual Indicator: Active building button shows white semi-transparent highlight overlay
+  - Cancellation: Click the active building button again, or switch away from Build menu
 - **Building Preview**:
   - Transparent preview follows mouse cursor
   - Preview centered on build grid cell under cursor
@@ -114,34 +138,83 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Must be within map bounds
   - No occupied build grid cells (includes 1-cell spacing requirement)
   - At least half the building's tiles must be within the city's search area
-  - Exception: First building can be placed anywhere (no existing city)
+  - Exception: Castle (first building) can be placed anywhere
   - Player must have sufficient gold
 - **Placement Action**:
   - Click on valid location: Building placed, gold deducted, occupancy updated
+  - Castle: Built immediately at 100% HP with full functionality
+  - Other buildings: Spawned as construction sites (see Construction System)
   - Click on invalid location: No action taken
 - **Grid Occupancy**:
   - Build grid occupancy updated when building placed
   - Pathfinding grid occupancy updated automatically
   - Both grids use reference counting for overlapping detection
 
+### Construction System
+- **Purpose**: Player-placed buildings (except Castle) must be built by Peasants
+- **Construction Sites**:
+  - Spawn at 10% of maximum HP (minimum 1 HP)
+  - Display "(under construction)" suffix in name
+  - Have UnderConstruction behavior (no functionality yet)
+  - Only have Building tag initially
+- **Building Process**:
+  - Peasants automatically find and repair construction sites
+  - Multiple Peasants can work on same site simultaneously
+  - Each Peasant adds 5 HP every 0.15 seconds while within 48px
+  - Construction site health bar shows progress to completion
+- **Completion**:
+  - When HP reaches 100% (max HP), construction completes automatically
+  - Building transitions to proper behavior (e.g., GenerateGold)
+  - Gains full set of tags (e.g., Guild, Coffer)
+  - Begins functioning normally
+  - "(under construction)" suffix removed
+
+### Garrison System
+- **Purpose**: System for housing henchmen units inside buildings
+- **Garrison Slot Configuration**:
+  - Buildings define garrison slots per unit type
+  - Each slot specifies: unit type, max count, current count, spawn timer
+  - Example (Castle): 3 Peasants, 1 Tax Collector, 2 Castle Guards
+- **Spawning**:
+  - Buildings automatically spawn henchmen every 30 seconds
+  - Checks each slot type and spawns if under max count
+  - Units spawn inside garrison (Garrisoned location)
+  - Spawned units begin in Sleeping behavior
+- **Entry and Exit**:
+  - Units exit garrison at building entrance tile
+  - Units enter garrison by moving within 32px of entrance
+  - Location changes between OnMap (x, y) and Garrisoned (buildingId)
+- **Death and Respawn**:
+  - When henchman dies, garrison slot count decrements
+  - After 30-second cooldown, new henchman spawns automatically
+  - Maintains stable population of workers
+- **Homeless Behavior**:
+  - If home building is destroyed, henchman enters WithoutHome state
+  - Dies after 15-30 seconds without home
+- **UI Display**:
+  - Selection panel shows garrison counts per unit type
+  - Format: "Peasant: 2/3" (current/max)
+  - Spawn timers visible in Info tab
+
 ### Units
 - **Selectable**: Units are selectable things that can be clicked to view/interact
 - **Mobile**: Units move across the map using pathfinding
 - **Appearance**: Circular placeholder graphics (16px diameter, half of pathfinding cell)
   - Random colors for visual distinction
-  - Text label "U" in center
+  - Text label showing unit type abbreviation
 - **Selection Radius**: 32px diameter (2x visual size) for easier clicking
 - **Unit Types**:
-  - **Heroes**: Important named units with randomized names, hero classes, stats, inventory, and leveling
-  - **Henchmen**: Anonymous throwaway units that keep the city running (e.g., Test Unit)
+  - **Heroes**: Important named units with randomized names, hero classes, stats, inventory, and leveling (not yet implemented)
+  - **Henchmen**: Anonymous worker units that maintain the kingdom
 - **Properties**:
   - HP: Unit health points (current/max), displayed via health bar below unit
-  - Movement Speed: Measured in grid cells per second (default: 2.5)
+  - Movement Speed: Measured in grid cells per second
   - Owner: Player or Enemy
   - Location: OnMap (x, y coordinates) or Garrisoned (building ID)
   - Behavior: State machine controlling unit actions
   - Target Destination: Final pathfinding cell destination (when moving)
   - Unit Kind: Hero or Henchman
+  - Home Building: ID of garrison building (for henchmen)
   - Tags: Collection of gameplay tags (Hero or Henchman tag)
   - Active/Search Radius: 192px/384px (approximately 3/6 build tiles)
 - **Pathfinding Grid Occupancy**: Units occupy all pathfinding cells they touch
@@ -151,32 +224,91 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Player units: Aquamarine dots (3px, #7FFFD4)
   - Enemy units: Red dots (3px, #FF0000)
 - **Path Visualization**: Selected unit's path shown as golden dots
-- **Available Units**:
-  - **Test Unit**: 100 HP, 2.5 cells/s speed, random behavior pattern
+- **Available Henchmen**:
+  - **Peasant**: 50 HP, 2.0 cells/s speed
+    - Builds construction sites and repairs damaged buildings
+    - Uses Build ability: adds 5 HP every 0.15 seconds
+    - Works within 48px radius of target building
+    - Automatically finds nearest damaged building or construction site
+    - Returns to garrison when no work available
+  - **Tax Collector**: 50 HP, 1.5 cells/s speed
+    - Collects gold from building coffers
+    - Carries up to 250 gold before returning to Castle
+    - Delivers gold to player at Castle
+    - Collection takes 2-3 seconds per building
+    - Delivery takes 2-3 seconds at Castle
+  - **Castle Guard**: 50 HP, 2.0 cells/s speed
+    - Defensive unit (not yet implemented)
+    - Currently has no task behavior
 
 ### Behavior System
 - **Purpose**: State machines that govern actions of units and buildings
 - **Building Behaviors**:
   - **Idle**: Default state, building performs no actions
-- **Unit Behaviors** (Test Unit):
-  - **Thinking**: Pause (1.0-2.0 seconds) before deciding next action
-    - Duration varies per unit using unit ID as seed
-    - Visual: Shrinking white circle animation (starts 2x unit size, shrinks to point)
-    - Transitions to FindingRandomTarget when timer expires
-  - **FindingRandomTarget**: Request pathfinding to random location
-    - Picks random cell within 10 tiles of current position
-    - Transitions to MovingTowardTarget when path is assigned
-  - **MovingTowardTarget**: Following calculated path to destination
-    - Moves along path at unit's movement speed
-    - Returns to Thinking when destination reached
+  - **UnderConstruction**: Construction site state, building non-functional
+  - **SpawnHouse**: Castle behavior, spawns Houses every 30-45 seconds
+  - **GenerateGold**: Generates gold into coffer every 15-45 seconds (amount varies by building)
+  - **Dead**: Building destroyed (not yet implemented)
+- **Common Unit Behaviors** (all henchmen):
+  - **Sleeping**: Unit regenerates HP (10% max HP per second) while garrisoned
+    - Checks for tasks every 1 second
+    - Transitions to LookingForTask periodically
+  - **LookingForTask**: Routes unit to appropriate task based on type
+    - Peasant → LookForBuildRepairTarget
+    - Tax Collector → LookForTaxTarget
+    - Castle Guard → GoingToSleep (no tasks yet)
+  - **GoingToSleep**: Unit moves back to home building entrance
+    - Enters garrison when within 32 pixels
+    - At each waypoint, interrupted to check for tasks
+    - Transitions to Sleeping when garrisoned
+  - **WithoutHome**: Unit's home building was destroyed
+    - Dies after 15-30 seconds
+  - **Dead**: Unit is dead, shows gray visuals
+    - Lasts 45-60 seconds before removal (not yet implemented)
+- **Peasant Behaviors**:
+  - **LookForBuildRepairTarget**: Exit garrison and search for damaged buildings
+    - Finds nearest building with HP < max HP
+    - Requests pathfinding to target
+    - Transitions to Repairing when path assigned
+    - If no targets found, goes to sleep
+  - **Repairing**: Build/repair target building
+    - Works when within 48px of building
+    - Uses Build ability every 0.15 seconds (adds 5 HP)
+    - When building reaches max HP, looks for new target
+- **Tax Collector Behaviors**:
+  - **LookForTaxTarget**: Exit garrison and search for buildings with gold
+    - Finds nearest building with coffer > 0
+    - Requests pathfinding to target
+    - Transitions to CollectingTaxes when adjacent
+    - If no targets found, goes to sleep
+  - **CollectingTaxes**: Collect gold from building coffer
+    - Waits 2-3 seconds
+    - Transfers all gold from coffer to carried storage
+    - If storage ≥ 250 gold, returns to Castle
+    - Otherwise, looks for more targets
+  - **ReturnToCastle**: Move to Castle and enter garrison
+    - Navigates to Castle entrance
+    - Enters when within 32 pixels
+    - Transitions to DeliverGold
+  - **DeliverGold**: Transfer gold to player
+    - Waits 2-3 seconds
+    - Adds carried gold to player gold (green flash)
+    - Empties storage
+    - Returns to LookingForTask
 - **State Display**: Current behavior shown in unit and building selection panels
 - **Tooltips**: Hovering over behavior shows descriptive tooltip explaining the current state
 
 ### Tags System
 - **Purpose**: Gameplay logic classification system for all entities
-- **Building Tags**: All buildings have the "Building" tag
-- **Unit Tags**: Units have either "Hero" or "Henchman" tag
+- **Available Tags**:
+  - **Building**: Applied to all buildings
+  - **Objective**: Applied to Castle (game over if destroyed)
+  - **Coffer**: Applied to buildings that generate and store gold (House, Warrior's Guild)
+  - **Guild**: Applied to guild buildings (Warrior's Guild)
+  - **Hero**: Applied to hero units (not yet implemented)
+  - **Henchman**: Applied to henchman units (Peasant, Tax Collector, Castle Guard)
 - **Display**: Tags shown in selection panel below entity name as comma-separated list
+- **Tooltips**: Hovering over tags shows description
 - **Usage**: Enables flexible game logic based on entity classifications
 
 ### Tooltips
@@ -287,9 +419,13 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
       - Stats tab: Camera position, gold, simulation frame count, average delta time
       - Visualization tab: Grid visualization checkboxes (Build Grid, PF Grid, occupancy overlays)
       - Controls tab: Simulation speed radio buttons, gold setter, spawn test unit button, place test building button
-    - Build button: Currently empty ("No buildings available")
-    - Building selected: Shows building name, tags, HP, garrison info, owner, current behavior
-    - Unit selected: Shows unit type, tags, HP, speed, owner, location (rounded), current behavior
+    - Build button: Shows Castle button (pre-game) or Warrior's Guild button (playing)
+      - Buttons disabled if insufficient gold
+      - Active building button shows white highlight
+    - Building selected: Tabbed interface with two tabs
+      - Main tab: Name (with construction suffix if applicable), tags, HP, owner, garrison counts per unit type
+      - Info tab: Current behavior, behavior timer, coffer amount (if Coffer tag), spawn cooldowns per garrison slot
+    - Unit selected: Shows unit type, tags, HP, speed, owner, location, current behavior, carried gold (Tax Collector)
 - **Minimap**: 200x150px in bottom-right corner
   - Shows entire map overview
   - Red viewport indicator shows current camera position
