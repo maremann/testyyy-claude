@@ -2162,9 +2162,9 @@ update msg model =
                             -- Initialize garrison configuration based on building type
                             initialGarrisonConfig =
                                 if isCastle then
-                                    [ { unitType = "Castle Guard", maxCount = 2, currentCount = 0, spawnTimer = 0 }
-                                    , { unitType = "Tax Collector", maxCount = 1, currentCount = 0, spawnTimer = 0 }
-                                    , { unitType = "Peasant", maxCount = 3, currentCount = 0, spawnTimer = 0 }
+                                    [ { unitType = "Castle Guard", maxCount = 2, currentCount = 1, spawnTimer = 0 }
+                                    , { unitType = "Tax Collector", maxCount = 1, currentCount = 1, spawnTimer = 0 }
+                                    , { unitType = "Peasant", maxCount = 3, currentCount = 1, spawnTimer = 0 }
                                     ]
 
                                 else
@@ -2178,6 +2178,10 @@ update msg model =
                                 else
                                     max 1 (template.maxHp // 10)
 
+                            -- Calculate initial garrison occupied count
+                            initialGarrisonOccupied =
+                                List.foldl (\slot acc -> acc + slot.currentCount) 0 initialGarrisonConfig
+
                             newBuilding =
                                 { id = model.nextBuildingId
                                 , owner = Player
@@ -2187,7 +2191,7 @@ update msg model =
                                 , hp = initialHp
                                 , maxHp = template.maxHp
                                 , garrisonSlots = template.garrisonSlots
-                                , garrisonOccupied = 0
+                                , garrisonOccupied = initialGarrisonOccupied
                                 , buildingType = template.name
                                 , behavior = buildingBehavior
                                 , behaviorTimer = 0
@@ -2205,9 +2209,30 @@ update msg model =
                             newPathfindingOccupancy =
                                 addBuildingOccupancy model.gridConfig newBuilding model.pathfindingOccupancy
 
+                            -- Create initial garrison units for Castle
+                            ( initialUnits, nextUnitIdAfterInitial ) =
+                                if isCastle then
+                                    let
+                                        unitsToCreate =
+                                            [ ( "Castle Guard", model.nextUnitId )
+                                            , ( "Tax Collector", model.nextUnitId + 1 )
+                                            , ( "Peasant", model.nextUnitId + 2 )
+                                            ]
+                                    in
+                                    ( List.map
+                                        (\( unitType, unitId ) ->
+                                            createHenchman unitType unitId model.nextBuildingId newBuilding
+                                        )
+                                        unitsToCreate
+                                    , model.nextUnitId + 3
+                                    )
+
+                                else
+                                    ( [], model.nextUnitId )
+
                             -- Recalculate paths for all units due to occupancy change
                             updatedUnits =
-                                recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy model.units
+                                recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy (model.units ++ initialUnits)
 
                             -- Transition from PreGame to Playing when Castle is placed
                             newGameState =
@@ -2222,6 +2247,7 @@ update msg model =
                             , buildingOccupancy = newBuildingOccupancy
                             , pathfindingOccupancy = newPathfindingOccupancy
                             , nextBuildingId = model.nextBuildingId + 1
+                            , nextUnitId = nextUnitIdAfterInitial
                             , gold = model.gold - template.cost
                             , buildMode = Nothing
                             , units = updatedUnits
@@ -2533,7 +2559,20 @@ update msg model =
                                         ( movedUnit :: accUnits, newOccupancyForUnit, needsPath )
 
                                     Garrisoned _ ->
-                                        ( unit :: accUnits, accOccupancy, accNeedingPaths )
+                                        let
+                                            -- Update behavior state for garrisoned units too
+                                            ( behaviorUpdatedUnit, shouldGeneratePath ) =
+                                                updateUnitBehavior deltaSeconds model.buildings unit
+
+                                            -- Collect units that need path generation (if they exited garrison)
+                                            needsPath =
+                                                if shouldGeneratePath then
+                                                    behaviorUpdatedUnit :: accNeedingPaths
+
+                                                else
+                                                    accNeedingPaths
+                                        in
+                                        ( behaviorUpdatedUnit :: accUnits, accOccupancy, needsPath )
                             )
                             ( [], model.pathfindingOccupancy, [] )
                             model.units
