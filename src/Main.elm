@@ -98,10 +98,7 @@ type BuildingTab
 
 
 type UnitBehavior
-    = Thinking
-    | FindingRandomTarget
-    | MovingTowardTarget
-    | Dead
+    = Dead
     | DebugError String
     | WithoutHome
     | LookingForTask
@@ -1318,39 +1315,6 @@ randomNearbyCell gridConfig unitX unitY radius =
 updateUnitBehavior : Float -> List Building -> Unit -> ( Unit, Bool )
 updateUnitBehavior deltaSeconds buildings unit =
     case unit.behavior of
-        Thinking ->
-            let
-                newTimer =
-                    unit.thinkingTimer + deltaSeconds
-            in
-            if newTimer >= unit.thinkingDuration then
-                -- Transition to FindingRandomTarget
-                ( { unit | behavior = FindingRandomTarget, thinkingTimer = 0 }, True )
-
-            else
-                -- Still thinking
-                ( { unit | thinkingTimer = newTimer }, False )
-
-        FindingRandomTarget ->
-            -- This state is briefly entered to trigger path generation
-            -- The unit will be transitioned to MovingTowardTarget when path is assigned
-            ( unit, False )
-
-        MovingTowardTarget ->
-            -- Check if destination reached (path is empty)
-            if List.isEmpty unit.path then
-                -- Transition back to Thinking, clear target destination
-                -- Random duration between 1.0 and 2.0 seconds (using unit ID as seed for variety)
-                let
-                    newThinkingDuration =
-                        1.0 + (toFloat (modBy 1000 unit.id) / 1000.0)
-                in
-                ( { unit | behavior = Thinking, thinkingTimer = 0, thinkingDuration = newThinkingDuration, targetDestination = Nothing }, False )
-
-            else
-                -- Still moving
-                ( unit, False )
-
         Dead ->
             -- Dead units don't change behavior
             ( unit, False )
@@ -1903,12 +1867,8 @@ type Msg
     | TooltipLeave
     | Frame Float
     | SetSimulationSpeed SimulationSpeed
-    | SpawnTestUnit
-    | TestUnitColorGenerated String
-    | AssignUnitDestination Int ( Int, Int )
     | SetDebugTab DebugTab
     | SetBuildingTab BuildingTab
-    | PlaceTestBuilding
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -2280,181 +2240,12 @@ update msg model =
         SetSimulationSpeed speed ->
             ( { model | simulationSpeed = speed }, Cmd.none )
 
-        SpawnTestUnit ->
-            -- Generate random color for the unit
-            ( model, Random.generate TestUnitColorGenerated randomUnitColor )
-
-        TestUnitColorGenerated color ->
-            let
-                -- Get center of screen in world coordinates
-                ( winWidth, winHeight ) =
-                    model.windowSize
-
-                spawnX =
-                    model.camera.x + toFloat winWidth / 2
-
-                spawnY =
-                    model.camera.y + toFloat winHeight / 2
-
-                -- Find nearest unoccupied position
-                ( finalX, finalY ) =
-                    findNearestUnoccupiedTile model.gridConfig model.mapConfig model.pathfindingOccupancy spawnX spawnY
-
-                newUnit =
-                    { id = model.nextUnitId
-                    , owner = Player
-                    , location = OnMap finalX finalY
-                    , hp = 100
-                    , maxHp = 100
-                    , movementSpeed = 2.5
-                    , unitType = "Test Unit"
-                    , unitKind = Henchman
-                    , color = color
-                    , path = []
-                    , behavior = Thinking
-                    , behaviorTimer = 0
-                    , behaviorDuration = 0
-                    , thinkingTimer = 0
-                    , thinkingDuration = 1.0 + (toFloat (modBy 1000 model.nextUnitId) / 1000.0)
-                    , homeBuilding = Nothing
-                    , carriedGold = 0
-                    , targetDestination = Nothing
-                    , activeRadius = 192
-                    , searchRadius = 384
-                    , tags = [ HenchmanTag ]
-                    }
-
-                -- Add unit occupancy to pathfinding grid
-                newOccupancy =
-                    addUnitOccupancy model.gridConfig finalX finalY model.pathfindingOccupancy
-            in
-            ( { model
-                | units = newUnit :: model.units
-                , nextUnitId = model.nextUnitId + 1
-                , pathfindingOccupancy = newOccupancy
-              }
-            , Cmd.none
-            )
-
-        AssignUnitDestination unitId targetCell ->
-            let
-                -- Update the specific unit with a new path, target destination, and transition to MovingTowardTarget
-                updatedUnits =
-                    List.map
-                        (\unit ->
-                            if unit.id == unitId then
-                                case unit.location of
-                                    OnMap x y ->
-                                        let
-                                            newPath =
-                                                calculateUnitPath model.gridConfig model.mapConfig model.pathfindingOccupancy x y targetCell
-                                        in
-                                        { unit | path = newPath, behavior = MovingTowardTarget, targetDestination = Just targetCell }
-
-                                    Garrisoned _ ->
-                                        unit
-
-                            else
-                                unit
-                        )
-                        model.units
-            in
-            ( { model | units = updatedUnits }, Cmd.none )
 
         SetDebugTab tab ->
             ( { model | debugTab = tab }, Cmd.none )
 
         SetBuildingTab tab ->
             ( { model | buildingTab = tab }, Cmd.none )
-
-        PlaceTestBuilding ->
-            let
-                -- Get center of screen in world coordinates
-                ( winWidth, winHeight ) =
-                    model.windowSize
-
-                centerWorldX =
-                    model.camera.x + toFloat winWidth / 2
-
-                centerWorldY =
-                    model.camera.y + toFloat winHeight / 2
-
-                -- Convert to grid coordinates
-                gridX =
-                    floor (centerWorldX / model.gridConfig.buildGridSize)
-
-                gridY =
-                    floor (centerWorldY / model.gridConfig.buildGridSize)
-
-                -- Center the building on the grid cell
-                template =
-                    testBuildingTemplate
-
-                sizeCells =
-                    buildingSizeToGridCells template.size
-
-                centeredGridX =
-                    gridX - (sizeCells // 2)
-
-                centeredGridY =
-                    gridY - (sizeCells // 2)
-
-                -- Check if placement is valid
-                isValid =
-                    isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy model.buildings
-
-                -- Check if player has enough gold
-                canAfford =
-                    model.gold >= template.cost
-            in
-            if isValid && canAfford then
-                let
-                    newBuilding =
-                        { id = model.nextBuildingId
-                        , owner = Player
-                        , gridX = centeredGridX
-                        , gridY = centeredGridY
-                        , size = template.size
-                        , hp = template.maxHp
-                        , maxHp = template.maxHp
-                        , garrisonSlots = template.garrisonSlots
-                        , garrisonOccupied = 0
-                        , buildingType = template.name
-                        , behavior = Idle
-                        , behaviorTimer = 0
-                        , behaviorDuration = 0
-                        , coffer = 0
-                        , garrisonConfig = []
-                        , activeRadius = 192
-                        , searchRadius = 384
-                        , tags = [ BuildingTag ]
-                        }
-
-                    newBuildingOccupancy =
-                        addBuildingGridOccupancy newBuilding model.buildingOccupancy
-
-                    newPathfindingOccupancy =
-                        addBuildingOccupancy model.gridConfig newBuilding model.pathfindingOccupancy
-
-                    -- Recalculate paths for all units due to occupancy change
-                    updatedUnits =
-                        recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy model.units
-                in
-                ( { model
-                    | buildings = newBuilding :: model.buildings
-                    , buildingOccupancy = newBuildingOccupancy
-                    , pathfindingOccupancy = newPathfindingOccupancy
-                    , nextBuildingId = model.nextBuildingId + 1
-                    , gold = model.gold - template.cost
-                    , units = updatedUnits
-                    , selected = Just (BuildingSelected newBuilding.id)
-                  }
-                , Cmd.none
-                )
-
-            else
-                -- Cannot place building - invalid location or not enough gold
-                ( model, Cmd.none )
 
         Frame delta ->
             let
@@ -2769,26 +2560,28 @@ update msg model =
                         else
                             model.gameState
 
-                    -- Generate random destinations for units that need them
-                    cmds =
+                    -- Calculate paths for units that requested them
+                    unitsWithPaths =
                         List.map
                             (\unit ->
-                                case unit.location of
-                                    OnMap x y ->
-                                        Random.generate
-                                            (AssignUnitDestination unit.id)
-                                            (randomNearbyCell model.gridConfig x y 10)
+                                case ( unit.location, unit.targetDestination ) of
+                                    ( OnMap x y, Just targetCell ) ->
+                                        let
+                                            newPath =
+                                                calculateUnitPath model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses x y targetCell
+                                        in
+                                        { unit | path = newPath }
 
-                                    Garrisoned _ ->
-                                        Cmd.none
+                                    _ ->
+                                        unit
                             )
-                            unitsNeedingPaths
+                            unitsAfterHouseSpawn
                 in
                 ( { model
                     | accumulatedTime = remainingTime
                     , simulationFrameCount = model.simulationFrameCount + 1
                     , lastSimulationDeltas = newSimulationDeltas
-                    , units = unitsAfterHouseSpawn
+                    , units = unitsWithPaths
                     , buildings = buildingsAfterRepairs
                     , buildingOccupancy = buildingOccupancyAfterHouses
                     , pathfindingOccupancy = pathfindingOccupancyAfterHouses
@@ -2797,7 +2590,7 @@ update msg model =
                     , nextBuildingId = nextBuildingIdAfterHouses
                     , gameState = newGameState
                   }
-                , Cmd.batch cmds
+                , Cmd.none
                 )
 
             else
@@ -3441,7 +3234,12 @@ viewUnit model unit worldX worldY =
             , style "font-weight" "bold"
             , style "pointer-events" "none"
             ]
-            [ text "U" ]
+            [ text (case unit.unitType of
+                "Peasant" -> "P"
+                "Tax Collector" -> "T"
+                "Castle Guard" -> "G"
+                _ -> "?"
+            ) ]
         , if isSelected then
             div
                 [ style "position" "absolute"
@@ -3477,42 +3275,6 @@ viewUnit model unit worldX worldY =
                 ]
                 []
             ]
-        , -- Thinking animation (shrinking circle)
-          if unit.behavior == Thinking then
-            let
-                -- Calculate animation progress (0 = just started, 1 = finished)
-                progress =
-                    if unit.thinkingDuration > 0 then
-                        unit.thinkingTimer / unit.thinkingDuration
-                    else
-                        1.0
-
-                -- Remaining progress determines size (1 = full size, 0 = shrunk to nothing)
-                remainingProgress =
-                    1.0 - progress
-
-                -- Start at 2x unit size (32px diameter) and shrink to 0
-                maxRadius =
-                    visualDiameter
-
-                currentRadius =
-                    maxRadius * remainingProgress
-            in
-            div
-                [ style "position" "absolute"
-                , style "width" (String.fromFloat (currentRadius * 2) ++ "px")
-                , style "height" (String.fromFloat (currentRadius * 2) ++ "px")
-                , style "border-radius" "50%"
-                , style "background-color" "rgba(255, 255, 255, 0.3)"
-                , style "border" "2px solid rgba(255, 255, 255, 0.6)"
-                , style "pointer-events" "none"
-                , style "top" (String.fromFloat (selectionRadius - currentRadius) ++ "px")
-                , style "left" (String.fromFloat (selectionRadius - currentRadius) ++ "px")
-                ]
-                []
-
-          else
-            text ""
         ]
 
 
@@ -4405,35 +4167,6 @@ viewSelectionPanel model panelWidth =
                                 [ text "SET" ]
                             ]
                         ]
-                    , div
-                        [ style "display" "flex"
-                        , style "gap" "4px"
-                        ]
-                        [ div
-                            [ style "padding" "6px 10px"
-                            , style "background-color" "#0f0"
-                            , style "color" "#000"
-                            , style "border-radius" "2px"
-                            , style "cursor" "pointer"
-                            , style "font-weight" "bold"
-                            , style "font-size" "10px"
-                            , style "text-align" "center"
-                            , Html.Events.onClick SpawnTestUnit
-                            ]
-                            [ text "SPAWN TEST UNIT" ]
-                        , div
-                            [ style "padding" "6px 10px"
-                            , style "background-color" "#0f0"
-                            , style "color" "#000"
-                            , style "border-radius" "2px"
-                            , style "cursor" "pointer"
-                            , style "font-weight" "bold"
-                            , style "font-size" "10px"
-                            , style "text-align" "center"
-                            , Html.Events.onClick PlaceTestBuilding
-                            ]
-                            [ text "PLACE TEST BUILDING" ]
-                        ]
                     ]
                 ]
 
@@ -5099,9 +4832,6 @@ viewSelectionPanel model panelWidth =
                                 [ style "cursor" "help"
                                 , on "mouseenter"
                                     (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
-                                        Thinking -> "Thinking"
-                                        FindingRandomTarget -> "Finding Target"
-                                        MovingTowardTarget -> "Moving"
                                         Dead -> "Dead"
                                         DebugError msg -> "Error: " ++ msg
                                         WithoutHome -> "Without Home"
@@ -5122,9 +4852,6 @@ viewSelectionPanel model panelWidth =
                                 , Html.Events.onMouseLeave TooltipLeave
                                 ]
                                 [ text ("Behavior: " ++ (case unit.behavior of
-                                    Thinking -> "Thinking"
-                                    FindingRandomTarget -> "Finding Target"
-                                    MovingTowardTarget -> "Moving"
                                     Dead -> "Dead"
                                     DebugError msg -> "Error: " ++ msg
                                     WithoutHome -> "Without Home"
