@@ -1445,14 +1445,51 @@ updateUnitBehavior deltaSeconds buildings unit =
             -- Looking for build/repair target
             case unit.location of
                 Garrisoned buildingId ->
-                    -- Exit garrison first
+                    -- Exit garrison first, then immediately look for buildings
                     case List.filter (\b -> b.id == buildingId) buildings |> List.head of
                         Just homeBuilding ->
                             let
                                 exitedUnit =
                                     exitGarrison homeBuilding unit
+
+                                -- Now check for damaged buildings at the exited position
+                                ( finalX, finalY ) =
+                                    case exitedUnit.location of
+                                        OnMap x y -> ( x, y )
+                                        _ -> ( 0, 0 )  -- Shouldn't happen
                             in
-                            ( exitedUnit, False )
+                            case findNearestDamagedBuilding finalX finalY buildings of
+                                Just targetBuilding ->
+                                    -- Found a target, move to it and switch to repair behavior
+                                    let
+                                        -- Calculate target position (building center)
+                                        buildGridSize =
+                                            64
+
+                                        targetX =
+                                            toFloat targetBuilding.gridX * toFloat buildGridSize + (toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize / 2)
+
+                                        targetY =
+                                            toFloat targetBuilding.gridY * toFloat buildGridSize + (toFloat (buildingSizeToGridCells targetBuilding.size) * toFloat buildGridSize / 2)
+
+                                        -- Calculate pathfinding cell
+                                        targetCellX =
+                                            floor (targetX / 32)
+
+                                        targetCellY =
+                                            floor (targetY / 32)
+                                    in
+                                    ( { exitedUnit
+                                        | behavior = Repairing
+                                        , targetDestination = Just ( targetCellX, targetCellY )
+                                        , behaviorTimer = 0
+                                      }
+                                    , True  -- Request path
+                                    )
+
+                                Nothing ->
+                                    -- No damaged buildings, go to sleep
+                                    ( { exitedUnit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
 
                         Nothing ->
                             -- Home building not found, error state
