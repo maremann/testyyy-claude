@@ -13,7 +13,7 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 ### Selection System
 - **Selection State**: Player always has 0 or 1 thing selected at any time
 - **Selection Determines UI**: The currently selected thing determines the content of the selection panel
-- **Currently Selectable**: Global buttons (Debug, Build) and buildings
+- **Currently Selectable**: Global buttons (Debug, Build), buildings, and units
 - **Deselection**: User cannot manually deselect
   - Zero selected only at game start or if selected thing is removed from game
 - **Selection Highlight**: Semi-transparent yellow overlay with glow effect
@@ -72,11 +72,13 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Large: 3×3 grid cells (192×192 pixels)
   - Huge: 4×4 grid cells (256×256 pixels)
 - **Properties**:
-  - HP: Building health points (current/max)
+  - HP: Building health points (current/max), displayed via health bar below building
   - Garrison Slots: Number of units that can be garrisoned
   - Cost: Gold required to construct
   - Owner: Player or Enemy
   - Behavior: State machine controlling actions (currently only Idle state)
+  - Tags: Collection of gameplay tags (Building tag)
+  - Active/Search Radius: 192px/384px (approximately 3/6 build tiles)
 - **Entrance Tiles**: Each building has one designated entrance tile
   - Purpose: Designated location for units to garrison into building
   - Visual: Transparent brown overlay with dark outline (rgba(139, 69, 19, 0.5))
@@ -94,9 +96,10 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Pathfinding grid occupancy updated automatically when buildings placed/removed
   - Enables efficient proximity queries and placement validation
 - **Available Buildings**:
-  - **Test Building**: 500 gold, 2×2 size, 500 HP, 5 garrison slots
+  - **Test Building**: 500 gold, 2×2 size, 500 HP, 5 garrison slots (placed via debug controls)
 
 ### Build Mode
+- **Status**: Currently empty - no buildings available in the build menu
 - **Activation**: Click a building button in the Build menu (only enabled if sufficient gold)
 - **Visual Indicator**: Active building button shows white semi-transparent highlight overlay
 - **Cancellation**: Click the active building button again, or switch away from Build menu
@@ -110,6 +113,8 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 - **Placement Validation**:
   - Must be within map bounds
   - No occupied build grid cells (includes 1-cell spacing requirement)
+  - At least half the building's tiles must be within the city's search area
+  - Exception: First building can be placed anywhere (no existing city)
   - Player must have sufficient gold
 - **Placement Action**:
   - Click on valid location: Building placed, gold deducted, occupancy updated
@@ -126,13 +131,19 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - Random colors for visual distinction
   - Text label "U" in center
 - **Selection Radius**: 32px diameter (2x visual size) for easier clicking
+- **Unit Types**:
+  - **Heroes**: Important named units with randomized names, hero classes, stats, inventory, and leveling
+  - **Henchmen**: Anonymous throwaway units that keep the city running (e.g., Test Unit)
 - **Properties**:
-  - HP: Unit health points (current/max)
+  - HP: Unit health points (current/max), displayed via health bar below unit
   - Movement Speed: Measured in grid cells per second (default: 2.5)
   - Owner: Player or Enemy
   - Location: OnMap (x, y coordinates) or Garrisoned (building ID)
   - Behavior: State machine controlling unit actions
   - Target Destination: Final pathfinding cell destination (when moving)
+  - Unit Kind: Hero or Henchman
+  - Tags: Collection of gameplay tags (Hero or Henchman tag)
+  - Active/Search Radius: 192px/384px (approximately 3/6 build tiles)
 - **Pathfinding Grid Occupancy**: Units occupy all pathfinding cells they touch
   - Circular unit (16px diameter) occupies 1 pathfinding cell
   - Occupancy updated automatically when units move or are created/destroyed
@@ -157,7 +168,31 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
   - **MovingTowardTarget**: Following calculated path to destination
     - Moves along path at unit's movement speed
     - Returns to Thinking when destination reached
-- **State Display**: Current behavior shown in unit selection panel
+- **State Display**: Current behavior shown in unit and building selection panels
+- **Tooltips**: Hovering over behavior shows descriptive tooltip explaining the current state
+
+### Tags System
+- **Purpose**: Gameplay logic classification system for all entities
+- **Building Tags**: All buildings have the "Building" tag
+- **Unit Tags**: Units have either "Hero" or "Henchman" tag
+- **Display**: Tags shown in selection panel below entity name as comma-separated list
+- **Usage**: Enables flexible game logic based on entity classifications
+
+### Tooltips
+- **Hover System**: UI elements display tooltips after 0.5 seconds of hovering
+- **Appearance**: Semi-transparent black background with higher opacity
+- **Dismissal**: Tooltip vanishes when mouse leaves element
+- **Current Implementation**:
+  - Test Building button shows HP, Size, and Garrison information in tooltip
+  - Tags show descriptions (e.g., "This is a building", "This is a hero", "This is a henchman")
+  - Behaviors show state explanations (e.g., "The unit is pausing before deciding on next action")
+- **Future Expansion**: Tooltips can expand right (extra info) or up (unit production)
+
+### Health Bars
+- **Visual**: Small bar below each building and unit
+- **Color**: Dark blue (#2E4272)
+- **Size**: 4px height for buildings, 3px for units
+- **Display**: Percentage of current HP vs max HP shown as filled portion of bar
 
 ### Pathfinding
 - **Algorithm**: A* pathfinding with octile distance heuristic
@@ -237,10 +272,10 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
     - Debug button: Tabbed interface with three tabs
       - Stats tab: Camera position, gold, simulation frame count, average delta time
       - Visualization tab: Grid visualization checkboxes (Build Grid, PF Grid, occupancy overlays)
-      - Controls tab: Simulation speed radio buttons, gold setter, spawn test unit button
-    - Build button: Shows available buildings (Test Building: 500g)
-    - Building selected: Shows building name, HP, garrison info, owner
-    - Unit selected: Shows unit type, HP, speed, owner, location (rounded), current behavior
+      - Controls tab: Simulation speed radio buttons, gold setter, spawn test unit button, place test building button
+    - Build button: Currently empty ("No buildings available")
+    - Building selected: Shows building name, tags, HP, garrison info, owner, current behavior
+    - Unit selected: Shows unit type, tags, HP, speed, owner, location (rounded), current behavior
 - **Minimap**: 200x150px in bottom-right corner
   - Shows entire map overview
   - Red viewport indicator shows current camera position

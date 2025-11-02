@@ -29,6 +29,14 @@ main =
 -- MODEL
 
 
+type alias TooltipState =
+    { elementId : String
+    , hoverTime : Float
+    , mouseX : Float
+    , mouseY : Float
+    }
+
+
 type alias Model =
     { camera : Camera
     , dragState : DragState
@@ -56,6 +64,9 @@ type alias Model =
     , units : List Unit
     , nextUnitId : Int
     , debugTab : DebugTab
+    , showCityActiveArea : Bool
+    , showCitySearchArea : Bool
+    , tooltipHover : Maybe TooltipState
     }
 
 
@@ -81,6 +92,17 @@ type UnitBehavior
 
 type BuildingBehavior
     = Idle
+
+
+type UnitKind
+    = Hero
+    | Henchman
+
+
+type Tag
+    = BuildingTag
+    | HeroTag
+    | HenchmanTag
 
 
 type Selectable
@@ -114,6 +136,9 @@ type alias Building =
     , garrisonOccupied : Int
     , buildingType : String
     , behavior : BuildingBehavior
+    , activeRadius : Float
+    , searchRadius : Float
+    , tags : List Tag
     }
 
 
@@ -139,11 +164,15 @@ type alias Unit =
     , maxHp : Int
     , movementSpeed : Float
     , unitType : String
+    , unitKind : UnitKind
     , color : String
     , path : List ( Int, Int )
     , behavior : UnitBehavior
     , thinkingTimer : Float
     , targetDestination : Maybe ( Int, Int )
+    , activeRadius : Float
+    , searchRadius : Float
+    , tags : List Tag
     }
 
 
@@ -233,6 +262,9 @@ init _ =
             , units = []
             , nextUnitId = 1
             , debugTab = StatsTab
+            , showCityActiveArea = False
+            , showCitySearchArea = False
+            , tooltipHover = Nothing
             }
     in
     ( initialModel
@@ -406,8 +438,8 @@ areBuildGridCellsOccupied cells occupancy =
 
 
 {-| Check if a building placement is valid -}
-isValidBuildingPlacement : Int -> Int -> BuildingSize -> MapConfig -> GridConfig -> Dict ( Int, Int ) Int -> Bool
-isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy =
+isValidBuildingPlacement : Int -> Int -> BuildingSize -> MapConfig -> GridConfig -> Dict ( Int, Int ) Int -> List Building -> Bool
+isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy buildings =
     let
         sizeCells =
             buildingSizeToGridCells size
@@ -438,6 +470,9 @@ isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy
             , garrisonOccupied = 0
             , buildingType = ""
             , behavior = Idle
+            , activeRadius = 192
+            , searchRadius = 384
+            , tags = [ BuildingTag ]
             }
 
         cellsWithSpacing =
@@ -445,8 +480,32 @@ isValidBuildingPlacement gridX gridY size mapConfig gridConfig buildingOccupancy
 
         notOccupied =
             not (areBuildGridCellsOccupied cellsWithSpacing buildingOccupancy)
+
+        -- Check if at least half the building tiles are within city search area
+        buildingCells =
+            getBuildingGridCells tempBuilding
+
+        citySearchArea =
+            getCitySearchArea buildings
+
+        searchAreaSet =
+            List.foldl (\cell acc -> Dict.insert cell () acc) Dict.empty citySearchArea
+
+        tilesInSearchArea =
+            List.filter (\cell -> Dict.member cell searchAreaSet) buildingCells
+                |> List.length
+
+        totalTiles =
+            List.length buildingCells
+
+        atLeastHalfInSearchArea =
+            -- If there are no buildings yet, allow placement anywhere
+            if List.isEmpty buildings then
+                True
+            else
+                toFloat tilesInSearchArea >= toFloat totalTiles / 2
     in
-    inBounds && notOccupied
+    inBounds && notOccupied && atLeastHalfInSearchArea
 
 
 
@@ -519,6 +578,66 @@ getBuildingEntrance building =
 
         Huge ->
             ( building.gridX + 1, building.gridY + 3 )
+
+
+{-| Calculate all build grid cells within a certain distance (in build grid cells) of a building.
+    Returns a list of (gridX, gridY) coordinates.
+-}
+getBuildingAreaCells : Building -> Int -> List ( Int, Int )
+getBuildingAreaCells building radiusInCells =
+    let
+        -- Get building center in build grid coordinates
+        sizeCells =
+            buildingSizeToGridCells building.size
+
+        centerX =
+            building.gridX + sizeCells // 2
+
+        centerY =
+            building.gridY + sizeCells // 2
+
+        -- Generate all cells within radius
+        minX =
+            centerX - radiusInCells
+
+        maxX =
+            centerX + radiusInCells
+
+        minY =
+            centerY - radiusInCells
+
+        maxY =
+            centerY + radiusInCells
+
+        allCells =
+            List.concatMap
+                (\x ->
+                    List.map (\y -> ( x, y ))
+                        (List.range minY maxY)
+                )
+                (List.range minX maxX)
+    in
+    allCells
+
+
+{-| Calculate city active area: all build grid cells within 3 cells of any friendly building -}
+getCityActiveArea : List Building -> List ( Int, Int )
+getCityActiveArea buildings =
+    buildings
+        |> List.filter (\b -> b.owner == Player)
+        |> List.concatMap (\b -> getBuildingAreaCells b 3)
+        |> List.foldl (\cell acc -> Dict.insert cell () acc) Dict.empty
+        |> Dict.keys
+
+
+{-| Calculate city search area: all build grid cells within 6 cells of any friendly building -}
+getCitySearchArea : List Building -> List ( Int, Int )
+getCitySearchArea buildings =
+    buildings
+        |> List.filter (\b -> b.owner == Player)
+        |> List.concatMap (\b -> getBuildingAreaCells b 6)
+        |> List.foldl (\cell acc -> Dict.insert cell () acc) Dict.empty
+        |> Dict.keys
 
 
 {-| Add a building's occupancy to the pathfinding grid -}
@@ -1175,12 +1294,17 @@ type Msg
     | WorldMouseMove Float Float
     | PlaceBuilding
     | ToggleBuildingOccupancy
+    | ToggleCityActiveArea
+    | ToggleCitySearchArea
+    | TooltipEnter String Float Float
+    | TooltipLeave
     | Frame Float
     | SetSimulationSpeed SimulationSpeed
     | SpawnTestUnit
     | TestUnitColorGenerated String
     | AssignUnitDestination Int ( Int, Int )
     | SetDebugTab DebugTab
+    | PlaceTestBuilding
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -1396,7 +1520,7 @@ update msg model =
 
                         -- Check if placement is valid
                         isValid =
-                            isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy
+                            isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy model.buildings
 
                         -- Check if player has enough gold
                         canAfford =
@@ -1416,6 +1540,9 @@ update msg model =
                                 , garrisonOccupied = 0
                                 , buildingType = template.name
                                 , behavior = Idle
+                                , activeRadius = 192
+                                , searchRadius = 384
+                                , tags = [ BuildingTag ]
                                 }
 
                             newBuildingOccupancy =
@@ -1449,6 +1576,18 @@ update msg model =
         ToggleBuildingOccupancy ->
             ( { model | showBuildingOccupancy = not model.showBuildingOccupancy }, Cmd.none )
 
+        ToggleCityActiveArea ->
+            ( { model | showCityActiveArea = not model.showCityActiveArea }, Cmd.none )
+
+        ToggleCitySearchArea ->
+            ( { model | showCitySearchArea = not model.showCitySearchArea }, Cmd.none )
+
+        TooltipEnter elementId x y ->
+            ( { model | tooltipHover = Just { elementId = elementId, hoverTime = 0, mouseX = x, mouseY = y } }, Cmd.none )
+
+        TooltipLeave ->
+            ( { model | tooltipHover = Nothing }, Cmd.none )
+
         SetSimulationSpeed speed ->
             ( { model | simulationSpeed = speed }, Cmd.none )
 
@@ -1480,11 +1619,15 @@ update msg model =
                     , maxHp = 100
                     , movementSpeed = 2.5
                     , unitType = "Test Unit"
+                    , unitKind = Henchman
                     , color = color
                     , path = []
                     , behavior = Thinking
                     , thinkingTimer = 0
                     , targetDestination = Nothing
+                    , activeRadius = 192
+                    , searchRadius = 384
+                    , tags = [ HenchmanTag ]
                     }
 
                 -- Add unit occupancy to pathfinding grid
@@ -1527,8 +1670,102 @@ update msg model =
         SetDebugTab tab ->
             ( { model | debugTab = tab }, Cmd.none )
 
+        PlaceTestBuilding ->
+            let
+                -- Get center of screen in world coordinates
+                ( winWidth, winHeight ) =
+                    model.windowSize
+
+                centerWorldX =
+                    model.camera.x + toFloat winWidth / 2
+
+                centerWorldY =
+                    model.camera.y + toFloat winHeight / 2
+
+                -- Convert to grid coordinates
+                gridX =
+                    floor (centerWorldX / model.gridConfig.buildGridSize)
+
+                gridY =
+                    floor (centerWorldY / model.gridConfig.buildGridSize)
+
+                -- Center the building on the grid cell
+                template =
+                    testBuildingTemplate
+
+                sizeCells =
+                    buildingSizeToGridCells template.size
+
+                centeredGridX =
+                    gridX - (sizeCells // 2)
+
+                centeredGridY =
+                    gridY - (sizeCells // 2)
+
+                -- Check if placement is valid
+                isValid =
+                    isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy model.buildings
+
+                -- Check if player has enough gold
+                canAfford =
+                    model.gold >= template.cost
+            in
+            if isValid && canAfford then
+                let
+                    newBuilding =
+                        { id = model.nextBuildingId
+                        , owner = Player
+                        , gridX = centeredGridX
+                        , gridY = centeredGridY
+                        , size = template.size
+                        , hp = template.maxHp
+                        , maxHp = template.maxHp
+                        , garrisonSlots = template.garrisonSlots
+                        , garrisonOccupied = 0
+                        , buildingType = template.name
+                        , behavior = Idle
+                        , activeRadius = 192
+                        , searchRadius = 384
+                        , tags = [ BuildingTag ]
+                        }
+
+                    newBuildingOccupancy =
+                        addBuildingGridOccupancy newBuilding model.buildingOccupancy
+
+                    newPathfindingOccupancy =
+                        addBuildingOccupancy model.gridConfig newBuilding model.pathfindingOccupancy
+
+                    -- Recalculate paths for all units due to occupancy change
+                    updatedUnits =
+                        recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy model.units
+                in
+                ( { model
+                    | buildings = newBuilding :: model.buildings
+                    , buildingOccupancy = newBuildingOccupancy
+                    , pathfindingOccupancy = newPathfindingOccupancy
+                    , nextBuildingId = model.nextBuildingId + 1
+                    , gold = model.gold - template.cost
+                    , units = updatedUnits
+                    , selected = Just (BuildingSelected newBuilding.id)
+                  }
+                , Cmd.none
+                )
+
+            else
+                -- Cannot place building - invalid location or not enough gold
+                ( model, Cmd.none )
+
         Frame delta ->
             let
+                -- Update tooltip hover timer
+                updatedTooltipHover =
+                    case model.tooltipHover of
+                        Just tooltipState ->
+                            Just { tooltipState | hoverTime = tooltipState.hoverTime + delta }
+
+                        Nothing ->
+                            Nothing
+
                 -- Pause if delta > 1000ms (indicates tab was hidden or system lag)
                 isPaused =
                     delta > 1000 || model.simulationSpeed == Pause
@@ -1647,12 +1884,13 @@ update msg model =
                     , lastSimulationDeltas = newSimulationDeltas
                     , units = updatedUnits
                     , pathfindingOccupancy = updatedOccupancy
+                    , tooltipHover = updatedTooltipHover
                   }
                 , Cmd.batch cmds
                 )
 
             else
-                ( { model | accumulatedTime = newAccumulatedTime }, Cmd.none )
+                ( { model | accumulatedTime = newAccumulatedTime, tooltipHover = updatedTooltipHover }, Cmd.none )
 
 
 constrainCamera : MapConfig -> ( Int, Int ) -> Camera -> Camera
@@ -1961,6 +2199,7 @@ view model =
         , viewGlobalButtonsPanel model globalButtonsLeft
         , viewSelectionPanel model selectionPanelWidth
         , viewMinimap model
+        , viewTooltip model
         ]
 
 
@@ -2014,7 +2253,10 @@ viewMainViewport model cursor viewportWidth viewportHeight =
         , viewGrids model viewportWidth viewportHeight
         , viewPathfindingOccupancy model viewportWidth viewportHeight
         , viewBuildingOccupancy model viewportWidth viewportHeight
+        , viewCitySearchArea model viewportWidth viewportHeight
+        , viewCityActiveArea model viewportWidth viewportHeight
         , viewBuildingPreview model
+        , viewUnitRadii model
         ]
 
 
@@ -2181,6 +2423,27 @@ viewBuilding model building =
 
           else
             text ""
+        , -- Health bar
+          let
+            healthPercent =
+                toFloat building.hp / toFloat building.maxHp
+          in
+          div
+            [ style "position" "absolute"
+            , style "bottom" "-8px"
+            , style "left" "0"
+            , style "width" "100%"
+            , style "height" "4px"
+            , style "background-color" "rgba(0, 0, 0, 0.5)"
+            , style "pointer-events" "none"
+            ]
+            [ div
+                [ style "width" (String.fromFloat (healthPercent * 100) ++ "%")
+                , style "height" "100%"
+                , style "background-color" "#2E4272"
+                ]
+                []
+            ]
         ]
 
 
@@ -2275,6 +2538,27 @@ viewUnit model unit worldX worldY =
 
           else
             text ""
+        , -- Health bar
+          let
+            healthPercent =
+                toFloat unit.hp / toFloat unit.maxHp
+          in
+          div
+            [ style "position" "absolute"
+            , style "bottom" (String.fromFloat (selectionRadius - visualRadius - 6) ++ "px")
+            , style "left" "0"
+            , style "width" "100%"
+            , style "height" "3px"
+            , style "background-color" "rgba(0, 0, 0, 0.5)"
+            , style "pointer-events" "none"
+            ]
+            [ div
+                [ style "width" (String.fromFloat (healthPercent * 100) ++ "%")
+                , style "height" "100%"
+                , style "background-color" "#2E4272"
+                ]
+                []
+            ]
         ]
 
 
@@ -2548,6 +2832,212 @@ viewBuildingOccupancy model viewportWidth viewportHeight =
         div [] (List.map renderCell occupiedCells)
 
 
+viewCityActiveArea : Model -> Float -> Float -> Html Msg
+viewCityActiveArea model viewportWidth viewportHeight =
+    if not model.showCityActiveArea then
+        div [] []
+
+    else
+        let
+            gridSize =
+                model.gridConfig.buildGridSize
+
+            -- Calculate city active area cells
+            cityCells =
+                getCityActiveArea model.buildings
+
+            -- Calculate visible range in building grid coordinates
+            startGridX =
+                max 0 (floor (model.camera.x / gridSize))
+
+            startGridY =
+                max 0 (floor (model.camera.y / gridSize))
+
+            endGridX =
+                min (floor (model.mapConfig.width / gridSize)) (ceiling ((model.camera.x + viewportWidth) / gridSize))
+
+            endGridY =
+                min (floor (model.mapConfig.height / gridSize)) (ceiling ((model.camera.y + viewportHeight) / gridSize))
+
+            -- Convert city cells to dict for fast lookup
+            cityDict =
+                List.foldl (\cell acc -> Dict.insert cell () acc) Dict.empty cityCells
+
+            -- Generate all visible cells and filter to city cells
+            cellsX =
+                List.range startGridX endGridX
+
+            cellsY =
+                List.range startGridY endGridY
+
+            allVisibleCells =
+                List.concatMap (\x -> List.map (\y -> ( x, y )) cellsY) cellsX
+
+            visibleCityCells =
+                List.filter (\cell -> Dict.member cell cityDict) allVisibleCells
+
+            -- Render city cells
+            renderCell ( x, y ) =
+                let
+                    worldX =
+                        toFloat x * gridSize
+
+                    worldY =
+                        toFloat y * gridSize
+
+                    screenX =
+                        worldX - model.camera.x
+
+                    screenY =
+                        worldY - model.camera.y
+                in
+                div
+                    [ style "position" "absolute"
+                    , style "left" (String.fromFloat screenX ++ "px")
+                    , style "top" (String.fromFloat screenY ++ "px")
+                    , style "width" (String.fromFloat gridSize ++ "px")
+                    , style "height" (String.fromFloat gridSize ++ "px")
+                    , style "background-color" "rgba(0, 255, 0, 0.2)"
+                    , style "pointer-events" "none"
+                    ]
+                    []
+        in
+        div [] (List.map renderCell visibleCityCells)
+
+
+viewCitySearchArea : Model -> Float -> Float -> Html Msg
+viewCitySearchArea model viewportWidth viewportHeight =
+    if not model.showCitySearchArea then
+        div [] []
+
+    else
+        let
+            gridSize =
+                model.gridConfig.buildGridSize
+
+            -- Calculate city search area cells
+            cityCells =
+                getCitySearchArea model.buildings
+
+            -- Calculate visible range in building grid coordinates
+            startGridX =
+                max 0 (floor (model.camera.x / gridSize))
+
+            startGridY =
+                max 0 (floor (model.camera.y / gridSize))
+
+            endGridX =
+                min (floor (model.mapConfig.width / gridSize)) (ceiling ((model.camera.x + viewportWidth) / gridSize))
+
+            endGridY =
+                min (floor (model.mapConfig.height / gridSize)) (ceiling ((model.camera.y + viewportHeight) / gridSize))
+
+            -- Convert city cells to dict for fast lookup
+            cityDict =
+                List.foldl (\cell acc -> Dict.insert cell () acc) Dict.empty cityCells
+
+            -- Generate all visible cells and filter to city cells
+            cellsX =
+                List.range startGridX endGridX
+
+            cellsY =
+                List.range startGridY endGridY
+
+            allVisibleCells =
+                List.concatMap (\x -> List.map (\y -> ( x, y )) cellsY) cellsX
+
+            visibleCityCells =
+                List.filter (\cell -> Dict.member cell cityDict) allVisibleCells
+
+            -- Render city cells
+            renderCell ( x, y ) =
+                let
+                    worldX =
+                        toFloat x * gridSize
+
+                    worldY =
+                        toFloat y * gridSize
+
+                    screenX =
+                        worldX - model.camera.x
+
+                    screenY =
+                        worldY - model.camera.y
+                in
+                div
+                    [ style "position" "absolute"
+                    , style "left" (String.fromFloat screenX ++ "px")
+                    , style "top" (String.fromFloat screenY ++ "px")
+                    , style "width" (String.fromFloat gridSize ++ "px")
+                    , style "height" (String.fromFloat gridSize ++ "px")
+                    , style "background-color" "rgba(0, 255, 0, 0.1)"
+                    , style "pointer-events" "none"
+                    ]
+                    []
+        in
+        div [] (List.map renderCell visibleCityCells)
+
+
+viewUnitRadii : Model -> Html Msg
+viewUnitRadii model =
+    case model.selected of
+        Just (UnitSelected unitId) ->
+            let
+                maybeUnit =
+                    List.filter (\u -> u.id == unitId) model.units
+                        |> List.head
+            in
+            case maybeUnit of
+                Just unit ->
+                    case unit.location of
+                        OnMap x y ->
+                            let
+                                screenX =
+                                    x - model.camera.x
+
+                                screenY =
+                                    y - model.camera.y
+
+                                -- Active radius circle
+                                activeCircle =
+                                    div
+                                        [ style "position" "absolute"
+                                        , style "left" (String.fromFloat (screenX - unit.activeRadius) ++ "px")
+                                        , style "top" (String.fromFloat (screenY - unit.activeRadius) ++ "px")
+                                        , style "width" (String.fromFloat (unit.activeRadius * 2) ++ "px")
+                                        , style "height" (String.fromFloat (unit.activeRadius * 2) ++ "px")
+                                        , style "border" "2px solid rgba(255, 255, 0, 0.6)"
+                                        , style "border-radius" "50%"
+                                        , style "pointer-events" "none"
+                                        ]
+                                        []
+
+                                -- Search radius circle
+                                searchCircle =
+                                    div
+                                        [ style "position" "absolute"
+                                        , style "left" (String.fromFloat (screenX - unit.searchRadius) ++ "px")
+                                        , style "top" (String.fromFloat (screenY - unit.searchRadius) ++ "px")
+                                        , style "width" (String.fromFloat (unit.searchRadius * 2) ++ "px")
+                                        , style "height" (String.fromFloat (unit.searchRadius * 2) ++ "px")
+                                        , style "border" "2px solid rgba(255, 255, 0, 0.3)"
+                                        , style "border-radius" "50%"
+                                        , style "pointer-events" "none"
+                                        ]
+                                        []
+                            in
+                            div [] [ searchCircle, activeCircle ]
+
+                        Garrisoned _ ->
+                            div [] []
+
+                Nothing ->
+                    div [] []
+
+        _ ->
+            div [] []
+
+
 viewBuildingPreview : Model -> Html Msg
 viewBuildingPreview model =
     case ( model.buildMode, model.mouseWorldPos ) of
@@ -2572,7 +3062,7 @@ viewBuildingPreview model =
 
                 -- Check if placement is valid
                 isValid =
-                    isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy
+                    isValidBuildingPlacement centeredGridX centeredGridY template.size model.mapConfig model.gridConfig model.buildingOccupancy model.buildings
                         && model.gold >= template.cost
 
                 -- Calculate screen position
@@ -2772,31 +3262,58 @@ viewSelectionPanel model panelWidth =
                 , style "display" "flex"
                 , style "flex-direction" "row"
                 , style "gap" "16px"
-                , style "align-items" "center"
                 ]
-                [ div []
-                    [ text "Camera: ("
-                    , text (String.fromFloat m.camera.x)
-                    , text ", "
-                    , text (String.fromFloat m.camera.y)
-                    , text ")"
+                [ div
+                    [ style "display" "flex"
+                    , style "flex-direction" "column"
+                    , style "gap" "6px"
                     ]
-                , div []
-                    [ text "Gold: "
-                    , text (String.fromInt m.gold)
-                    ]
-                , div []
-                    [ text "Sim Frame: "
-                    , text (String.fromInt m.simulationFrameCount)
-                    ]
-                , div []
-                    [ text "Avg Delta: "
-                    , text (String.fromFloat (round (avgDelta * 10) |> toFloat |> (\x -> x / 10)))
-                    , text "ms"
+                    [ div []
+                        [ text "Camera: ("
+                        , text (String.fromFloat m.camera.x)
+                        , text ", "
+                        , text (String.fromFloat m.camera.y)
+                        , text ")"
+                        ]
+                    , div []
+                        [ text "Sim Frame: "
+                        , text (String.fromInt m.simulationFrameCount)
+                        ]
+                    , div []
+                        [ text "Avg Delta: "
+                        , text (String.fromFloat (round (avgDelta * 10) |> toFloat |> (\x -> x / 10)))
+                        , text "ms"
+                        ]
                     ]
                 ]
 
         debugVisualizationContent =
+            let
+                checkbox isChecked label onClick =
+                    div
+                        [ style "display" "flex"
+                        , style "gap" "8px"
+                        , style "align-items" "center"
+                        , style "cursor" "pointer"
+                        , Html.Events.onClick onClick
+                        ]
+                        [ div
+                            [ style "width" "14px"
+                            , style "height" "14px"
+                            , style "border" "2px solid #0f0"
+                            , style "border-radius" "2px"
+                            , style "background-color"
+                                (if isChecked then
+                                    "#0f0"
+
+                                 else
+                                    "transparent"
+                                )
+                            ]
+                            []
+                        , text label
+                        ]
+            in
             div
                 [ style "padding" "12px"
                 , style "color" "#0f0"
@@ -2804,100 +3321,31 @@ viewSelectionPanel model panelWidth =
                 , style "font-size" "11px"
                 , style "display" "flex"
                 , style "flex-direction" "row"
-                , style "gap" "12px"
-                , style "align-items" "center"
+                , style "gap" "16px"
                 ]
                 [ div
                     [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
-                    , Html.Events.onClick ToggleBuildGrid
+                    , style "flex-direction" "column"
+                    , style "gap" "6px"
                     ]
-                    [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showBuildGrid then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
-                        ]
-                        []
-                    , text "Build Grid"
+                    [ checkbox model.showBuildGrid "Build Grid" ToggleBuildGrid
+                    , checkbox model.showPathfindingGrid "Pathfinding Grid" TogglePathfindingGrid
                     ]
                 , div
                     [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
-                    , Html.Events.onClick TogglePathfindingGrid
+                    , style "flex-direction" "column"
+                    , style "gap" "6px"
                     ]
-                    [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showPathfindingGrid then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
-                        ]
-                        []
-                    , text "Pathfinding Grid"
+                    [ checkbox model.showPathfindingOccupancy "PF Occupancy" TogglePathfindingOccupancy
+                    , checkbox model.showBuildingOccupancy "Build Occupancy" ToggleBuildingOccupancy
                     ]
                 , div
                     [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
-                    , Html.Events.onClick TogglePathfindingOccupancy
+                    , style "flex-direction" "column"
+                    , style "gap" "6px"
                     ]
-                    [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showPathfindingOccupancy then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
-                        ]
-                        []
-                    , text "PF Occupancy"
-                    ]
-                , div
-                    [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
-                    , Html.Events.onClick ToggleBuildingOccupancy
-                    ]
-                    [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showBuildingOccupancy then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
-                        ]
-                        []
-                    , text "Build Occupancy"
+                    [ checkbox model.showCityActiveArea "City Active" ToggleCityActiveArea
+                    , checkbox model.showCitySearchArea "City Search" ToggleCitySearchArea
                     ]
                 ]
 
@@ -2947,13 +3395,11 @@ viewSelectionPanel model panelWidth =
                 , style "display" "flex"
                 , style "flex-direction" "row"
                 , style "gap" "16px"
-                , style "align-items" "center"
                 ]
                 [ div
                     [ style "display" "flex"
-                    , style "flex-direction" "row"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
+                    , style "flex-direction" "column"
+                    , style "gap" "6px"
                     ]
                     [ div [] [ text "Speed:" ]
                     , speedRadio Pause "0x"
@@ -2963,57 +3409,77 @@ viewSelectionPanel model panelWidth =
                     , speedRadio Speed100x "100x"
                     ]
                 , div
-                    [ style "border-left" "1px solid #0f0"
-                    , style "padding-left" "16px"
-                    , style "display" "flex"
-                    , style "flex-direction" "row"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    ]
-                    [ div [] [ text "Gold:" ]
-                    , Html.input
-                        [ Html.Attributes.type_ "text"
-                        , Html.Attributes.value model.goldInputValue
-                        , Html.Attributes.placeholder "Amount"
-                        , Html.Events.onInput GoldInputChanged
-                        , style "width" "80px"
-                        , style "padding" "4px"
-                        , style "background-color" "#222"
-                        , style "color" "#0f0"
-                        , style "border" "1px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "font-family" "monospace"
-                        , style "font-size" "11px"
-                        ]
-                        []
-                    , div
-                        [ style "padding" "4px 8px"
-                        , style "background-color" "#0f0"
-                        , style "color" "#000"
-                        , style "border-radius" "2px"
-                        , style "cursor" "pointer"
-                        , style "font-weight" "bold"
-                        , style "font-size" "10px"
-                        , Html.Events.onClick SetGoldFromInput
-                        ]
-                        [ text "SET" ]
-                    ]
-                , div
-                    [ style "border-left" "1px solid #0f0"
-                    , style "padding-left" "16px"
+                    [ style "display" "flex"
+                    , style "flex-direction" "column"
+                    , style "gap" "10px"
                     ]
                     [ div
-                        [ style "padding" "6px 10px"
-                        , style "background-color" "#0f0"
-                        , style "color" "#000"
-                        , style "border-radius" "2px"
-                        , style "cursor" "pointer"
-                        , style "font-weight" "bold"
-                        , style "font-size" "10px"
-                        , style "text-align" "center"
-                        , Html.Events.onClick SpawnTestUnit
+                        [ style "display" "flex"
+                        , style "flex-direction" "column"
+                        , style "gap" "6px"
                         ]
-                        [ text "SPAWN TEST UNIT" ]
+                        [ div [] [ text "Gold:" ]
+                        , div
+                            [ style "display" "flex"
+                            , style "gap" "4px"
+                            ]
+                            [ Html.input
+                                [ Html.Attributes.type_ "text"
+                                , Html.Attributes.value model.goldInputValue
+                                , Html.Attributes.placeholder "Amount"
+                                , Html.Events.onInput GoldInputChanged
+                                , style "width" "80px"
+                                , style "padding" "4px"
+                                , style "background-color" "#222"
+                                , style "color" "#0f0"
+                                , style "border" "1px solid #0f0"
+                                , style "border-radius" "2px"
+                                , style "font-family" "monospace"
+                                , style "font-size" "11px"
+                                ]
+                                []
+                            , div
+                                [ style "padding" "4px 8px"
+                                , style "background-color" "#0f0"
+                                , style "color" "#000"
+                                , style "border-radius" "2px"
+                                , style "cursor" "pointer"
+                                , style "font-weight" "bold"
+                                , style "font-size" "10px"
+                                , Html.Events.onClick SetGoldFromInput
+                                ]
+                                [ text "SET" ]
+                            ]
+                        ]
+                    , div
+                        [ style "display" "flex"
+                        , style "gap" "4px"
+                        ]
+                        [ div
+                            [ style "padding" "6px 10px"
+                            , style "background-color" "#0f0"
+                            , style "color" "#000"
+                            , style "border-radius" "2px"
+                            , style "cursor" "pointer"
+                            , style "font-weight" "bold"
+                            , style "font-size" "10px"
+                            , style "text-align" "center"
+                            , Html.Events.onClick SpawnTestUnit
+                            ]
+                            [ text "SPAWN TEST UNIT" ]
+                        , div
+                            [ style "padding" "6px 10px"
+                            , style "background-color" "#0f0"
+                            , style "color" "#000"
+                            , style "border-radius" "2px"
+                            , style "cursor" "pointer"
+                            , style "font-weight" "bold"
+                            , style "font-size" "10px"
+                            , style "text-align" "center"
+                            , Html.Events.onClick PlaceTestBuilding
+                            ]
+                            [ text "PLACE TEST BUILDING" ]
+                        ]
                     ]
                 ]
 
@@ -3165,250 +3631,15 @@ viewSelectionPanel model panelWidth =
                     ]
                 ]
 
-        debugSpeedSection =
-            let
-                speedRadio speed label =
-                    let
-                        isSelected =
-                            model.simulationSpeed == speed
-                    in
-                    div
-                        [ style "display" "flex"
-                        , style "gap" "6px"
-                        , style "align-items" "center"
-                        , style "cursor" "pointer"
-                        , Html.Events.onClick (SetSimulationSpeed speed)
-                        ]
-                        [ div
-                            [ style "width" "12px"
-                            , style "height" "12px"
-                            , style "border" "2px solid #0f0"
-                            , style "border-radius" "50%"
-                            , style "display" "flex"
-                            , style "align-items" "center"
-                            , style "justify-content" "center"
-                            ]
-                            [ if isSelected then
-                                div
-                                    [ style "width" "6px"
-                                    , style "height" "6px"
-                                    , style "background-color" "#0f0"
-                                    , style "border-radius" "50%"
-                                    ]
-                                    []
-
-                              else
-                                text ""
-                            ]
-                        , text label
-                        ]
-            in
-            div
-                [ style "padding" "12px"
-                , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "6px"
-                , style "flex-shrink" "0"
-                , style "border-left" "1px solid #0f0"
-                ]
-                [ div [] [ text "Sim Speed:" ]
-                , speedRadio Pause "0x"
-                , speedRadio Speed1x "1x"
-                , speedRadio Speed2x "2x"
-                , speedRadio Speed10x "10x"
-                , speedRadio Speed100x "100x"
-                ]
-
-        debugGoldSection =
-            div
-                [ style "padding" "12px"
-                , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "6px"
-                , style "flex-shrink" "0"
-                , style "border-left" "1px solid #0f0"
-                ]
-                [ div []
-                    [ text "Set Gold:" ]
-                , div
-                    [ style "display" "flex"
-                    , style "gap" "4px"
-                    ]
-                    [ Html.input
-                        [ Html.Attributes.type_ "text"
-                        , Html.Attributes.value model.goldInputValue
-                        , Html.Attributes.placeholder "Amount"
-                        , Html.Events.onInput GoldInputChanged
-                        , style "width" "80px"
-                        , style "padding" "4px"
-                        , style "background-color" "#222"
-                        , style "color" "#0f0"
-                        , style "border" "1px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "font-family" "monospace"
-                        , style "font-size" "11px"
-                        ]
-                        []
-                    , div
-                        [ style "padding" "4px 8px"
-                        , style "background-color" "#0f0"
-                        , style "color" "#000"
-                        , style "border-radius" "2px"
-                        , style "cursor" "pointer"
-                        , style "font-weight" "bold"
-                        , style "font-size" "10px"
-                        , Html.Events.onClick SetGoldFromInput
-                        ]
-                        [ text "SET" ]
-                    ]
-                , div
-                    [ style "padding" "6px 10px"
-                    , style "background-color" "#0f0"
-                    , style "color" "#000"
-                    , style "border-radius" "2px"
-                    , style "cursor" "pointer"
-                    , style "font-weight" "bold"
-                    , style "font-size" "10px"
-                    , style "text-align" "center"
-                    , Html.Events.onClick SpawnTestUnit
-                    ]
-                    [ text "SPAWN TEST UNIT" ]
-                ]
-
         buildContent =
             div
-                [ style "display" "flex"
-                , style "gap" "8px"
-                , style "padding" "8px"
+                [ style "padding" "12px"
+                , style "color" "#aaa"
+                , style "font-family" "monospace"
+                , style "font-size" "11px"
+                , style "font-style" "italic"
                 ]
-                [ buildingOption testBuildingTemplate
-                ]
-
-        buildingOption : BuildingTemplate -> Html Msg
-        buildingOption template =
-            let
-                canAfford =
-                    model.gold >= template.cost
-
-                isActive =
-                    case model.buildMode of
-                        Just activeTemplate ->
-                            activeTemplate.name == template.name
-
-                        Nothing ->
-                            False
-
-                sizeLabel =
-                    case template.size of
-                        Small ->
-                            "1×1"
-
-                        Medium ->
-                            "2×2"
-
-                        Large ->
-                            "3×3"
-
-                        Huge ->
-                            "4×4"
-
-                clickHandler =
-                    if canAfford then
-                        if isActive then
-                            Html.Events.onClick ExitBuildMode
-
-                        else
-                            Html.Events.onClick (EnterBuildMode template)
-
-                    else
-                        Html.Attributes.class ""
-            in
-            div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "align-items" "center"
-                , style "gap" "4px"
-                , style "padding" "8px"
-                , style "background-color"
-                    (if canAfford then
-                        "#333"
-
-                     else
-                        "#222"
-                    )
-                , style "border"
-                    (if canAfford then
-                        "2px solid #666"
-
-                     else
-                        "2px solid #444"
-                    )
-                , style "border-radius" "4px"
-                , style "cursor"
-                    (if canAfford then
-                        "pointer"
-
-                     else
-                        "not-allowed"
-                    )
-                , style "flex-shrink" "0"
-                , style "opacity"
-                    (if canAfford then
-                        "1"
-
-                     else
-                        "0.5"
-                    )
-                , style "position" "relative"
-                , clickHandler
-                ]
-                [ div
-                    [ style "font-size" "12px"
-                    , style "color" "#fff"
-                    , style "font-weight" "bold"
-                    ]
-                    [ text template.name ]
-                , div
-                    [ style "font-size" "10px"
-                    , style "color" "#aaa"
-                    ]
-                    [ text sizeLabel ]
-                , div
-                    [ style "color" "#FFD700"
-                    , style "font-size" "12px"
-                    , style "font-weight" "bold"
-                    ]
-                    [ text (String.fromInt template.cost ++ "g") ]
-                , div
-                    [ style "font-size" "9px"
-                    , style "color" "#888"
-                    ]
-                    [ text ("HP: " ++ String.fromInt template.maxHp) ]
-                , div
-                    [ style "font-size" "9px"
-                    , style "color" "#888"
-                    ]
-                    [ text ("Garrison: " ++ String.fromInt template.garrisonSlots) ]
-                , if isActive then
-                    div
-                        [ style "position" "absolute"
-                        , style "inset" "0"
-                        , style "border-radius" "4px"
-                        , style "background-color" "rgba(255, 255, 255, 0.3)"
-                        , style "pointer-events" "none"
-                        , style "box-shadow" "inset 0 0 10px rgba(255, 255, 255, 0.6)"
-                        ]
-                        []
-
-                  else
-                    text ""
-                ]
+                [ text "No buildings available" ]
 
         noSelectionContent =
             div
@@ -3430,20 +3661,64 @@ viewSelectionPanel model panelWidth =
             in
             case maybeBuilding of
                 Just building ->
+                    let
+                        tagToString tag =
+                            case tag of
+                                BuildingTag ->
+                                    "Building"
+
+                                HeroTag ->
+                                    "Hero"
+
+                                HenchmanTag ->
+                                    "Henchman"
+                    in
                     div
                         [ style "padding" "12px"
                         , style "color" "#fff"
                         , style "font-family" "monospace"
                         , style "font-size" "11px"
                         , style "display" "flex"
-                        , style "flex-direction" "column"
-                        , style "gap" "6px"
+                        , style "flex-direction" "row"
+                        , style "gap" "16px"
+                        , style "align-items" "center"
                         ]
                         [ div
-                            [ style "font-weight" "bold"
-                            , style "font-size" "12px"
+                            [ style "display" "flex"
+                            , style "flex-direction" "column"
+                            , style "gap" "4px"
                             ]
-                            [ text building.buildingType ]
+                            [ div
+                                [ style "font-weight" "bold"
+                                , style "font-size" "12px"
+                                ]
+                                [ text building.buildingType ]
+                            , div
+                                [ style "font-size" "9px"
+                                , style "color" "#aaa"
+                                , style "display" "flex"
+                                , style "gap" "4px"
+                                ]
+                                ([ text "[" ]
+                                    ++ (building.tags
+                                            |> List.map
+                                                (\tag ->
+                                                    div
+                                                        [ style "cursor" "help"
+                                                        , on "mouseenter"
+                                                            (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
+                                                                (D.field "clientX" D.float)
+                                                                (D.field "clientY" D.float)
+                                                            )
+                                                        , Html.Events.onMouseLeave TooltipLeave
+                                                        ]
+                                                        [ text (tagToString tag) ]
+                                                )
+                                            |> List.intersperse (text ", ")
+                                       )
+                                    ++ [ text "]" ]
+                                )
+                            ]
                         , div []
                             [ text ("HP: " ++ String.fromInt building.hp ++ "/" ++ String.fromInt building.maxHp) ]
                         , div []
@@ -3452,6 +3727,21 @@ viewSelectionPanel model panelWidth =
                             [ text ("Owner: " ++ (case building.owner of
                                 Player -> "Player"
                                 Enemy -> "Enemy"
+                                ))
+                            ]
+                        , div
+                            [ style "cursor" "help"
+                            , on "mouseenter"
+                                (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case building.behavior of
+                                    Idle -> "Idle"
+                                    )) x y)
+                                    (D.field "clientX" D.float)
+                                    (D.field "clientY" D.float)
+                                )
+                            , Html.Events.onMouseLeave TooltipLeave
+                            ]
+                            [ text ("Behavior: " ++ (case building.behavior of
+                                Idle -> "Idle"
                                 ))
                             ]
                         ]
@@ -3472,6 +3762,18 @@ viewSelectionPanel model panelWidth =
             in
             case maybeUnit of
                 Just unit ->
+                    let
+                        tagToString tag =
+                            case tag of
+                                BuildingTag ->
+                                    "Building"
+
+                                HeroTag ->
+                                    "Hero"
+
+                                HenchmanTag ->
+                                    "Henchman"
+                    in
                     div
                         [ style "padding" "12px"
                         , style "color" "#fff"
@@ -3483,10 +3785,41 @@ viewSelectionPanel model panelWidth =
                         , style "align-items" "center"
                         ]
                         [ div
-                            [ style "font-weight" "bold"
-                            , style "font-size" "12px"
+                            [ style "display" "flex"
+                            , style "flex-direction" "column"
+                            , style "gap" "4px"
                             ]
-                            [ text unit.unitType ]
+                            [ div
+                                [ style "font-weight" "bold"
+                                , style "font-size" "12px"
+                                ]
+                                [ text unit.unitType ]
+                            , div
+                                [ style "font-size" "9px"
+                                , style "color" "#aaa"
+                                , style "display" "flex"
+                                , style "gap" "4px"
+                                ]
+                                ([ text "[" ]
+                                    ++ (unit.tags
+                                            |> List.map
+                                                (\tag ->
+                                                    div
+                                                        [ style "cursor" "help"
+                                                        , on "mouseenter"
+                                                            (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
+                                                                (D.field "clientX" D.float)
+                                                                (D.field "clientY" D.float)
+                                                            )
+                                                        , Html.Events.onMouseLeave TooltipLeave
+                                                        ]
+                                                        [ text (tagToString tag) ]
+                                                )
+                                            |> List.intersperse (text ", ")
+                                       )
+                                    ++ [ text "]" ]
+                                )
+                            ]
                         , div []
                             [ text ("HP: " ++ String.fromInt unit.hp ++ "/" ++ String.fromInt unit.maxHp) ]
                         , div []
@@ -3503,7 +3836,19 @@ viewSelectionPanel model panelWidth =
                                 Garrisoned buildingId -> "Garrisoned in #" ++ String.fromInt buildingId
                                 ))
                             ]
-                        , div []
+                        , div
+                            [ style "cursor" "help"
+                            , on "mouseenter"
+                                (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
+                                    Thinking -> "Thinking"
+                                    FindingRandomTarget -> "Finding Target"
+                                    MovingTowardTarget -> "Moving"
+                                    )) x y)
+                                    (D.field "clientX" D.float)
+                                    (D.field "clientY" D.float)
+                                )
+                            , Html.Events.onMouseLeave TooltipLeave
+                            ]
                             [ text ("Behavior: " ++ (case unit.behavior of
                                 Thinking -> "Thinking"
                                 FindingRandomTarget -> "Finding Target"
@@ -3775,6 +4120,182 @@ viewMinimapUnit scale unit =
                 []
 
         Garrisoned _ ->
+            text ""
+
+
+viewTooltip : Model -> Html Msg
+viewTooltip model =
+    case model.tooltipHover of
+        Just tooltipState ->
+            if tooltipState.hoverTime >= 500 then
+                -- Show tooltip after 500ms
+                case tooltipState.elementId of
+                    "building-Test Building" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "8px 12px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            ]
+                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
+                                [ text "Test Building" ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("HP: " ++ String.fromInt testBuildingTemplate.maxHp) ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("Size: 2×2") ]
+                            , div [ style "color" "#aaa" ]
+                                [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
+                            ]
+
+                    "tag-Building" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "This is a building" ]
+
+                    "tag-Hero" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "This is a hero" ]
+
+                    "tag-Henchman" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "This is a henchman" ]
+
+                    "behavior-Idle" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The building is not performing any actions" ]
+
+                    "behavior-Thinking" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The unit is pausing before deciding on next action" ]
+
+                    "behavior-Finding Target" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The unit is calculating a path to a random destination" ]
+
+                    "behavior-Moving" ->
+                        div
+                            [ style "position" "fixed"
+                            , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
+                            , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
+                            , style "transform" "translateX(-50%)"
+                            , style "background-color" "rgba(0, 0, 0, 0.9)"
+                            , style "border" "2px solid #666"
+                            , style "border-radius" "4px"
+                            , style "padding" "6px 10px"
+                            , style "color" "#fff"
+                            , style "font-family" "monospace"
+                            , style "font-size" "11px"
+                            , style "pointer-events" "none"
+                            , style "z-index" "1000"
+                            , style "white-space" "nowrap"
+                            ]
+                            [ text "The unit is following its path to the destination" ]
+
+                    _ ->
+                        text ""
+
+            else
+                text ""
+
+        Nothing ->
             text ""
 
 
