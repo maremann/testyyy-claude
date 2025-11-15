@@ -52,3 +52,160 @@ body {
   scrollbar-width: auto;
   scrollbar-color: #888 #222;
 }
+
+/* ========================================
+  Design Tokens (CSS Variables)
+  ======================================== */
+:root {
+  /* Colors */
+  --color-bg: #000;
+  --color-map: #1a6b1a;
+  --color-panel-bg: rgba(0, 0, 0, 0.8);
+  --color-tooltip-bg: rgba(0, 0, 0, 0.9);
+  --color-border: #666;
+  --color-border-strong: #333;
+  --color-scroll-track: #222;
+  --color-scroll-thumb: #888;
+  --color-white: #fff;
+  --color-muted: #aaa;
+  --color-gold: #FFD700;
+  --color-gold-dark: #FFA500;
+
+  /* Sizing */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  --border-1: 1px;
+  --border-2: 2px;
+
+  /* Spacing scale (px) */
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-16: 16px;
+
+  /* Z-index */
+  --z-tooltip: 1000;
+  --z-overlay: 2000;
+}
+
+/* ========================================
+  Utility Classes
+  ======================================== */
+/* Positioning */
+.rel { position: relative; }
+.abs { position: absolute; }
+.fix { position: fixed; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.pe-none { pointer-events: none; }
+.pe-auto { pointer-events: auto; }
+
+/* Flexbox */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+
+/* Gap */
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+.gap-10 { gap: var(--space-10); }
+.gap-16 { gap: var(--space-16); }
+
+/* Padding */
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+.p-8 { padding: var(--space-8); }
+.p-12 { padding: var(--space-12); }
+.px-8 { padding-left: var(--space-8); padding-right: var(--space-8); }
+.py-6 { padding-top: var(--space-6); padding-bottom: var(--space-6); }
+
+/* Borders & Radius */
+.border { border: var(--border-1) solid var(--color-border); }
+.border-2 { border: var(--border-2) solid var(--color-border); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded { border-radius: var(--radius); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Typography */
+.font-mono { font-family: monospace; }
+.font-bold { font-weight: bold; }
+.text-white { color: var(--color-white); }
+.text-muted { color: var(--color-muted); }
+.text-gold { color: var(--color-gold); }
+.text-10 { font-size: 10px; }
+.text-11 { font-size: 11px; }
+.text-12 { font-size: 12px; }
+.text-14 { font-size: 14px; }
+.nowrap { white-space: nowrap; }
+.italic { font-style: italic; }
+.select-none { user-select: none; -webkit-user-select: none; -moz-user-select: none; }
+
+/* Background helpers */
+.bg-panel { background-color: var(--color-panel-bg); }
+.bg-tooltip { background-color: var(--color-tooltip-bg); }
+.bg-black-50 { background-color: rgba(0, 0, 0, 0.5); }
+.bg-map { background-color: var(--color-map); }
+
+/* Misc */
+.cursor-pointer { cursor: pointer; }
+.cursor-move { cursor: move; }
+.cursor-help { cursor: help; }
+.overflow-hidden { overflow: hidden; }
+.overflow-visible { overflow: visible; }
+.z-tooltip { z-index: var(--z-tooltip); }
+.z-overlay { z-index: var(--z-overlay); }
+
+/* ========================================
+  Component Primitives (for upcoming refactors)
+  ======================================== */
+/* Panel base */
+.panel { background-color: var(--color-panel-bg); border: var(--border-2) solid var(--color-border); border-radius: var(--radius); }
+.panel-row { display: flex; align-items: center; gap: var(--space-6); }
+.panel-col { display: flex; flex-direction: column; gap: var(--space-6); }
+
+/* Button base */
+.button { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: var(--border-2) solid var(--color-border); border-radius: var(--radius); color: var(--color-white); background: rgba(255,255,255,0.03); cursor: pointer; user-select: none; }
+.button--selected { outline: 2px solid var(--color-gold); }
+
+/* Tooltip base (position left/top remains inline) */
+.tooltip { position: fixed; transform: translateX(-50%); background-color: var(--color-tooltip-bg); color: var(--color-white); border: var(--border-2) solid var(--color-border); border-radius: var(--radius); padding: 6px 8px; font-family: monospace; font-size: 11px; z-index: var(--z-tooltip); white-space: nowrap; }
+
+/* Overlay base */
+.overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); z-index: var(--z-overlay); }
+
+/* Bars (health/progress) */
+.bar { position: absolute; left: 0; width: 100%; background-color: rgba(0,0,0,0.5); pointer-events: none; }
+.bar__fill { height: 100%; background-color: #2E4272; }
+
+/* ========================================
+  Additional Utilities & Helpers
+  ======================================== */
+/* Margins */
+.mt-4 { margin-top: 4px; }
+.mb-4 { margin-bottom: 4px; }
+.ml-4 { margin-left: 4px; }
+.mr-4 { margin-right: 4px; }
+
+/* Colors & accents */
+.bg-gold { background-color: #FFD700; }
+.border-gold { border-color: #FFA500; }
+.text-error { color: #ff4d4f; }
+.text-green { color: #22c55e; }
+.text-red { color: #ef4444; }
+.opacity-80 { opacity: 0.8; }
+
+/* Minimap viewport indicator */
+.minimap-viewport {
+  border: 2px solid #ff0000;
+  background-color: rgba(255, 255, 255, 0.2);
+}

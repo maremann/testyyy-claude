@@ -6,7 +6,7 @@ import Browser.Events as E
 import Debug
 import Dict exposing (Dict)
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (on, stopPropagationOn)
 import Json.Decode as D
 import Random
@@ -3030,17 +3030,9 @@ view model =
                 toFloat globalButtonsMargin
     in
     div
-        [ style "width" "100vw"
-        , style "height" "100vh"
-        , style "overflow" "hidden"
-        , style "position" "relative"
-        , style "background-color" "#000"
-        , style "user-select" "none"
-        , style "-webkit-user-select" "none"
-        , style "-moz-user-select" "none"
+        [ class "root-container"
         ]
-        [ Html.node "style" [] [ text "::-webkit-scrollbar { height: 16px; width: 16px; background-color: #222; border-top: 1px solid #444; } ::-webkit-scrollbar-thumb { background-color: #888; border: 2px solid #444; border-radius: 8px; } ::-webkit-scrollbar-thumb:hover { background-color: #aaa; } * { scrollbar-width: auto; scrollbar-color: #888 #222; }" ]
-        , viewMainViewport model cursor viewportWidth viewportHeight
+        [ viewMainViewport model cursor viewportWidth viewportHeight
         , viewGoldCounter model
         , viewGlobalButtonsPanel model globalButtonsLeft
         , viewSelectionPanel model selectionPanelWidth
@@ -3085,10 +3077,7 @@ viewMainViewport model cursor viewportWidth viewportHeight =
                     Html.Attributes.class ""
     in
     div
-        [ style "width" "100%"
-        , style "height" "100%"
-        , style "position" "relative"
-        , style "overflow" "hidden"
+        [ class "main-viewport"
         , style "cursor" cursor
         , handleMouseDown
         , handleMouseMove
@@ -3129,7 +3118,7 @@ viewTerrain model viewportWidth viewportHeight =
         , style "top" (String.fromFloat terrainTop ++ "px")
         , style "width" (String.fromFloat terrainWidth ++ "px")
         , style "height" (String.fromFloat terrainHeight ++ "px")
-        , style "background-color" "#1a6b1a"
+        , class "bg-map"
         ]
         []
 
@@ -3228,21 +3217,14 @@ viewBuilding model building =
             model.gridConfig.buildGridSize
     in
     div
-        [ style "position" "absolute"
+        [ class "abs flex items-center justify-center text-white text-12 font-bold cursor-pointer select-none"
+        , style "position" "absolute"
         , style "left" (String.fromFloat screenX ++ "px")
         , style "top" (String.fromFloat screenY ++ "px")
         , style "width" (String.fromFloat buildingSizePx ++ "px")
         , style "height" (String.fromFloat buildingSizePx ++ "px")
         , style "background-color" buildingColor
         , style "border" "2px solid #333"
-        , style "display" "flex"
-        , style "align-items" "center"
-        , style "justify-content" "center"
-        , style "color" "#fff"
-        , style "font-size" "12px"
-        , style "font-weight" "bold"
-        , style "cursor" "pointer"
-        , style "user-select" "none"
         , Html.Events.onClick (SelectThing (BuildingSelected building.id))
         ]
         [ text (building.buildingType ++
@@ -3253,23 +3235,21 @@ viewBuilding model building =
             ))
         , -- Entrance overlay
           div
-            [ style "position" "absolute"
+            [ class "abs pe-none"
             , style "left" (String.fromFloat entranceOffsetX ++ "px")
             , style "top" (String.fromFloat entranceOffsetY ++ "px")
             , style "width" (String.fromFloat entranceTileSize ++ "px")
             , style "height" (String.fromFloat entranceTileSize ++ "px")
             , style "background-color" "rgba(139, 69, 19, 0.5)"
             , style "border" "1px solid rgba(0, 0, 0, 0.4)"
-            , style "pointer-events" "none"
             ]
             []
         , if isSelected then
             div
-                [ style "position" "absolute"
+                [ class "abs pe-none"
                 , style "inset" "0"
                 , style "border-radius" "4px"
                 , style "background-color" "rgba(255, 215, 0, 0.3)"
-                , style "pointer-events" "none"
                 , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
                 ]
                 []
@@ -3282,18 +3262,13 @@ viewBuilding model building =
                 toFloat building.hp / toFloat building.maxHp
           in
           div
-            [ style "position" "absolute"
+            [ class "bar"
             , style "bottom" "-8px"
-            , style "left" "0"
-            , style "width" "100%"
             , style "height" "4px"
-            , style "background-color" "rgba(0, 0, 0, 0.5)"
-            , style "pointer-events" "none"
             ]
             [ div
-                [ style "width" (String.fromFloat (healthPercent * 100) ++ "%")
-                , style "height" "100%"
-                , style "background-color" "#2E4272"
+                [ class "bar__fill"
+                , style "width" (String.fromFloat (healthPercent * 100) ++ "%")
                 ]
                 []
             ]
@@ -3349,32 +3324,22 @@ viewUnit model unit worldX worldY =
     in
     -- Outer clickable area (larger)
     div
-        [ style "position" "absolute"
+        [ class "abs cursor-pointer select-none flex items-center justify-center"
+        , style "position" "absolute"
         , style "left" (String.fromFloat (screenX - selectionRadius) ++ "px")
         , style "top" (String.fromFloat (screenY - selectionRadius) ++ "px")
         , style "width" (String.fromFloat selectionDiameter ++ "px")
         , style "height" (String.fromFloat selectionDiameter ++ "px")
-        , style "cursor" "pointer"
-        , style "user-select" "none"
         , Html.Events.onClick (SelectThing (UnitSelected unit.id))
-        , style "display" "flex"
-        , style "align-items" "center"
-        , style "justify-content" "center"
         ]
         [ -- Inner visual representation (smaller)
           div
-            [ style "width" (String.fromFloat visualDiameter ++ "px")
+            [ class "rounded-full flex items-center justify-center text-white font-bold pe-none"
+            , style "width" (String.fromFloat visualDiameter ++ "px")
             , style "height" (String.fromFloat visualDiameter ++ "px")
             , style "background-color" unit.color
             , style "border" "2px solid #333"
-            , style "border-radius" "50%"
-            , style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "center"
-            , style "color" "#fff"
             , style "font-size" "8px"
-            , style "font-weight" "bold"
-            , style "pointer-events" "none"
             ]
             [ text (case unit.unitType of
                 "Peasant" -> "P"
@@ -3384,12 +3349,10 @@ viewUnit model unit worldX worldY =
             ) ]
         , if isSelected then
             div
-                [ style "position" "absolute"
+                [ class "abs pe-none rounded-full"
                 , style "width" (String.fromFloat visualDiameter ++ "px")
                 , style "height" (String.fromFloat visualDiameter ++ "px")
-                , style "border-radius" "50%"
                 , style "background-color" "rgba(255, 215, 0, 0.3)"
-                , style "pointer-events" "none"
                 , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
                 ]
                 []
@@ -3402,18 +3365,13 @@ viewUnit model unit worldX worldY =
                 toFloat unit.hp / toFloat unit.maxHp
           in
           div
-            [ style "position" "absolute"
+            [ class "bar"
             , style "bottom" (String.fromFloat (selectionRadius - visualRadius - 6) ++ "px")
-            , style "left" "0"
-            , style "width" "100%"
             , style "height" "3px"
-            , style "background-color" "rgba(0, 0, 0, 0.5)"
-            , style "pointer-events" "none"
             ]
             [ div
-                [ style "width" (String.fromFloat (healthPercent * 100) ++ "%")
-                , style "height" "100%"
-                , style "background-color" "#2E4272"
+                [ class "bar__fill"
+                , style "width" (String.fromFloat (healthPercent * 100) ++ "%")
                 ]
                 []
             ]
@@ -3454,16 +3412,11 @@ viewSelectedUnitPath model =
                                         6
                                 in
                                 div
-                                    [ style "position" "absolute"
+                                    [ class "abs pe-none rounded-full bg-gold border border-gold opacity-80"
                                     , style "left" (String.fromFloat (screenX - dotSize / 2) ++ "px")
                                     , style "top" (String.fromFloat (screenY - dotSize / 2) ++ "px")
                                     , style "width" (String.fromFloat dotSize ++ "px")
                                     , style "height" (String.fromFloat dotSize ++ "px")
-                                    , style "background-color" "#FFD700"
-                                    , style "border-radius" "50%"
-                                    , style "border" "1px solid #FFA500"
-                                    , style "pointer-events" "none"
-                                    , style "opacity" "0.8"
                                     ]
                                     []
                             )
@@ -3522,13 +3475,12 @@ viewGrid model gridSize color viewportWidth viewportHeight =
             List.map
                 (\x ->
                     div
-                        [ style "position" "absolute"
+                        [ class "abs pe-none"
                         , style "left" (String.fromFloat (toFloat x - model.camera.x) ++ "px")
                         , style "top" (String.fromFloat terrainTop ++ "px")
                         , style "width" "1px"
                         , style "height" (String.fromFloat model.mapConfig.height ++ "px")
                         , style "background-color" color
-                        , style "pointer-events" "none"
                         ]
                         []
                 )
@@ -3541,13 +3493,12 @@ viewGrid model gridSize color viewportWidth viewportHeight =
             List.map
                 (\y ->
                     div
-                        [ style "position" "absolute"
+                        [ class "abs pe-none"
                         , style "left" (String.fromFloat terrainLeft ++ "px")
                         , style "top" (String.fromFloat (toFloat y - model.camera.y) ++ "px")
                         , style "width" (String.fromFloat model.mapConfig.width ++ "px")
                         , style "height" "1px"
                         , style "background-color" color
-                        , style "pointer-events" "none"
                         ]
                         []
                 )
@@ -3611,13 +3562,12 @@ viewPathfindingOccupancy model viewportWidth viewportHeight =
                         worldY - model.camera.y
                 in
                 div
-                    [ style "position" "absolute"
+                    [ class "abs pe-none"
                     , style "left" (String.fromFloat screenX ++ "px")
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
                     , style "background-color" "rgba(0, 0, 139, 0.5)"
-                    , style "pointer-events" "none"
                     ]
                     []
         in
@@ -3677,13 +3627,12 @@ viewBuildingOccupancy model viewportWidth viewportHeight =
                         worldY - model.camera.y
                 in
                 div
-                    [ style "position" "absolute"
+                    [ class "abs pe-none"
                     , style "left" (String.fromFloat screenX ++ "px")
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
                     , style "background-color" "rgba(255, 165, 0, 0.4)"
-                    , style "pointer-events" "none"
                     ]
                     []
         in
@@ -3750,13 +3699,12 @@ viewCityActiveArea model viewportWidth viewportHeight =
                         worldY - model.camera.y
                 in
                 div
-                    [ style "position" "absolute"
+                    [ class "abs pe-none"
                     , style "left" (String.fromFloat screenX ++ "px")
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
                     , style "background-color" "rgba(0, 255, 0, 0.2)"
-                    , style "pointer-events" "none"
                     ]
                     []
         in
@@ -3823,13 +3771,12 @@ viewCitySearchArea model viewportWidth viewportHeight =
                         worldY - model.camera.y
                 in
                 div
-                    [ style "position" "absolute"
+                    [ class "abs pe-none"
                     , style "left" (String.fromFloat screenX ++ "px")
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
                     , style "background-color" "rgba(0, 255, 0, 0.1)"
-                    , style "pointer-events" "none"
                     ]
                     []
         in
@@ -3976,56 +3923,27 @@ viewGlobalButtonsPanel model leftPosition =
 
         button label selectable isSelected =
             div
-                [ style "width" "100%"
-                , style "height" "36px"
-                , style "background-color"
-                    (if isSelected then
-                        "#555"
-
-                     else
-                        "#333"
+                [ class
+                    ("button text-12 font-bold"
+                        ++ (if isSelected then
+                                " button--selected"
+                            else
+                                ""
+                           )
                     )
-                , style "color" "#fff"
-                , style "border" "2px solid #666"
-                , style "border-radius" "4px"
-                , style "cursor" "pointer"
-                , style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "font-size" "12px"
-                , style "font-weight" "bold"
-                , style "position" "relative"
+                , style "width" "100%"
+                , style "height" "36px"
                 , Html.Events.onClick (SelectThing selectable)
                 ]
-                [ text label
-                , if isSelected then
-                    div
-                        [ style "position" "absolute"
-                        , style "inset" "0"
-                        , style "border-radius" "4px"
-                        , style "background-color" "rgba(255, 215, 0, 0.3)"
-                        , style "pointer-events" "none"
-                        , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
-                        ]
-                        []
-
-                  else
-                    text ""
-                ]
+                [ text label ]
     in
     div
-        [ style "position" "absolute"
+        [ class "panel panel-col p-8 gap-6"
+        , style "position" "absolute"
         , style "bottom" "20px"
         , style "left" (String.fromFloat leftPosition ++ "px")
         , style "width" (String.fromInt panelSize ++ "px")
         , style "height" (String.fromInt panelSize ++ "px")
-        , style "background-color" "rgba(0, 0, 0, 0.8)"
-        , style "border" "2px solid #666"
-        , style "border-radius" "4px"
-        , style "padding" "8px"
-        , style "display" "flex"
-        , style "flex-direction" "column"
-        , style "gap" "6px"
         ]
         [ button "Debug" GlobalButtonDebug (model.selected == Just GlobalButtonDebug)
         , button "Build" GlobalButtonBuild (model.selected == Just GlobalButtonBuild)
@@ -4047,7 +3965,8 @@ viewSelectionPanel model panelWidth =
                             m.debugTab == tab
                     in
                     div
-                        [ style "padding" "6px 12px"
+                        [ class "button font-mono text-10 font-bold"
+                        , style "padding" "6px 12px"
                         , style "background-color"
                             (if isActive then
                                 "#0f0"
@@ -4062,22 +3981,14 @@ viewSelectionPanel model panelWidth =
                              else
                                 "#0f0"
                             )
-                        , style "cursor" "pointer"
                         , style "border-radius" "3px"
-                        , style "font-family" "monospace"
-                        , style "font-size" "10px"
-                        , style "font-weight" "bold"
-                        , style "user-select" "none"
                         , Html.Events.onClick (SetDebugTab tab)
                         ]
                         [ text label ]
 
                 tabsColumn =
                     div
-                        [ style "display" "flex"
-                        , style "flex-direction" "column"
-                        , style "gap" "4px"
-                        , style "padding" "8px"
+                        [ class "flex flex-col gap-4 p-8"
                         , style "border-right" "1px solid #0f0"
                         , style "flex-shrink" "0"
                         ]
@@ -4098,8 +4009,7 @@ viewSelectionPanel model panelWidth =
                             debugControlsContent
             in
             div
-                [ style "display" "flex"
-                , style "flex-direction" "row"
+                [ class "flex"
                 ]
                 [ tabsColumn, tabContent ]
 
@@ -4113,18 +4023,11 @@ viewSelectionPanel model panelWidth =
                         (List.sum m.lastSimulationDeltas) / toFloat (List.length m.lastSimulationDeltas)
             in
             div
-                [ style "padding" "12px"
+                [ class "p-12 font-mono text-11 flex gap-16"
                 , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "row"
-                , style "gap" "16px"
                 ]
                 [ div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "6px"
+                    [ class "flex flex-col gap-6"
                     ]
                     [ div []
                         [ text "Camera: ("
@@ -4133,15 +4036,14 @@ viewSelectionPanel model panelWidth =
                         , text (String.fromFloat m.camera.y)
                         , text ")"
                         ]
-                    , div []
-                        [ text "Sim Frame: "
-                        , text (String.fromInt m.simulationFrameCount)
+                    , div
+                        [ class "text-muted"
                         ]
-                    , div []
-                        [ text "Avg Delta: "
-                        , text (String.fromFloat (round (avgDelta * 10) |> toFloat |> (\x -> x / 10)))
-                        , text "ms"
+                        []
+                    , div
+                        [ class "text-gold text-12 font-bold"
                         ]
+                        []
                     ]
                 ]
 
@@ -4149,10 +4051,7 @@ viewSelectionPanel model panelWidth =
             let
                 checkbox isChecked label onClick =
                     div
-                        [ style "display" "flex"
-                        , style "gap" "8px"
-                        , style "align-items" "center"
-                        , style "cursor" "pointer"
+                        [ class "flex items-center gap-8 cursor-pointer"
                         , Html.Events.onClick onClick
                         ]
                         [ div
@@ -4173,34 +4072,23 @@ viewSelectionPanel model panelWidth =
                         ]
             in
             div
-                [ style "padding" "12px"
+                [ class "p-12 font-mono text-11 flex gap-16"
                 , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "row"
-                , style "gap" "16px"
                 ]
                 [ div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "6px"
+                    [ class "flex flex-col gap-6"
                     ]
                     [ checkbox model.showBuildGrid "Build Grid" ToggleBuildGrid
                     , checkbox model.showPathfindingGrid "Pathfinding Grid" TogglePathfindingGrid
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "6px"
+                    [ class "flex flex-col gap-6"
                     ]
                     [ checkbox model.showPathfindingOccupancy "PF Occupancy" TogglePathfindingOccupancy
                     , checkbox model.showBuildingOccupancy "Build Occupancy" ToggleBuildingOccupancy
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "6px"
+                    [ class "flex flex-col gap-6"
                     ]
                     [ checkbox model.showCityActiveArea "City Active" ToggleCityActiveArea
                     , checkbox model.showCitySearchArea "City Search" ToggleCitySearchArea
@@ -4215,10 +4103,7 @@ viewSelectionPanel model panelWidth =
                             model.simulationSpeed == speed
                     in
                     div
-                        [ style "display" "flex"
-                        , style "gap" "6px"
-                        , style "align-items" "center"
-                        , style "cursor" "pointer"
+                        [ class "flex items-center gap-6 cursor-pointer"
                         , Html.Events.onClick (SetSimulationSpeed speed)
                         ]
                         [ div
@@ -4246,18 +4131,11 @@ viewSelectionPanel model panelWidth =
                         ]
             in
             div
-                [ style "padding" "12px"
+                [ class "p-12 font-mono text-11 flex gap-16"
                 , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "row"
-                , style "gap" "16px"
                 ]
                 [ div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "6px"
+                    [ class "flex flex-col gap-6"
                     ]
                     [ div [] [ text "Speed:" ]
                     , speedRadio Pause "0x"
@@ -4267,19 +4145,14 @@ viewSelectionPanel model panelWidth =
                     , speedRadio Speed100x "100x"
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "flex-direction" "column"
-                    , style "gap" "10px"
+                    [ class "flex flex-col gap-10"
                     ]
                     [ div
-                        [ style "display" "flex"
-                        , style "flex-direction" "column"
-                        , style "gap" "6px"
+                        [ class "flex flex-col gap-6"
                         ]
                         [ div [] [ text "Gold:" ]
                         , div
-                            [ style "display" "flex"
-                            , style "gap" "4px"
+                            [ class "flex gap-4"
                             ]
                             [ Html.input
                                 [ Html.Attributes.type_ "text"
@@ -4292,8 +4165,7 @@ viewSelectionPanel model panelWidth =
                                 , style "color" "#0f0"
                                 , style "border" "1px solid #0f0"
                                 , style "border-radius" "2px"
-                                , style "font-family" "monospace"
-                                , style "font-size" "11px"
+                                , class "font-mono text-11"
                                 ]
                                 []
                             , div
@@ -4301,9 +4173,7 @@ viewSelectionPanel model panelWidth =
                                 , style "background-color" "#0f0"
                                 , style "color" "#000"
                                 , style "border-radius" "2px"
-                                , style "cursor" "pointer"
-                                , style "font-weight" "bold"
-                                , style "font-size" "10px"
+                                , class "cursor-pointer font-bold text-10"
                                 , Html.Events.onClick SetGoldFromInput
                                 ]
                                 [ text "SET" ]
@@ -4323,13 +4193,8 @@ viewSelectionPanel model panelWidth =
                         (List.sum model.lastSimulationDeltas) / toFloat (List.length model.lastSimulationDeltas)
             in
             div
-                [ style "padding" "12px"
+                [ class "p-12 font-mono text-11 flex flex-col gap-6"
                 , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "6px"
                 , style "flex-shrink" "0"
                 ]
                 [ div []
@@ -4356,21 +4221,13 @@ viewSelectionPanel model panelWidth =
 
         debugGridSection =
             div
-                [ style "padding" "12px"
+                [ class "p-12 font-mono text-11 flex flex-col gap-6"
                 , style "color" "#0f0"
-                , style "font-family" "monospace"
-                , style "font-size" "11px"
-                , style "display" "flex"
-                , style "flex-direction" "column"
-                , style "gap" "6px"
                 , style "flex-shrink" "0"
                 , style "border-left" "1px solid #0f0"
                 ]
                 [ div
-                    [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
+                    [ class "flex items-center gap-8 cursor-pointer"
                     , Html.Events.onClick ToggleBuildGrid
                     ]
                     [ div
@@ -4390,10 +4247,7 @@ viewSelectionPanel model panelWidth =
                     , text "Build Grid"
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
+                    [ class "flex items-center gap-8 cursor-pointer"
                     , Html.Events.onClick TogglePathfindingGrid
                     ]
                     [ div
@@ -4413,10 +4267,7 @@ viewSelectionPanel model panelWidth =
                     , text "Pathfinding Grid"
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
+                    [ class "flex items-center gap-8 cursor-pointer"
                     , Html.Events.onClick TogglePathfindingOccupancy
                     ]
                     [ div
@@ -4436,10 +4287,7 @@ viewSelectionPanel model panelWidth =
                     , text "PF Occupancy"
                     ]
                 , div
-                    [ style "display" "flex"
-                    , style "gap" "8px"
-                    , style "align-items" "center"
-                    , style "cursor" "pointer"
+                    [ class "flex items-center gap-8 cursor-pointer"
                     , Html.Events.onClick ToggleBuildingOccupancy
                     ]
                     [ div
@@ -4611,12 +4459,9 @@ viewSelectionPanel model panelWidth =
 
         noSelectionContent =
             div
-                [ style "padding" "12px"
+                [ class "p-12 italic flex items-center"
                 , style "color" "#888"
                 , style "font-size" "14px"
-                , style "font-style" "italic"
-                , style "display" "flex"
-                , style "align-items" "center"
                 , style "height" "100%"
                 ]
                 [ text "No selection" ]
@@ -4668,16 +4513,11 @@ viewSelectionPanel model panelWidth =
                             case model.buildingTab of
                                 MainTab ->
                                     div
-                                        [ style "display" "flex"
-                                        , style "flex-direction" "row"
-                                        , style "gap" "16px"
-                                        , style "align-items" "flex-start"
+                                        [ class "flex gap-16 items-start"
                                         ]
                                         [ -- Column 1: Name, HP, Owner
                                           div
-                                            [ style "display" "flex"
-                                            , style "flex-direction" "column"
-                                            , style "gap" "4px"
+                                            [ class "flex flex-col gap-4"
                                             ]
                                             [ div
                                                 [ style "font-weight" "bold"
@@ -4726,10 +4566,8 @@ viewSelectionPanel model panelWidth =
                                             ]
                                         , -- Column 2: Garrison
                                           div
-                                            [ style "display" "flex"
-                                            , style "flex-direction" "column"
-                                            , style "gap" "4px"
-                                            ]
+                                                                                        [ class "flex flex-col gap-4"
+                                                                                        ]
                                             (if List.isEmpty building.garrisonConfig then
                                                 [ div
                                                     [ style "cursor" "help"
@@ -4761,17 +4599,12 @@ viewSelectionPanel model panelWidth =
 
                                 InfoTab ->
                                     div
-                                        [ style "display" "flex"
-                                        , style "flex-direction" "row"
-                                        , style "gap" "16px"
-                                        , style "align-items" "flex-start"
-                                        ]
+                                                                                [ class "flex gap-16 items-start"
+                                                                                ]
                                         [ -- Column 1: Behavior, Timer, Coffer
                                           div
-                                            [ style "display" "flex"
-                                            , style "flex-direction" "column"
-                                            , style "gap" "8px"
-                                            ]
+                                                                                        [ class "flex flex-col gap-8"
+                                                                                        ]
                                             ([ div
                                                 [ style "cursor" "help"
                                                 , on "mouseenter"
@@ -4813,10 +4646,8 @@ viewSelectionPanel model panelWidth =
                                             )
                                         , -- Column 2: Garrison Cooldowns
                                           div
-                                            [ style "display" "flex"
-                                            , style "flex-direction" "column"
-                                            , style "gap" "4px"
-                                            ]
+                                                                                        [ class "flex flex-col gap-4"
+                                                                                        ]
                                             (if not (List.isEmpty building.garrisonConfig) then
                                                 [ div []
                                                     [ text "Garrison Cooldowns:" ]
@@ -4843,25 +4674,21 @@ viewSelectionPanel model panelWidth =
                                         ]
                     in
                     div
-                        [ style "display" "flex"
-                        , style "flex-direction" "column"
-                        ]
+                                                [ class "flex flex-col"
+                                                ]
                         [ -- Tab buttons
                           div
-                            [ style "display" "flex"
-                            , style "gap" "4px"
-                            , style "padding" "8px 8px 0 8px"
-                            ]
+                                                        [ class "flex gap-4"
+                                                        , style "padding" "8px 8px 0 8px"
+                                                        ]
                             [ tabButton "Main" MainTab
                             , tabButton "Info" InfoTab
                             ]
                         , -- Tab content
                           div
-                            [ style "padding" "12px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            ]
+                                                        [ class "p-12 font-mono text-11"
+                                                        , style "color" "#fff"
+                                                        ]
                             [ tabContent ]
                         ]
 
@@ -4903,19 +4730,12 @@ viewSelectionPanel model panelWidth =
                                     "Coffer"
                     in
                     div
-                        [ style "padding" "12px"
+                        [ class "p-12 font-mono text-11 flex gap-16"
                         , style "color" "#fff"
-                        , style "font-family" "monospace"
-                        , style "font-size" "11px"
-                        , style "display" "flex"
-                        , style "flex-direction" "row"
-                        , style "gap" "16px"
                         ]
                         [ -- Column 1: Name and HP
                           div
-                            [ style "display" "flex"
-                            , style "flex-direction" "column"
-                            , style "gap" "4px"
+                            [ class "flex flex-col gap-4"
                             ]
                             [ div
                                 [ style "font-weight" "bold"
@@ -4925,15 +4745,14 @@ viewSelectionPanel model panelWidth =
                             , div
                                 [ style "font-size" "9px"
                                 , style "color" "#aaa"
-                                , style "display" "flex"
-                                , style "gap" "4px"
+                                , class "flex gap-4"
                                 ]
                                 ([ text "[" ]
                                     ++ (unit.tags
                                             |> List.map
                                                 (\tag ->
                                                     div
-                                                        [ style "cursor" "help"
+                                                        [ class "cursor-help"
                                                         , on "mouseenter"
                                                             (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
                                                                 (D.field "clientX" D.float)
@@ -4952,9 +4771,7 @@ viewSelectionPanel model panelWidth =
                             ]
                         , -- Column 2: Everything else
                           div
-                            [ style "display" "flex"
-                            , style "flex-direction" "column"
-                            , style "gap" "4px"
+                            [ class "flex flex-col gap-4"
                             ]
                             [ div []
                                 [ text ("Speed: " ++ String.fromFloat unit.movementSpeed ++ " cells/s") ]
@@ -4971,7 +4788,7 @@ viewSelectionPanel model panelWidth =
                                     ))
                                 ]
                             , div
-                                [ style "cursor" "help"
+                                [ class "cursor-help"
                                 , on "mouseenter"
                                     (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
                                         Dead -> "Dead"
@@ -5038,14 +4855,12 @@ viewSelectionPanel model panelWidth =
                     [ unitSelectedContent unitId ]
     in
     div
-        [ style "position" "absolute"
+        [ class "panel"
+        , style "position" "absolute"
         , style "bottom" "20px"
         , style "right" "224px"
         , style "width" (String.fromFloat panelWidth ++ "px")
         , style "height" (String.fromInt panelHeight ++ "px")
-        , style "background-color" "rgba(0, 0, 0, 0.8)"
-        , style "border" "2px solid #666"
-        , style "border-radius" "4px"
         , style "overflow-x" "scroll"
         , style "overflow-y" "hidden"
         , style "-webkit-overflow-scrolling" "touch"
@@ -5053,8 +4868,7 @@ viewSelectionPanel model panelWidth =
         , style "scrollbar-color" "#888 #222"
         ]
         [ div
-            [ style "display" "flex"
-            , style "align-items" "flex-start"
+            [ class "flex items-start"
             , style "width" "max-content"
             , style "min-width" "100%"
             ]
@@ -5069,38 +4883,30 @@ viewGoldCounter model =
             model.simulationSpeed == Pause
     in
     div
-        [ style "position" "absolute"
+        [ class "flex items-center gap-8 rounded"
+        , style "position" "absolute"
         , style "bottom" "190px"
         , style "right" "20px"
-        , style "display" "flex"
-        , style "align-items" "center"
-        , style "gap" "8px"
         , style "background-color" "rgba(0, 0, 0, 0.7)"
         , style "padding" "8px 12px"
-        , style "border-radius" "4px"
         , style "border" "2px solid #FFD700"
         ]
         [ div
-            [ style "width" "20px"
+            [ class "rounded-full bg-gold border-2 border-gold"
+            , style "width" "20px"
             , style "height" "20px"
-            , style "border-radius" "50%"
-            , style "background-color" "#FFD700"
-            , style "border" "2px solid #FFA500"
             ]
             []
         , div
-            [ style "color" "#FFD700"
-            , style "font-family" "monospace"
+            [ class "text-gold font-mono font-bold"
             , style "font-size" "18px"
-            , style "font-weight" "bold"
             ]
             [ text (String.fromInt model.gold) ]
         , if isPaused then
             div
-                [ style "color" "#FF6B6B"
-                , style "font-family" "monospace"
+                [ class "font-mono font-bold"
+                , style "color" "#FF6B6B"
                 , style "font-size" "12px"
-                , style "font-weight" "bold"
                 ]
                 [ text "PAUSED" ]
 
@@ -5158,14 +4964,14 @@ viewMinimap model =
         , style "height" (String.fromInt minimapHeight ++ "px")
         , style "background-color" "#333"
         , style "border" "2px solid #fff"
-        , style "overflow" "visible"
+        , class "overflow-visible"
         , style "cursor" cursor
         , stopPropagationOn "mousedown" (decodeMinimapMouseEvent MinimapMouseDown)
         ]
         [ div
             [ style "width" (String.fromFloat (model.mapConfig.width * scale) ++ "px")
             , style "height" (String.fromFloat (model.mapConfig.height * scale) ++ "px")
-            , style "background-color" "#1a6b1a"
+            , class "bg-map"
             , style "position" "relative"
             , style "left" (String.fromFloat padding ++ "px")
             , style "top" (String.fromFloat padding ++ "px")
@@ -5174,14 +4980,11 @@ viewMinimap model =
             (List.map (viewMinimapBuilding scale model.gridConfig.buildGridSize) model.buildings
                 ++ List.map (viewMinimapUnit scale) model.units
                 ++ [ div
-                        [ style "position" "absolute"
+                    [ class "abs pe-none minimap-viewport"
                         , style "left" (String.fromFloat (model.camera.x * scale) ++ "px")
                         , style "top" (String.fromFloat (model.camera.y * scale) ++ "px")
                         , style "width" (String.fromFloat viewportIndicatorWidth ++ "px")
                         , style "height" (String.fromFloat viewportIndicatorHeight ++ "px")
-                        , style "border" "2px solid #ff0000"
-                        , style "background-color" "rgba(255, 255, 255, 0.2)"
-                        , style "pointer-events" "none"
                         ]
                         []
                    ]
@@ -5269,7 +5072,7 @@ viewMinimapUnit scale unit =
                 , style "width" (String.fromFloat dotSize ++ "px")
                 , style "height" (String.fromFloat dotSize ++ "px")
                 , style "background-color" unitColor
-                , style "border-radius" "50%"
+                , class "rounded-full"
                 , style "pointer-events" "none"
                 ]
                 []
@@ -5287,354 +5090,158 @@ viewTooltip model =
                 case tooltipState.elementId of
                     "building-Test Building" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
                             , style "padding" "8px 12px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
                             ]
-                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
-                                [ text "Test Building" ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("HP: " ++ String.fromInt testBuildingTemplate.maxHp) ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("Size: 2×2") ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Test Building" ]
+                            , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt testBuildingTemplate.maxHp) ]
+                            , div [ class "text-muted" ] [ text ("Size: 2×2") ]
+                            , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
                             ]
 
                     "building-Castle" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 120) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
                             , style "padding" "8px 12px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
                             ]
-                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
-                                [ text "Castle" ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("HP: " ++ String.fromInt castleTemplate.maxHp) ]
-                            , div [ style "color" "#aaa" ]
-                                [ text "Size: 4×4" ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("Garrison: " ++ String.fromInt castleTemplate.garrisonSlots ++ " henchmen") ]
-                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
-                                [ text "Mission-critical building" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Castle" ]
+                            , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt castleTemplate.maxHp) ]
+                            , div [ class "text-muted" ] [ text "Size: 4×4" ]
+                            , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt castleTemplate.garrisonSlots ++ " henchmen") ]
+                            , div [ class "text-gold", style "margin-top" "4px" ] [ text "Mission-critical building" ]
                             ]
 
                     "building-House" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
                             , style "padding" "8px 12px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
                             ]
-                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
-                                [ text "House" ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("HP: " ++ String.fromInt houseTemplate.maxHp) ]
-                            , div [ style "color" "#aaa" ]
-                                [ text "Size: 2×2" ]
-                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
-                                [ text "Generates gold" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "House" ]
+                            , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt houseTemplate.maxHp) ]
+                            , div [ class "text-muted" ] [ text "Size: 2×2" ]
+                            , div [ class "text-gold", style "margin-top" "4px" ] [ text "Generates gold" ]
                             ]
 
                     "building-Warrior's Guild" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
                             , style "padding" "8px 12px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
                             ]
-                            [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
-                                [ text "Warrior's Guild" ]
-                            , div [ style "color" "#aaa" ]
-                                [ text ("HP: " ++ String.fromInt warriorsGuildTemplate.maxHp) ]
-                            , div [ style "color" "#aaa" ]
-                                [ text "Size: 3×3" ]
-                            , div [ style "color" "#FFD700", style "margin-top" "4px" ]
-                                [ text "Trains warriors, generates gold" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Warrior's Guild" ]
+                            , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt warriorsGuildTemplate.maxHp) ]
+                            , div [ class "text-muted" ] [ text "Size: 3×3" ]
+                            , div [ class "text-gold", style "margin-top" "4px" ] [ text "Trains warriors, generates gold" ]
                             ]
 
                     "tag-Building" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "This is a building" ]
 
                     "tag-Hero" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "This is a hero" ]
 
                     "tag-Henchman" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "This is a henchman" ]
 
                     "tag-Guild" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "This building produces and houses Heroes" ]
 
                     "tag-Objective" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "If this dies, the player loses the game" ]
 
                     "tag-Coffer" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "This building has a Gold Coffer" ]
 
                     "behavior-Idle" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The building is not performing any actions" ]
 
                     "behavior-Under Construction" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The building is under construction" ]
 
                     "behavior-Spawn House" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The Castle is periodically spawning Houses for the kingdom" ]
 
                     "behavior-Generate Gold" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The building is generating gold into its coffer" ]
 
                     "behavior-Thinking" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The unit is pausing before deciding on next action" ]
 
                     "behavior-Finding Target" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The unit is calculating a path to a random destination" ]
 
                     "behavior-Moving" ->
                         div
-                            [ style "position" "fixed"
+                            [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
-                            , style "transform" "translateX(-50%)"
-                            , style "background-color" "rgba(0, 0, 0, 0.9)"
-                            , style "border" "2px solid #666"
-                            , style "border-radius" "4px"
-                            , style "padding" "6px 10px"
-                            , style "color" "#fff"
-                            , style "font-family" "monospace"
-                            , style "font-size" "11px"
-                            , style "pointer-events" "none"
-                            , style "z-index" "1000"
-                            , style "white-space" "nowrap"
                             ]
                             [ text "The unit is following its path to the destination" ]
 
@@ -5660,28 +5267,15 @@ viewTooltip model =
                             case maybeBuilding of
                                 Just building ->
                                     div
-                                        [ style "position" "fixed"
+                                        [ class "tooltip pe-none"
                                         , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                                         , style "top" (String.fromFloat (tooltipState.mouseY - 80) ++ "px")
-                                        , style "transform" "translateX(-50%)"
-                                        , style "background-color" "rgba(0, 0, 0, 0.9)"
-                                        , style "border" "2px solid #666"
-                                        , style "border-radius" "4px"
                                         , style "padding" "8px 12px"
-                                        , style "color" "#fff"
-                                        , style "font-family" "monospace"
-                                        , style "font-size" "11px"
-                                        , style "pointer-events" "none"
-                                        , style "z-index" "1000"
                                         ]
-                                        [ div [ style "font-weight" "bold", style "margin-bottom" "4px" ]
-                                            [ text "Garrison" ]
-                                        , div [ style "color" "#aaa" ]
-                                            [ text ("Current: " ++ String.fromInt building.garrisonOccupied) ]
-                                        , div [ style "color" "#aaa" ]
-                                            [ text ("Capacity: " ++ String.fromInt building.garrisonSlots) ]
-                                        , div [ style "color" "#aaa" ]
-                                            [ text "Next unit: Not implemented" ]
+                                        [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Garrison" ]
+                                        , div [ class "text-muted" ] [ text ("Current: " ++ String.fromInt building.garrisonOccupied) ]
+                                        , div [ class "text-muted" ] [ text ("Capacity: " ++ String.fromInt building.garrisonSlots) ]
+                                        , div [ class "text-muted" ] [ text "Next unit: Not implemented" ]
                                         ]
 
                                 Nothing ->
@@ -5702,18 +5296,13 @@ viewPreGameOverlay model =
     case model.gameState of
         PreGame ->
             div
-                [ style "position" "fixed"
+                [ class "panel font-mono font-bold text-gold pe-none"
+                , style "position" "fixed"
                 , style "top" "20px"
                 , style "right" "20px"
-                , style "background-color" "rgba(0, 0, 0, 0.8)"
                 , style "border" "3px solid #FFD700"
-                , style "border-radius" "8px"
                 , style "padding" "16px 24px"
-                , style "color" "#FFD700"
-                , style "font-family" "monospace"
                 , style "font-size" "18px"
-                , style "font-weight" "bold"
-                , style "pointer-events" "none"
                 , style "z-index" "1000"
                 ]
                 [ text "Site your Castle" ]
@@ -5727,23 +5316,16 @@ viewGameOverOverlay model =
     case model.gameState of
         GameOver ->
             div
-                [ style "position" "fixed"
-                , style "top" "0"
-                , style "left" "0"
-                , style "width" "100vw"
-                , style "height" "100vh"
+                [ class "overlay pe-none"
                 , style "background-color" "rgba(0, 0, 0, 0.9)"
-                , style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "color" "#f00"
-                , style "font-family" "monospace"
-                , style "font-size" "64px"
-                , style "font-weight" "bold"
-                , style "z-index" "2000"
-                , style "pointer-events" "none"
                 ]
-                [ text "GAME OVER" ]
+                [ div
+                    [ class "font-mono font-bold"
+                    , style "color" "#f00"
+                    , style "font-size" "64px"
+                    ]
+                    [ text "GAME OVER" ]
+                ]
 
         _ ->
             text ""
