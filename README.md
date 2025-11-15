@@ -446,8 +446,10 @@ A real-time strategy (RTS) game built with Elm, featuring a top-down 2D view.
 
 ### Compilation
 ```bash
-elm make src/Main.elm --output=index.html
+elm make src/Main.elm --output=elm.js
 ```
+
+This compiles the Elm code to `elm.js`, which is loaded by the static `index.html` file.
 
 ### Running
 Open `index.html` in a web browser.

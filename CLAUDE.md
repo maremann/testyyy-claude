@@ -30,7 +30,8 @@ When implementing new game objects (units, buildings, resources, etc.):
 ### Project Structure
 - **Language**: Elm 0.19.1
 - **Main file**: `src/Main.elm`
-- **Output**: `index.html` (compiled)
+- **Output**: `elm.js` (compiled JavaScript)
+- **HTML**: `index.html` (static, loads elm.js)
 - **Architecture**: The Elm Architecture (Model-Update-View)
 
 ### Dependencies (elm.json)
@@ -128,9 +129,11 @@ Task.perform MessageConstructor Dom.getViewport
 
 ### Making Changes
 1. Edit `src/Main.elm`
-2. Compile: `elm make src/Main.elm --output=index.html`
+2. Compile: `elm make src/Main.elm --output=elm.js`
 3. Test in browser by opening `index.html`
 4. **Update README.md if game design changed**
+
+Note: The `index.html` file is a static HTML file that loads `elm.js`. Do not modify `index.html` during normal development - only edit `src/Main.elm` and recompile.
 
 ### Adding Dependencies
 Manually add to `elm.json` in the `"direct"` dependencies object, then compile.
@@ -143,7 +146,8 @@ Manually add to `elm.json` in the `"direct"` dependencies object, then compile.
 ## File Organization
 - `/src/Main.elm` - All game code (currently monolithic)
 - `/elm.json` - Package configuration
-- `/index.html` - Compiled output
+- `/elm.js` - Compiled JavaScript output (generated, do not edit)
+- `/index.html` - Static HTML file that loads elm.js (minimal, rarely changes)
 - `/elm-stuff/` - Build artifacts (ignored)
 - `README.md` - Game design documentation
 - `MECHANICS.md` - Game mechanics specification
