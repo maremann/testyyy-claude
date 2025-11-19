@@ -7,6 +7,7 @@ module View.Viewport exposing
     , viewTerrain
     , viewUnits
     )
+import GameStrings
 import Grid exposing (getBuildingEntrance, isValidBuildingPlacement)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
@@ -105,9 +106,10 @@ viewBuilding model building =
         sizeCells = buildingSizeToGridCells building.size
         buildingSizePx = toFloat sizeCells * model.gridConfig.buildGridSize
         buildingColor =
-            case building.buildingType of
-                "Test Building" -> "#8B4513"
-                _ -> "#666"
+            if building.buildingType == GameStrings.buildingTypeTestBuilding then
+                "#8B4513"
+            else
+                "#666"
         isSelected =
             case model.selected of
                 Just (BuildingSelected id) -> id == building.id
@@ -131,7 +133,7 @@ viewBuilding model building =
         ]
         [ text (building.buildingType ++
             (if building.behavior == UnderConstruction then
-                " (under construction)"
+                GameStrings.suffixUnderConstruction
              else
                 ""
             ))
@@ -208,11 +210,14 @@ viewUnit model unit worldX worldY =
             , style "height" (String.fromFloat visualDiameter ++ "px")
             , style "background-color" unit.color
             ]
-            [ text (case unit.unitType of
-                "Peasant" -> "P"
-                "Tax Collector" -> "T"
-                "Castle Guard" -> "G"
-                _ -> "?"
+            [ text (if unit.unitType == GameStrings.unitTypePeasant then
+                GameStrings.unitIconPeasant
+            else if unit.unitType == GameStrings.unitTypeTaxCollector then
+                GameStrings.unitIconTaxCollector
+            else if unit.unitType == GameStrings.unitTypeCastleGuard then
+                GameStrings.unitIconCastleGuard
+            else
+                GameStrings.unitIconUnknown
             ) ]
         , if isSelected then
             div

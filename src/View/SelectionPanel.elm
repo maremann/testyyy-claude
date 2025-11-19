@@ -1,5 +1,6 @@
 module View.SelectionPanel exposing (viewSelectionPanel)
 import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
+import GameStrings
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput, onMouseLeave)
@@ -356,7 +357,7 @@ viewSelectionPanel model panelWidth =
                 GameOver -> div
                         [ class "p-12 text-red font-mono text-14 font-bold"
                         ]
-                        [ text "GAME OVER" ]
+                        [ text GameStrings.uiGameOver ]
         noSelectionContent = div
                 [ class "p-12 italic flex items-center text-14"
                 , style "color" "#888"
@@ -373,12 +374,12 @@ viewSelectionPanel model panelWidth =
                     let
                         tagToString tag =
                             case tag of
-                                BuildingTag -> "Building"
-                                HeroTag -> "Hero"
-                                HenchmanTag -> "Henchman"
-                                GuildTag -> "Guild"
-                                ObjectiveTag -> "Objective"
-                                CofferTag -> "Coffer"
+                                BuildingTag -> GameStrings.tagBuilding
+                                HeroTag -> GameStrings.tagHero
+                                HenchmanTag -> GameStrings.tagHenchman
+                                GuildTag -> GameStrings.tagGuild
+                                ObjectiveTag -> GameStrings.tagObjective
+                                CofferTag -> GameStrings.tagCoffer
                         tabButton label tab = div
                                 [ class "py-6 px-12 cursor-pointer rounded-top text-10 font-bold select-none"
                                 , style "background-color" (if model.buildingTab == tab then "#555" else "#333")
@@ -429,8 +430,8 @@ viewSelectionPanel model panelWidth =
                                                 [ text ("HP: " ++ String.fromInt building.hp ++ "/" ++ String.fromInt building.maxHp) ]
                                             , div []
                                                 [ text ("Owner: " ++ (case building.owner of
-                                                    Player -> "Player"
-                                                    Enemy -> "Enemy"
+                                                    Player -> GameStrings.ownerPlayer
+                                                    Enemy -> GameStrings.ownerEnemy
                                                     ))
                                                 ]
                                             ]
@@ -475,11 +476,11 @@ viewSelectionPanel model panelWidth =
                                                 [ style "cursor" "help"
                                                 , on "mouseenter"
                                                     (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case building.behavior of
-                                                        Idle -> "Idle"
-                                                        UnderConstruction -> "Under Construction"
-                                                        SpawnHouse -> "Spawn House"
-                                                        GenerateGold -> "Generate Gold"
-                                                        BuildingDead -> "Dead"
+                                                        Idle -> GameStrings.buildingBehaviorIdle
+                                                        UnderConstruction -> GameStrings.buildingBehaviorUnderConstruction
+                                                        SpawnHouse -> GameStrings.buildingBehaviorSpawnHouse
+                                                        GenerateGold -> GameStrings.buildingBehaviorGenerateGold
+                                                        BuildingDead -> GameStrings.unitBehaviorDead
                                                         BuildingDebugError msg -> "Error: " ++ msg
                                                         )) x y)
                                                         (D.field "clientX" D.float)
@@ -488,11 +489,11 @@ viewSelectionPanel model panelWidth =
                                                 , Html.Events.onMouseLeave TooltipLeave
                                                 ]
                                                 [ text ("Behavior: " ++ (case building.behavior of
-                                                    Idle -> "Idle"
-                                                    UnderConstruction -> "Under Construction"
-                                                    SpawnHouse -> "Spawn House"
-                                                    GenerateGold -> "Generate Gold"
-                                                    BuildingDead -> "Dead"
+                                                    Idle -> GameStrings.buildingBehaviorIdle
+                                                    UnderConstruction -> GameStrings.buildingBehaviorUnderConstruction
+                                                    SpawnHouse -> GameStrings.buildingBehaviorSpawnHouse
+                                                    GenerateGold -> GameStrings.buildingBehaviorGenerateGold
+                                                    BuildingDead -> GameStrings.unitBehaviorDead
                                                     BuildingDebugError msg -> "Error: " ++ msg
                                                     ))
                                                 ]
@@ -567,12 +568,12 @@ viewSelectionPanel model panelWidth =
                     let
                         tagToString tag =
                             case tag of
-                                BuildingTag -> "Building"
-                                HeroTag -> "Hero"
-                                HenchmanTag -> "Henchman"
-                                GuildTag -> "Guild"
-                                ObjectiveTag -> "Objective"
-                                CofferTag -> "Coffer"
+                                BuildingTag -> GameStrings.tagBuilding
+                                HeroTag -> GameStrings.tagHero
+                                HenchmanTag -> GameStrings.tagHenchman
+                                GuildTag -> GameStrings.tagGuild
+                                ObjectiveTag -> GameStrings.tagObjective
+                                CofferTag -> GameStrings.tagCoffer
                     in
                     div
                         [ class "p-12 font-mono text-11 flex gap-16 text-fff"
@@ -617,8 +618,8 @@ viewSelectionPanel model panelWidth =
                                 [ text ("Speed: " ++ String.fromFloat unit.movementSpeed ++ " cells/s") ]
                             , div []
                                 [ text ("Owner: " ++ (case unit.owner of
-                                    Player -> "Player"
-                                    Enemy -> "Enemy"
+                                    Player -> GameStrings.ownerPlayer
+                                    Enemy -> GameStrings.ownerEnemy
                                     ))
                                 ]
                             , div []
@@ -631,19 +632,19 @@ viewSelectionPanel model panelWidth =
                                 [ class "cursor-help"
                                 , on "mouseenter"
                                     (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case unit.behavior of
-                                        Dead -> "Dead"
+                                        Dead -> GameStrings.unitBehaviorDead
                                         DebugError msg -> "Error: " ++ msg
-                                        WithoutHome -> "Without Home"
-                                        LookingForTask -> "Looking for Task"
-                                        GoingToSleep -> "Going to Sleep"
-                                        Sleeping -> "Sleeping"
-                                        LookForBuildRepairTarget -> "Looking for Build/Repair"
-                                        MovingToBuildRepairTarget -> "Moving to Building"
-                                        Repairing -> "Repairing"
-                                        LookForTaxTarget -> "Looking for Tax Target"
-                                        CollectingTaxes -> "Collecting Taxes"
-                                        ReturnToCastle -> "Returning to Castle"
-                                        DeliveringGold -> "Delivering Gold"
+                                        WithoutHome -> GameStrings.unitBehaviorWithoutHome
+                                        LookingForTask -> GameStrings.unitBehaviorLookingForTask
+                                        GoingToSleep -> GameStrings.unitBehaviorGoingToSleep
+                                        Sleeping -> GameStrings.unitBehaviorSleeping
+                                        LookForBuildRepairTarget -> GameStrings.unitBehaviorLookingForBuildRepair
+                                        MovingToBuildRepairTarget -> GameStrings.unitBehaviorMovingToBuilding
+                                        Repairing -> GameStrings.unitBehaviorRepairing
+                                        LookForTaxTarget -> GameStrings.unitBehaviorLookingForTaxTarget
+                                        CollectingTaxes -> GameStrings.unitBehaviorCollectingTaxes
+                                        ReturnToCastle -> GameStrings.unitBehaviorReturningToCastle
+                                        DeliveringGold -> GameStrings.unitBehaviorDeliveringGold
                                         )) x y)
                                         (D.field "clientX" D.float)
                                         (D.field "clientY" D.float)
@@ -651,19 +652,19 @@ viewSelectionPanel model panelWidth =
                                 , Html.Events.onMouseLeave TooltipLeave
                                 ]
                                 [ text ("Behavior: " ++ (case unit.behavior of
-                                    Dead -> "Dead"
+                                    Dead -> GameStrings.unitBehaviorDead
                                     DebugError msg -> "Error: " ++ msg
-                                    WithoutHome -> "Without Home"
-                                    LookingForTask -> "Looking for Task"
-                                    GoingToSleep -> "Going to Sleep"
-                                    Sleeping -> "Sleeping"
-                                    LookForBuildRepairTarget -> "Looking for Build/Repair"
-                                    MovingToBuildRepairTarget -> "Moving to Building"
-                                    Repairing -> "Repairing"
-                                    LookForTaxTarget -> "Looking for Tax Target"
-                                    CollectingTaxes -> "Collecting Taxes"
-                                    ReturnToCastle -> "Returning to Castle"
-                                    DeliveringGold -> "Delivering Gold"
+                                    WithoutHome -> GameStrings.unitBehaviorWithoutHome
+                                    LookingForTask -> GameStrings.unitBehaviorLookingForTask
+                                    GoingToSleep -> GameStrings.unitBehaviorGoingToSleep
+                                    Sleeping -> GameStrings.unitBehaviorSleeping
+                                    LookForBuildRepairTarget -> GameStrings.unitBehaviorLookingForBuildRepair
+                                    MovingToBuildRepairTarget -> GameStrings.unitBehaviorMovingToBuilding
+                                    Repairing -> GameStrings.unitBehaviorRepairing
+                                    LookForTaxTarget -> GameStrings.unitBehaviorLookingForTaxTarget
+                                    CollectingTaxes -> GameStrings.unitBehaviorCollectingTaxes
+                                    ReturnToCastle -> GameStrings.unitBehaviorReturningToCastle
+                                    DeliveringGold -> GameStrings.unitBehaviorDeliveringGold
                                     ))
                                 ]
                             ]

@@ -27,7 +27,8 @@
       "Bash(\"$file.tmp\")",
       "Bash(done)",
       "Bash(/tmp/contract_lines.sh:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(/tmp/replace_strings.sh:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,6 +5,7 @@ import BuildingTemplates exposing (castleTemplate, houseTemplate, randomUnitColo
 import Camera exposing (MinimapConfig, centerCameraOnMinimapClick, constrainCamera, getMinimapScale, isClickOnViewbox, minimapClickOffset, minimapDragToCamera)
 import Dict
 import GameHelpers exposing (createHenchman, recalculateAllPaths)
+import GameStrings
 import Grid exposing (..)
 import Json.Decode as D
 import Message exposing (Msg(..))
@@ -179,7 +180,7 @@ update msg model =
                     in
                     if isValid && canAfford then
                         let
-                            isCastle = template.name == "Castle"
+                            isCastle = template.name == GameStrings.buildingTypeCastle
                             ( buildingBehavior, buildingTags ) =
                                 if isCastle then
                                     ( SpawnHouse, [ BuildingTag, ObjectiveTag ] )
@@ -194,9 +195,9 @@ update msg model =
                                     _ -> 0
                             initialGarrisonConfig =
                                 if isCastle then
-                                    [ { unitType = "Castle Guard", maxCount = 2, currentCount = 1, spawnTimer = 0 }
-                                    , { unitType = "Tax Collector", maxCount = 1, currentCount = 1, spawnTimer = 0 }
-                                    , { unitType = "Peasant", maxCount = 3, currentCount = 1, spawnTimer = 0 }
+                                    [ { unitType = GameStrings.unitTypeCastleGuard, maxCount = 2, currentCount = 1, spawnTimer = 0 }
+                                    , { unitType = GameStrings.unitTypeTaxCollector, maxCount = 1, currentCount = 1, spawnTimer = 0 }
+                                    , { unitType = GameStrings.unitTypePeasant, maxCount = 3, currentCount = 1, spawnTimer = 0 }
                                     ]
                                 else
                                     []
@@ -233,9 +234,9 @@ update msg model =
                             ( initialUnits, nextUnitIdAfterInitial ) =
                                 if isCastle then
                                     let
-                                        unitsToCreate = [ ( "Castle Guard", model.nextUnitId )
-                                            , ( "Tax Collector", model.nextUnitId + 1 )
-                                            , ( "Peasant", model.nextUnitId + 2 )
+                                        unitsToCreate = [ ( GameStrings.unitTypeCastleGuard, model.nextUnitId )
+                                            , ( GameStrings.unitTypeTaxCollector, model.nextUnitId + 1 )
+                                            , ( GameStrings.unitTypePeasant, model.nextUnitId + 2 )
                                             ]
                                     in
                                     ( List.map
@@ -250,7 +251,7 @@ update msg model =
                             updatedUnits =
                                 recalculateAllPaths model.gridConfig model.mapConfig newPathfindingOccupancy (model.units ++ initialUnits)
                             newGameState =
-                                if model.gameState == PreGame && template.name == "Castle" then
+                                if model.gameState == PreGame && template.name == GameStrings.buildingTypeCastle then
                                     Playing
                                 else
                                     model.gameState

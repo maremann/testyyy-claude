@@ -2,6 +2,7 @@ module Simulation exposing (simulationTick)
 import BuildingBehavior exposing (updateBuildingBehavior)
 import Dict
 import GameHelpers exposing (createHenchman, recalculateAllPaths, updateUnitMovement)
+import GameStrings
 import Grid exposing (addBuildingGridOccupancy, addBuildingOccupancy, addUnitOccupancy, findAdjacentHouseLocation, removeUnitOccupancy)
 import Pathfinding exposing (calculateUnitPath)
 import Types exposing (..)
@@ -113,7 +114,7 @@ simulationTick delta model =
                                         , maxHp = 500
                                         , garrisonSlots = 0
                                         , garrisonOccupied = 0
-                                        , buildingType = "House"
+                                        , buildingType = GameStrings.buildingTypeHouse
                                         , behavior = GenerateGold
                                         , behaviorTimer = 0
                                         , behaviorDuration = 15.0 + toFloat (modBy 30000 (currentBuildingId * 1000)) / 1000.0
@@ -166,17 +167,18 @@ simulationTick delta model =
                                 building.behavior == UnderConstruction && newHp >= building.maxHp
                             ( completedBehavior, completedTags, completedDuration ) =
                                 if isConstructionComplete then
-                                    case building.buildingType of
-                                        "Warrior's Guild" -> ( GenerateGold
-                                            , [ BuildingTag, GuildTag, CofferTag ]
-                                            , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
-                                            )
-                                        "House" -> ( GenerateGold
-                                            , [ BuildingTag, CofferTag ]
-                                            , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
-                                            )
-                                        _ ->
-                                            ( building.behavior, building.tags, building.behaviorDuration )
+                                    if building.buildingType == GameStrings.buildingTypeWarriorsGuild then
+                                        ( GenerateGold
+                                        , [ BuildingTag, GuildTag, CofferTag ]
+                                        , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
+                                        )
+                                    else if building.buildingType == GameStrings.buildingTypeHouse then
+                                        ( GenerateGold
+                                        , [ BuildingTag, CofferTag ]
+                                        , 15.0 + toFloat (modBy 30000 (building.id * 1000)) / 1000.0
+                                        )
+                                    else
+                                        ( building.behavior, building.tags, building.behaviorDuration )
                                 else
                                     ( building.behavior, building.tags, building.behaviorDuration )
                         in

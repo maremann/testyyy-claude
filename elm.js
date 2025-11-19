@@ -6721,6 +6721,7 @@ var $author$project$Grid$addBuildingOccupancy = F3(
 		var cells = A2($author$project$Grid$getBuildingPathfindingCells, gridConfig, building);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
+var $author$project$GameStrings$buildingTypeCastle = 'Castle';
 var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
@@ -6768,36 +6769,28 @@ var $author$project$Types$Garrisoned = function (a) {
 var $author$project$Types$Henchman = {$: 'Henchman'};
 var $author$project$Types$HenchmanTag = {$: 'HenchmanTag'};
 var $author$project$Types$Sleeping = {$: 'Sleeping'};
+var $author$project$GameStrings$unitTypeCastleGuard = 'Castle Guard';
+var $author$project$GameStrings$unitTypePeasant = 'Peasant';
+var $author$project$GameStrings$unitTypeTaxCollector = 'Tax Collector';
 var $author$project$GameHelpers$createHenchman = F4(
 	function (unitType, unitId, buildingId, homeBuilding) {
-		var _v0 = function () {
-			switch (unitType) {
-				case 'Peasant':
-					return _Utils_Tuple3(
-						50,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				case 'Tax Collector':
-					return _Utils_Tuple3(
-						50,
-						1.5,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				case 'Castle Guard':
-					return _Utils_Tuple3(
-						100,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				default:
-					return _Utils_Tuple3(
-						50,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-			}
-		}();
+		var _v0 = _Utils_eq(unitType, $author$project$GameStrings$unitTypePeasant) ? _Utils_Tuple3(
+			50,
+			2.0,
+			_List_fromArray(
+				[$author$project$Types$HenchmanTag])) : (_Utils_eq(unitType, $author$project$GameStrings$unitTypeTaxCollector) ? _Utils_Tuple3(
+			50,
+			1.5,
+			_List_fromArray(
+				[$author$project$Types$HenchmanTag])) : (_Utils_eq(unitType, $author$project$GameStrings$unitTypeCastleGuard) ? _Utils_Tuple3(
+			100,
+			2.0,
+			_List_fromArray(
+				[$author$project$Types$HenchmanTag])) : _Utils_Tuple3(
+			50,
+			2.0,
+			_List_fromArray(
+				[$author$project$Types$HenchmanTag]))));
 		var hp = _v0.a;
 		var speed = _v0.b;
 		var tags = _v0.c;
@@ -7376,6 +7369,8 @@ var $author$project$Grid$addUnitOccupancy = F4(
 		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
+var $author$project$GameStrings$buildingTypeHouse = 'House';
+var $author$project$GameStrings$buildingTypeWarriorsGuild = 'Warrior\'s Guild';
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -7577,7 +7572,7 @@ var $author$project$BuildingBehavior$updateBuildingBehavior = F2(
 					var randomSeed = (building.id * 1000) + $elm$core$Basics$round(building.behaviorTimer * 1000);
 					var durationRandomValue = A2($elm$core$Basics$modBy, 30000, randomSeed) / 1000.0;
 					var newDuration = 15.0 + durationRandomValue;
-					var _v1 = (building.buildingType === 'House') ? _Utils_Tuple2(45, 90) : _Utils_Tuple2(450, 900);
+					var _v1 = _Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeHouse) ? _Utils_Tuple2(45, 90) : _Utils_Tuple2(450, 900);
 					var minGold = _v1.a;
 					var maxGold = _v1.b;
 					var goldRange = maxGold - minGold;
@@ -7755,36 +7750,26 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 						{behaviorTimer: newTimer}),
 					false);
 			case 'LookingForTask':
-				var _v1 = unit.unitType;
-				switch (_v1) {
-					case 'Peasant':
-						return _Utils_Tuple2(
-							_Utils_update(
-								unit,
-								{behavior: $author$project$Types$LookForBuildRepairTarget, behaviorTimer: 0}),
-							false);
-					case 'Tax Collector':
-						return _Utils_Tuple2(
-							_Utils_update(
-								unit,
-								{behavior: $author$project$Types$LookForTaxTarget, behaviorTimer: 0}),
-							false);
-					case 'Castle Guard':
-						return _Utils_Tuple2(
-							_Utils_update(
-								unit,
-								{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
-							false);
-					default:
-						return _Utils_Tuple2(
-							_Utils_update(
-								unit,
-								{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
-							false);
-				}
+				return _Utils_eq(unit.unitType, $author$project$GameStrings$unitTypePeasant) ? _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behavior: $author$project$Types$LookForBuildRepairTarget, behaviorTimer: 0}),
+					false) : (_Utils_eq(unit.unitType, $author$project$GameStrings$unitTypeTaxCollector) ? _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behavior: $author$project$Types$LookForTaxTarget, behaviorTimer: 0}),
+					false) : (_Utils_eq(unit.unitType, $author$project$GameStrings$unitTypeCastleGuard) ? _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+					false) : _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+					false)));
 			case 'GoingToSleep':
-				var _v2 = unit.homeBuilding;
-				if (_v2.$ === 'Nothing') {
+				var _v1 = unit.homeBuilding;
+				if (_v1.$ === 'Nothing') {
 					return _Utils_Tuple2(
 						_Utils_update(
 							unit,
@@ -7795,15 +7780,15 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 							}),
 						false);
 				} else {
-					var homeBuildingId = _v2.a;
-					var _v3 = $elm$core$List$head(
+					var homeBuildingId = _v1.a;
+					var _v2 = $elm$core$List$head(
 						A2(
 							$elm$core$List$filter,
 							function (b) {
 								return _Utils_eq(b.id, homeBuildingId);
 							},
 							buildings));
-					if (_v3.$ === 'Nothing') {
+					if (_v2.$ === 'Nothing') {
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
@@ -7815,21 +7800,21 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 								}),
 							false);
 					} else {
-						var homeBuilding = _v3.a;
-						var _v4 = unit.location;
-						if (_v4.$ === 'Garrisoned') {
+						var homeBuilding = _v2.a;
+						var _v3 = unit.location;
+						if (_v3.$ === 'Garrisoned') {
 							return _Utils_Tuple2(
 								_Utils_update(
 									unit,
 									{behavior: $author$project$Types$Sleeping, behaviorTimer: 0}),
 								false);
 						} else {
-							var x = _v4.a;
-							var y = _v4.b;
+							var x = _v3.a;
+							var y = _v3.b;
 							var buildGridSize = 64;
-							var _v5 = $author$project$Grid$getBuildingEntrance(homeBuilding);
-							var entranceGridX = _v5.a;
-							var entranceGridY = _v5.b;
+							var _v4 = $author$project$Grid$getBuildingEntrance(homeBuilding);
+							var entranceGridX = _v4.a;
+							var entranceGridY = _v4.b;
 							var exitGridX = entranceGridX;
 							var exitX = (exitGridX * buildGridSize) + (buildGridSize / 2);
 							var dx = x - exitX;
@@ -7881,34 +7866,34 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 						{behaviorTimer: newTimer, hp: newHp}),
 					false);
 			case 'LookForBuildRepairTarget':
-				var _v6 = unit.location;
-				if (_v6.$ === 'Garrisoned') {
-					var buildingId = _v6.a;
-					var _v7 = $elm$core$List$head(
+				var _v5 = unit.location;
+				if (_v5.$ === 'Garrisoned') {
+					var buildingId = _v5.a;
+					var _v6 = $elm$core$List$head(
 						A2(
 							$elm$core$List$filter,
 							function (b) {
 								return _Utils_eq(b.id, buildingId);
 							},
 							buildings));
-					if (_v7.$ === 'Just') {
-						var homeBuilding = _v7.a;
+					if (_v6.$ === 'Just') {
+						var homeBuilding = _v6.a;
 						var exitedUnit = A2($author$project$GameHelpers$exitGarrison, homeBuilding, unit);
-						var _v8 = function () {
-							var _v9 = exitedUnit.location;
-							if (_v9.$ === 'OnMap') {
-								var x = _v9.a;
-								var y = _v9.b;
+						var _v7 = function () {
+							var _v8 = exitedUnit.location;
+							if (_v8.$ === 'OnMap') {
+								var x = _v8.a;
+								var y = _v8.b;
 								return _Utils_Tuple2(x, y);
 							} else {
 								return _Utils_Tuple2(0, 0);
 							}
 						}();
-						var finalX = _v8.a;
-						var finalY = _v8.b;
-						var _v10 = A3($author$project$GameHelpers$findNearestDamagedBuilding, finalX, finalY, buildings);
-						if (_v10.$ === 'Just') {
-							var targetBuilding = _v10.a;
+						var finalX = _v7.a;
+						var finalY = _v7.b;
+						var _v9 = A3($author$project$GameHelpers$findNearestDamagedBuilding, finalX, finalY, buildings);
+						if (_v9.$ === 'Just') {
+							var targetBuilding = _v9.a;
 							var buildGridSize = 64;
 							var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 							var targetCellX = $elm$core$Basics$floor(targetX / 32);
@@ -7941,11 +7926,11 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 							false);
 					}
 				} else {
-					var x = _v6.a;
-					var y = _v6.b;
-					var _v11 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
-					if (_v11.$ === 'Just') {
-						var targetBuilding = _v11.a;
+					var x = _v5.a;
+					var y = _v5.b;
+					var _v10 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
+					if (_v10.$ === 'Just') {
+						var targetBuilding = _v10.a;
 						var buildGridSize = 64;
 						var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 						var targetCellX = $elm$core$Basics$floor(targetX / 32);
@@ -7970,13 +7955,13 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 					}
 				}
 			case 'MovingToBuildRepairTarget':
-				var _v12 = unit.location;
-				if (_v12.$ === 'OnMap') {
-					var x = _v12.a;
-					var y = _v12.b;
-					var _v13 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
-					if (_v13.$ === 'Just') {
-						var targetBuilding = _v13.a;
+				var _v11 = unit.location;
+				if (_v11.$ === 'OnMap') {
+					var x = _v11.a;
+					var y = _v11.b;
+					var _v12 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
+					if (_v12.$ === 'Just') {
+						var targetBuilding = _v12.a;
 						var buildGridSize = 64;
 						var buildingMinX = targetBuilding.gridX * buildGridSize;
 						var buildingMinY = targetBuilding.gridY * buildGridSize;
@@ -8006,13 +7991,13 @@ var $author$project$UnitBehavior$updateUnitBehavior = F3(
 						false);
 				}
 			case 'Repairing':
-				var _v14 = unit.location;
-				if (_v14.$ === 'OnMap') {
-					var x = _v14.a;
-					var y = _v14.b;
-					var _v15 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
-					if (_v15.$ === 'Just') {
-						var targetBuilding = _v15.a;
+				var _v13 = unit.location;
+				if (_v13.$ === 'OnMap') {
+					var x = _v13.a;
+					var y = _v13.b;
+					var _v14 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, buildings);
+					if (_v14.$ === 'Just') {
+						var targetBuilding = _v14.a;
 						var newTimer = unit.behaviorTimer + deltaSeconds;
 						var canBuild = newTimer >= 0.15;
 						var buildGridSize = 64;
@@ -8118,9 +8103,9 @@ var $author$project$GameHelpers$updateUnitMovement = F5(
 var $author$project$Simulation$simulationTick = F2(
 	function (delta, model) {
 		var updatedTooltipHover = function () {
-			var _v30 = model.tooltipHover;
-			if (_v30.$ === 'Just') {
-				var tooltipState = _v30.a;
+			var _v29 = model.tooltipHover;
+			if (_v29.$ === 'Just') {
+				var tooltipState = _v29.a;
 				return $elm$core$Maybe$Just(
 					_Utils_update(
 						tooltipState,
@@ -8130,8 +8115,8 @@ var $author$project$Simulation$simulationTick = F2(
 			}
 		}();
 		var speedMultiplier = function () {
-			var _v29 = model.simulationSpeed;
-			switch (_v29.$) {
+			var _v28 = model.simulationSpeed;
+			switch (_v28.$) {
 				case 'Pause':
 					return 0;
 				case 'Speed1x':
@@ -8246,7 +8231,7 @@ var $author$project$Simulation$simulationTick = F2(
 								behavior: $author$project$Types$GenerateGold,
 								behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 30000, currentBuildingId * 1000) / 1000.0),
 								behaviorTimer: 0,
-								buildingType: 'House',
+								buildingType: $author$project$GameStrings$buildingTypeHouse,
 								coffer: 0,
 								garrisonConfig: _List_Nil,
 								garrisonOccupied: 0,
@@ -8322,12 +8307,12 @@ var $author$project$Simulation$simulationTick = F2(
 					var repairingPeasants = A2(
 						$elm$core$List$filter,
 						function (unit) {
-							var _v26 = _Utils_Tuple2(unit.behavior, unit.location);
-							if ((_v26.a.$ === 'Repairing') && (_v26.b.$ === 'OnMap')) {
-								var _v27 = _v26.a;
-								var _v28 = _v26.b;
-								var x = _v28.a;
-								var y = _v28.b;
+							var _v25 = _Utils_Tuple2(unit.behavior, unit.location);
+							if ((_v25.a.$ === 'Repairing') && (_v25.b.$ === 'OnMap')) {
+								var _v26 = _v25.a;
+								var _v27 = _v25.b;
+								var x = _v27.a;
+								var y = _v27.b;
 								var canBuild = unit.behaviorTimer >= 0.15;
 								var buildGridSize = 64;
 								var buildingMinX = building.gridX * buildGridSize;
@@ -8345,29 +8330,15 @@ var $author$project$Simulation$simulationTick = F2(
 					var hpGain = $elm$core$List$length(repairingPeasants) * 5;
 					var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
 					var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Types$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
-					var _v24 = function () {
-						if (isConstructionComplete) {
-							var _v25 = building.buildingType;
-							switch (_v25) {
-								case 'Warrior\'s Guild':
-									return _Utils_Tuple3(
-										$author$project$Types$GenerateGold,
-										_List_fromArray(
-											[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
-										15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
-								case 'House':
-									return _Utils_Tuple3(
-										$author$project$Types$GenerateGold,
-										_List_fromArray(
-											[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
-										15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
-								default:
-									return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
-							}
-						} else {
-							return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
-						}
-					}();
+					var _v24 = isConstructionComplete ? (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeWarriorsGuild) ? _Utils_Tuple3(
+						$author$project$Types$GenerateGold,
+						_List_fromArray(
+							[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
+						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeHouse) ? _Utils_Tuple3(
+						$author$project$Types$GenerateGold,
+						_List_fromArray(
+							[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
+						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration))) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
 					var completedBehavior = _v24.a;
 					var completedTags = _v24.b;
 					var completedDuration = _v24.c;
@@ -8645,14 +8616,14 @@ var $author$project$Update$update = F2(
 					var isValid = A7($author$project$Grid$isValidBuildingPlacement, centeredGridX, centeredGridY, template.size, model.mapConfig, model.gridConfig, model.buildingOccupancy, model.buildings);
 					var canAfford = _Utils_cmp(model.gold, template.cost) > -1;
 					if (isValid && canAfford) {
-						var newGameState = (_Utils_eq(model.gameState, $author$project$Types$PreGame) && (template.name === 'Castle')) ? $author$project$Types$Playing : model.gameState;
-						var isCastle = template.name === 'Castle';
+						var newGameState = (_Utils_eq(model.gameState, $author$project$Types$PreGame) && _Utils_eq(template.name, $author$project$GameStrings$buildingTypeCastle)) ? $author$project$Types$Playing : model.gameState;
+						var isCastle = _Utils_eq(template.name, $author$project$GameStrings$buildingTypeCastle);
 						var initialHp = isCastle ? template.maxHp : A2($elm$core$Basics$max, 1, (template.maxHp / 10) | 0);
 						var initialGarrisonConfig = isCastle ? _List_fromArray(
 							[
-								{currentCount: 1, maxCount: 2, spawnTimer: 0, unitType: 'Castle Guard'},
-								{currentCount: 1, maxCount: 1, spawnTimer: 0, unitType: 'Tax Collector'},
-								{currentCount: 1, maxCount: 3, spawnTimer: 0, unitType: 'Peasant'}
+								{currentCount: 1, maxCount: 2, spawnTimer: 0, unitType: $author$project$GameStrings$unitTypeCastleGuard},
+								{currentCount: 1, maxCount: 1, spawnTimer: 0, unitType: $author$project$GameStrings$unitTypeTaxCollector},
+								{currentCount: 1, maxCount: 3, spawnTimer: 0, unitType: $author$project$GameStrings$unitTypePeasant}
 							]) : _List_Nil;
 						var initialGarrisonOccupied = A3(
 							$elm$core$List$foldl,
@@ -8686,9 +8657,9 @@ var $author$project$Update$update = F2(
 							if (isCastle) {
 								var unitsToCreate = _List_fromArray(
 									[
-										_Utils_Tuple2('Castle Guard', model.nextUnitId),
-										_Utils_Tuple2('Tax Collector', model.nextUnitId + 1),
-										_Utils_Tuple2('Peasant', model.nextUnitId + 2)
+										_Utils_Tuple2($author$project$GameStrings$unitTypeCastleGuard, model.nextUnitId),
+										_Utils_Tuple2($author$project$GameStrings$unitTypeTaxCollector, model.nextUnitId + 1),
+										_Utils_Tuple2($author$project$GameStrings$unitTypePeasant, model.nextUnitId + 2)
 									]);
 								return _Utils_Tuple2(
 									A2(
@@ -9090,6 +9061,7 @@ var $author$project$View$Debug$viewCitySearchArea = F3(
 	});
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$GameStrings$uiGameOver = 'GAME OVER';
 var $author$project$View$viewGameOverOverlay = function (model) {
 	var _v0 = model.gameState;
 	if (_v0.$ === 'GameOver') {
@@ -9109,7 +9081,7 @@ var $author$project$View$viewGameOverOverlay = function (model) {
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text('GAME OVER')
+							$elm$html$Html$text($author$project$GameStrings$uiGameOver)
 						]))
 				]));
 	} else {
@@ -9138,6 +9110,8 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $author$project$GameStrings$uiBuild = 'Build';
+var $author$project$GameStrings$uiDebug = 'Debug';
 var $author$project$View$viewGlobalButtonsPanel = F2(
 	function (model, leftPosition) {
 		var panelSize = 120;
@@ -9180,20 +9154,21 @@ var $author$project$View$viewGlobalButtonsPanel = F2(
 				[
 					A3(
 					button,
-					'Debug',
+					$author$project$GameStrings$uiDebug,
 					$author$project$Types$GlobalButtonDebug,
 					_Utils_eq(
 						model.selected,
 						$elm$core$Maybe$Just($author$project$Types$GlobalButtonDebug))),
 					A3(
 					button,
-					'Build',
+					$author$project$GameStrings$uiBuild,
 					$author$project$Types$GlobalButtonBuild,
 					_Utils_eq(
 						model.selected,
 						$elm$core$Maybe$Just($author$project$Types$GlobalButtonBuild)))
 				]));
 	});
+var $author$project$GameStrings$uiPaused = 'PAUSED';
 var $author$project$View$viewGoldCounter = function (model) {
 	var isPaused = _Utils_eq(model.simulationSpeed, $author$project$Types$Pause);
 	return A2(
@@ -9230,7 +9205,7 @@ var $author$project$View$viewGoldCounter = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('PAUSED')
+						$elm$html$Html$text($author$project$GameStrings$uiPaused)
 					])) : $elm$html$Html$text('')
 			]));
 };
@@ -9388,6 +9363,8 @@ var $author$project$View$Viewport$viewBuildingPreview = function (model) {
 var $author$project$Types$BuildingSelected = function (a) {
 	return {$: 'BuildingSelected', a: a};
 };
+var $author$project$GameStrings$buildingTypeTestBuilding = 'Test Building';
+var $author$project$GameStrings$suffixUnderConstruction = ' (under construction)';
 var $author$project$View$Viewport$viewBuilding = F2(
 	function (model, building) {
 		var worldY = building.gridY * model.gridConfig.buildGridSize;
@@ -9396,9 +9373,9 @@ var $author$project$View$Viewport$viewBuilding = F2(
 		var screenY = worldY - model.camera.y;
 		var screenX = worldX - model.camera.x;
 		var isSelected = function () {
-			var _v2 = model.selected;
-			if ((_v2.$ === 'Just') && (_v2.a.$ === 'BuildingSelected')) {
-				var id = _v2.a.a;
+			var _v1 = model.selected;
+			if ((_v1.$ === 'Just') && (_v1.a.$ === 'BuildingSelected')) {
+				var id = _v1.a.a;
 				return _Utils_eq(id, building.id);
 			} else {
 				return false;
@@ -9406,14 +9383,7 @@ var $author$project$View$Viewport$viewBuilding = F2(
 		}();
 		var entranceTileSize = model.gridConfig.buildGridSize;
 		var buildingSizePx = sizeCells * model.gridConfig.buildGridSize;
-		var buildingColor = function () {
-			var _v1 = building.buildingType;
-			if (_v1 === 'Test Building') {
-				return '#8B4513';
-			} else {
-				return '#666';
-			}
-		}();
+		var buildingColor = _Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeTestBuilding) ? '#8B4513' : '#666';
 		var _v0 = $author$project$Grid$getBuildingEntrance(building);
 		var entranceGridX = _v0.a;
 		var entranceGridY = _v0.b;
@@ -9451,7 +9421,7 @@ var $author$project$View$Viewport$viewBuilding = F2(
 					$elm$html$Html$text(
 					_Utils_ap(
 						building.buildingType,
-						_Utils_eq(building.behavior, $author$project$Types$UnderConstruction) ? ' (under construction)' : '')),
+						_Utils_eq(building.behavior, $author$project$Types$UnderConstruction) ? $author$project$GameStrings$suffixUnderConstruction : '')),
 					A2(
 					$elm$html$Html$div,
 					_List_fromArray(
@@ -9668,6 +9638,10 @@ var $author$project$View$Viewport$viewTerrain = F3(
 var $author$project$Types$UnitSelected = function (a) {
 	return {$: 'UnitSelected', a: a};
 };
+var $author$project$GameStrings$unitIconCastleGuard = 'G';
+var $author$project$GameStrings$unitIconPeasant = 'P';
+var $author$project$GameStrings$unitIconTaxCollector = 'T';
+var $author$project$GameStrings$unitIconUnknown = '?';
 var $author$project$View$Viewport$viewUnit = F4(
 	function (model, unit, worldX, worldY) {
 		var visualDiameter = model.gridConfig.pathfindingGridSize / 2;
@@ -9677,9 +9651,9 @@ var $author$project$View$Viewport$viewUnit = F4(
 		var screenY = worldY - model.camera.y;
 		var screenX = worldX - model.camera.x;
 		var isSelected = function () {
-			var _v1 = model.selected;
-			if ((_v1.$ === 'Just') && (_v1.a.$ === 'UnitSelected')) {
-				var id = _v1.a.a;
+			var _v0 = model.selected;
+			if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
+				var id = _v0.a.a;
 				return _Utils_eq(id, unit.id);
 			} else {
 				return false;
@@ -9730,19 +9704,7 @@ var $author$project$View$Viewport$viewUnit = F4(
 					_List_fromArray(
 						[
 							$elm$html$Html$text(
-							function () {
-								var _v0 = unit.unitType;
-								switch (_v0) {
-									case 'Peasant':
-										return 'P';
-									case 'Tax Collector':
-										return 'T';
-									case 'Castle Guard':
-										return 'G';
-									default:
-										return '?';
-								}
-							}())
+							_Utils_eq(unit.unitType, $author$project$GameStrings$unitTypePeasant) ? $author$project$GameStrings$unitIconPeasant : (_Utils_eq(unit.unitType, $author$project$GameStrings$unitTypeTaxCollector) ? $author$project$GameStrings$unitIconTaxCollector : (_Utils_eq(unit.unitType, $author$project$GameStrings$unitTypeCastleGuard) ? $author$project$GameStrings$unitIconCastleGuard : $author$project$GameStrings$unitIconUnknown)))
 						])),
 					isSelected ? A2(
 					$elm$html$Html$div,
@@ -10168,6 +10130,7 @@ var $author$project$View$Debug$viewPathfindingOccupancy = F3(
 				A2($elm$core$List$map, renderCell, occupiedCells));
 		}
 	});
+var $author$project$GameStrings$uiSiteYourCastle = 'Site your Castle';
 var $author$project$View$viewPreGameOverlay = function (model) {
 	var _v0 = model.gameState;
 	if (_v0.$ === 'PreGame') {
@@ -10181,7 +10144,7 @@ var $author$project$View$viewPreGameOverlay = function (model) {
 				]),
 			_List_fromArray(
 				[
-					$elm$html$Html$text('Site your Castle')
+					$elm$html$Html$text($author$project$GameStrings$uiSiteYourCastle)
 				]));
 	} else {
 		return $elm$html$Html$text('');
@@ -10221,8 +10184,12 @@ var $author$project$Message$TooltipEnter = F3(
 	});
 var $author$project$Message$TooltipLeave = {$: 'TooltipLeave'};
 var $author$project$Types$VisualizationTab = {$: 'VisualizationTab'};
+var $author$project$GameStrings$buildingBehaviorGenerateGold = 'Generate Gold';
+var $author$project$GameStrings$buildingBehaviorIdle = 'Idle';
+var $author$project$GameStrings$buildingBehaviorSpawnHouse = 'Spawn House';
+var $author$project$GameStrings$buildingBehaviorUnderConstruction = 'Under Construction';
 var $author$project$Types$Huge = {$: 'Huge'};
-var $author$project$BuildingTemplates$castleTemplate = {cost: 10000, garrisonSlots: 6, maxHp: 5000, name: 'Castle', size: $author$project$Types$Huge};
+var $author$project$BuildingTemplates$castleTemplate = {cost: 10000, garrisonSlots: 6, maxHp: 5000, name: $author$project$GameStrings$buildingTypeCastle, size: $author$project$Types$Huge};
 var $elm$html$Html$Attributes$classList = function (classes) {
 	return $elm$html$Html$Attributes$class(
 		A2(
@@ -10280,12 +10247,32 @@ var $elm$html$Html$Events$onMouseLeave = function (msg) {
 		'mouseleave',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $author$project$GameStrings$ownerEnemy = 'Enemy';
+var $author$project$GameStrings$ownerPlayer = 'Player';
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $author$project$BuildingTemplates$testBuildingTemplate = {cost: 500, garrisonSlots: 5, maxHp: 500, name: 'Test Building', size: $author$project$Types$Medium};
+var $author$project$GameStrings$tagBuilding = 'Building';
+var $author$project$GameStrings$tagCoffer = 'Coffer';
+var $author$project$GameStrings$tagGuild = 'Guild';
+var $author$project$GameStrings$tagHenchman = 'Henchman';
+var $author$project$GameStrings$tagHero = 'Hero';
+var $author$project$GameStrings$tagObjective = 'Objective';
+var $author$project$BuildingTemplates$testBuildingTemplate = {cost: 500, garrisonSlots: 5, maxHp: 500, name: $author$project$GameStrings$buildingTypeTestBuilding, size: $author$project$Types$Medium};
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $author$project$GameStrings$unitBehaviorCollectingTaxes = 'Collecting Taxes';
+var $author$project$GameStrings$unitBehaviorDead = 'Dead';
+var $author$project$GameStrings$unitBehaviorDeliveringGold = 'Delivering Gold';
+var $author$project$GameStrings$unitBehaviorGoingToSleep = 'Going to Sleep';
+var $author$project$GameStrings$unitBehaviorLookingForBuildRepair = 'Looking for Build/Repair';
+var $author$project$GameStrings$unitBehaviorLookingForTask = 'Looking for Task';
+var $author$project$GameStrings$unitBehaviorLookingForTaxTarget = 'Looking for Tax Target';
+var $author$project$GameStrings$unitBehaviorMovingToBuilding = 'Moving to Building';
+var $author$project$GameStrings$unitBehaviorRepairing = 'Repairing';
+var $author$project$GameStrings$unitBehaviorReturningToCastle = 'Returning to Castle';
+var $author$project$GameStrings$unitBehaviorSleeping = 'Sleeping';
+var $author$project$GameStrings$unitBehaviorWithoutHome = 'Without Home';
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Types$Large = {$: 'Large'};
-var $author$project$BuildingTemplates$warriorsGuildTemplate = {cost: 1500, garrisonSlots: 0, maxHp: 1000, name: 'Warrior\'s Guild', size: $author$project$Types$Large};
+var $author$project$BuildingTemplates$warriorsGuildTemplate = {cost: 1500, garrisonSlots: 0, maxHp: 1000, name: $author$project$GameStrings$buildingTypeWarriorsGuild, size: $author$project$Types$Large};
 var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 	function (model, panelWidth) {
 		var unitSelectedContent = function (unitId) {
@@ -10301,17 +10288,17 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 				var tagToString = function (tag) {
 					switch (tag.$) {
 						case 'BuildingTag':
-							return 'Building';
+							return $author$project$GameStrings$tagBuilding;
 						case 'HeroTag':
-							return 'Hero';
+							return $author$project$GameStrings$tagHero;
 						case 'HenchmanTag':
-							return 'Henchman';
+							return $author$project$GameStrings$tagHenchman;
 						case 'GuildTag':
-							return 'Guild';
+							return $author$project$GameStrings$tagGuild;
 						case 'ObjectiveTag':
-							return 'Objective';
+							return $author$project$GameStrings$tagObjective;
 						default:
-							return 'Coffer';
+							return $author$project$GameStrings$tagCoffer;
 					}
 				};
 				return A2(
@@ -10425,9 +10412,9 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 											'Owner: ' + function () {
 												var _v14 = unit.owner;
 												if (_v14.$ === 'Player') {
-													return 'Player';
+													return $author$project$GameStrings$ownerPlayer;
 												} else {
-													return 'Enemy';
+													return $author$project$GameStrings$ownerEnemy;
 												}
 											}())
 										])),
@@ -10469,32 +10456,32 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 																var _v16 = unit.behavior;
 																switch (_v16.$) {
 																	case 'Dead':
-																		return 'Dead';
+																		return $author$project$GameStrings$unitBehaviorDead;
 																	case 'DebugError':
 																		var msg = _v16.a;
 																		return 'Error: ' + msg;
 																	case 'WithoutHome':
-																		return 'Without Home';
+																		return $author$project$GameStrings$unitBehaviorWithoutHome;
 																	case 'LookingForTask':
-																		return 'Looking for Task';
+																		return $author$project$GameStrings$unitBehaviorLookingForTask;
 																	case 'GoingToSleep':
-																		return 'Going to Sleep';
+																		return $author$project$GameStrings$unitBehaviorGoingToSleep;
 																	case 'Sleeping':
-																		return 'Sleeping';
+																		return $author$project$GameStrings$unitBehaviorSleeping;
 																	case 'LookForBuildRepairTarget':
-																		return 'Looking for Build/Repair';
+																		return $author$project$GameStrings$unitBehaviorLookingForBuildRepair;
 																	case 'MovingToBuildRepairTarget':
-																		return 'Moving to Building';
+																		return $author$project$GameStrings$unitBehaviorMovingToBuilding;
 																	case 'Repairing':
-																		return 'Repairing';
+																		return $author$project$GameStrings$unitBehaviorRepairing;
 																	case 'LookForTaxTarget':
-																		return 'Looking for Tax Target';
+																		return $author$project$GameStrings$unitBehaviorLookingForTaxTarget;
 																	case 'CollectingTaxes':
-																		return 'Collecting Taxes';
+																		return $author$project$GameStrings$unitBehaviorCollectingTaxes;
 																	case 'ReturnToCastle':
-																		return 'Returning to Castle';
+																		return $author$project$GameStrings$unitBehaviorReturningToCastle;
 																	default:
-																		return 'Delivering Gold';
+																		return $author$project$GameStrings$unitBehaviorDeliveringGold;
 																}
 															}(),
 															x,
@@ -10511,32 +10498,32 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 												var _v17 = unit.behavior;
 												switch (_v17.$) {
 													case 'Dead':
-														return 'Dead';
+														return $author$project$GameStrings$unitBehaviorDead;
 													case 'DebugError':
 														var msg = _v17.a;
 														return 'Error: ' + msg;
 													case 'WithoutHome':
-														return 'Without Home';
+														return $author$project$GameStrings$unitBehaviorWithoutHome;
 													case 'LookingForTask':
-														return 'Looking for Task';
+														return $author$project$GameStrings$unitBehaviorLookingForTask;
 													case 'GoingToSleep':
-														return 'Going to Sleep';
+														return $author$project$GameStrings$unitBehaviorGoingToSleep;
 													case 'Sleeping':
-														return 'Sleeping';
+														return $author$project$GameStrings$unitBehaviorSleeping;
 													case 'LookForBuildRepairTarget':
-														return 'Looking for Build/Repair';
+														return $author$project$GameStrings$unitBehaviorLookingForBuildRepair;
 													case 'MovingToBuildRepairTarget':
-														return 'Moving to Building';
+														return $author$project$GameStrings$unitBehaviorMovingToBuilding;
 													case 'Repairing':
-														return 'Repairing';
+														return $author$project$GameStrings$unitBehaviorRepairing;
 													case 'LookForTaxTarget':
-														return 'Looking for Tax Target';
+														return $author$project$GameStrings$unitBehaviorLookingForTaxTarget;
 													case 'CollectingTaxes':
-														return 'Collecting Taxes';
+														return $author$project$GameStrings$unitBehaviorCollectingTaxes;
 													case 'ReturnToCastle':
-														return 'Returning to Castle';
+														return $author$project$GameStrings$unitBehaviorReturningToCastle;
 													default:
-														return 'Delivering Gold';
+														return $author$project$GameStrings$unitBehaviorDeliveringGold;
 												}
 											}())
 										]))
@@ -11040,17 +11027,17 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 				var tagToString = function (tag) {
 					switch (tag.$) {
 						case 'BuildingTag':
-							return 'Building';
+							return $author$project$GameStrings$tagBuilding;
 						case 'HeroTag':
-							return 'Hero';
+							return $author$project$GameStrings$tagHero;
 						case 'HenchmanTag':
-							return 'Henchman';
+							return $author$project$GameStrings$tagHenchman;
 						case 'GuildTag':
-							return 'Guild';
+							return $author$project$GameStrings$tagGuild;
 						case 'ObjectiveTag':
-							return 'Objective';
+							return $author$project$GameStrings$tagObjective;
 						default:
-							return 'Coffer';
+							return $author$project$GameStrings$tagCoffer;
 					}
 				};
 				var tabContent = function () {
@@ -11153,9 +11140,9 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 													'Owner: ' + function () {
 														var _v8 = building.owner;
 														if (_v8.$ === 'Player') {
-															return 'Player';
+															return $author$project$GameStrings$ownerPlayer;
 														} else {
-															return 'Enemy';
+															return $author$project$GameStrings$ownerEnemy;
 														}
 													}())
 												]))
@@ -11260,15 +11247,15 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 																			var _v9 = building.behavior;
 																			switch (_v9.$) {
 																				case 'Idle':
-																					return 'Idle';
+																					return $author$project$GameStrings$buildingBehaviorIdle;
 																				case 'UnderConstruction':
-																					return 'Under Construction';
+																					return $author$project$GameStrings$buildingBehaviorUnderConstruction;
 																				case 'SpawnHouse':
-																					return 'Spawn House';
+																					return $author$project$GameStrings$buildingBehaviorSpawnHouse;
 																				case 'GenerateGold':
-																					return 'Generate Gold';
+																					return $author$project$GameStrings$buildingBehaviorGenerateGold;
 																				case 'BuildingDead':
-																					return 'Dead';
+																					return $author$project$GameStrings$unitBehaviorDead;
 																				default:
 																					var msg = _v9.a;
 																					return 'Error: ' + msg;
@@ -11288,15 +11275,15 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 															var _v10 = building.behavior;
 															switch (_v10.$) {
 																case 'Idle':
-																	return 'Idle';
+																	return $author$project$GameStrings$buildingBehaviorIdle;
 																case 'UnderConstruction':
-																	return 'Under Construction';
+																	return $author$project$GameStrings$buildingBehaviorUnderConstruction;
 																case 'SpawnHouse':
-																	return 'Spawn House';
+																	return $author$project$GameStrings$buildingBehaviorSpawnHouse;
 																case 'GenerateGold':
-																	return 'Generate Gold';
+																	return $author$project$GameStrings$buildingBehaviorGenerateGold;
 																case 'BuildingDead':
-																	return 'Dead';
+																	return $author$project$GameStrings$unitBehaviorDead;
 																default:
 																	var msg = _v10.a;
 																	return 'Error: ' + msg;
@@ -11570,7 +11557,7 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('GAME OVER')
+								$elm$html$Html$text($author$project$GameStrings$uiGameOver)
 							]));
 			}
 		}();
@@ -11637,7 +11624,7 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 					content)
 				]));
 	});
-var $author$project$BuildingTemplates$houseTemplate = {cost: 0, garrisonSlots: 0, maxHp: 500, name: 'House', size: $author$project$Types$Medium};
+var $author$project$BuildingTemplates$houseTemplate = {cost: 0, garrisonSlots: 0, maxHp: 500, name: $author$project$GameStrings$buildingTypeHouse, size: $author$project$Types$Medium};
 var $author$project$View$viewTooltip = function (model) {
 	var _v0 = model.tooltipHover;
 	if (_v0.$ === 'Just') {
@@ -11671,7 +11658,7 @@ var $author$project$View$viewTooltip = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Test Building')
+										$elm$html$Html$text($author$project$GameStrings$buildingTypeTestBuilding)
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11732,7 +11719,7 @@ var $author$project$View$viewTooltip = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Castle')
+										$elm$html$Html$text($author$project$GameStrings$buildingTypeCastle)
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11804,7 +11791,7 @@ var $author$project$View$viewTooltip = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('House')
+										$elm$html$Html$text($author$project$GameStrings$buildingTypeHouse)
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11865,7 +11852,7 @@ var $author$project$View$viewTooltip = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Warrior\'s Guild')
+										$elm$html$Html$text($author$project$GameStrings$buildingTypeWarriorsGuild)
 									])),
 								A2(
 								$elm$html$Html$div,

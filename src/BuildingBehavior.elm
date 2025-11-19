@@ -1,4 +1,5 @@
 module BuildingBehavior exposing (updateBuildingBehavior)
+import GameStrings
 import Types exposing (..)
 updateBuildingBehavior : Float -> Building -> ( Building, Bool )
 updateBuildingBehavior deltaSeconds building =
@@ -29,7 +30,7 @@ updateBuildingBehavior deltaSeconds building =
                     durationRandomValue = toFloat (modBy 30000 randomSeed) / 1000.0
                     newDuration = 15.0 + durationRandomValue
                     ( minGold, maxGold ) =
-                        if building.buildingType == "House" then
+                        if building.buildingType == GameStrings.buildingTypeHouse then
                             ( 45, 90 )
                         else
                             ( 450, 900 )

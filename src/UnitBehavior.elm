@@ -3,6 +3,7 @@ module UnitBehavior exposing
     , updateUnitBehavior
     )
 import GameHelpers exposing (exitGarrison, findNearestDamagedBuilding)
+import GameStrings
 import Grid exposing (getBuildingEntrance)
 import Types exposing (..)
 updateUnitBehavior : Float -> List Building -> Unit -> ( Unit, Bool )
@@ -19,15 +20,14 @@ updateUnitBehavior deltaSeconds buildings unit =
             else
                 ( { unit | behaviorTimer = newTimer }, False )
         LookingForTask ->
-            case unit.unitType of
-                "Peasant" ->
-                    ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
-                "Tax Collector" ->
-                    ( { unit | behavior = LookForTaxTarget, behaviorTimer = 0 }, False )
-                "Castle Guard" ->
-                    ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
-                _ ->
-                    ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
+            if unit.unitType == GameStrings.unitTypePeasant then
+                ( { unit | behavior = LookForBuildRepairTarget, behaviorTimer = 0 }, False )
+            else if unit.unitType == GameStrings.unitTypeTaxCollector then
+                ( { unit | behavior = LookForTaxTarget, behaviorTimer = 0 }, False )
+            else if unit.unitType == GameStrings.unitTypeCastleGuard then
+                ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
+            else
+                ( { unit | behavior = GoingToSleep, behaviorTimer = 0 }, False )
         GoingToSleep ->
             case unit.homeBuilding of
                 Nothing ->

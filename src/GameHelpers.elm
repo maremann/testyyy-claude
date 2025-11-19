@@ -7,6 +7,7 @@ module GameHelpers exposing
     , updateUnitMovement
     )
 import Dict exposing (Dict)
+import GameStrings
 import Grid exposing (getBuildingEntrance)
 import Pathfinding exposing (calculateUnitPath)
 import Random
@@ -105,11 +106,14 @@ createHenchman : String -> Int -> Int -> Building -> Unit
 createHenchman unitType unitId buildingId homeBuilding =
     let
         ( hp, speed, tags ) =
-            case unitType of
-                "Peasant" -> ( 50, 2.0, [ HenchmanTag ] )
-                "Tax Collector" -> ( 50, 1.5, [ HenchmanTag ] )
-                "Castle Guard" -> ( 100, 2.0, [ HenchmanTag ] )
-                _ -> ( 50, 2.0, [ HenchmanTag ] )
+            if unitType == GameStrings.unitTypePeasant then
+                ( 50, 2.0, [ HenchmanTag ] )
+            else if unitType == GameStrings.unitTypeTaxCollector then
+                ( 50, 1.5, [ HenchmanTag ] )
+            else if unitType == GameStrings.unitTypeCastleGuard then
+                ( 100, 2.0, [ HenchmanTag ] )
+            else
+                ( 50, 2.0, [ HenchmanTag ] )
     in
     { id = unitId
     , owner = Player

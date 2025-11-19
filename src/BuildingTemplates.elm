@@ -5,31 +5,32 @@ module BuildingTemplates exposing
     , testBuildingTemplate
     , warriorsGuildTemplate
     )
+import GameStrings
 import Random
 import Types exposing (BuildingSize(..), BuildingTemplate)
 testBuildingTemplate : BuildingTemplate
-testBuildingTemplate = { name = "Test Building"
+testBuildingTemplate = { name = GameStrings.buildingTypeTestBuilding
     , size = Medium
     , cost = 500
     , maxHp = 500
     , garrisonSlots = 5
     }
 castleTemplate : BuildingTemplate
-castleTemplate = { name = "Castle"
+castleTemplate = { name = GameStrings.buildingTypeCastle
     , size = Huge
     , cost = 10000
     , maxHp = 5000
     , garrisonSlots = 6
     }
 houseTemplate : BuildingTemplate
-houseTemplate = { name = "House"
+houseTemplate = { name = GameStrings.buildingTypeHouse
     , size = Medium
     , cost = 0
     , maxHp = 500
     , garrisonSlots = 0
     }
 warriorsGuildTemplate : BuildingTemplate
-warriorsGuildTemplate = { name = "Warrior's Guild"
+warriorsGuildTemplate = { name = GameStrings.buildingTypeWarriorsGuild
     , size = Large
     , cost = 1500
     , maxHp = 1000

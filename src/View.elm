@@ -1,6 +1,7 @@
 module View exposing (view)
 import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
 import Dict
+import GameStrings
 import Grid exposing (getBuildingEntrance, getCityActiveArea, getCitySearchArea, isPathfindingCellOccupied, isValidBuildingPlacement)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style, placeholder, value)
@@ -97,8 +98,8 @@ viewGlobalButtonsPanel model leftPosition =
         , style "width" (String.fromInt panelSize ++ "px")
         , style "height" (String.fromInt panelSize ++ "px")
         ]
-        [ button "Debug" GlobalButtonDebug (model.selected == Just GlobalButtonDebug)
-        , button "Build" GlobalButtonBuild (model.selected == Just GlobalButtonBuild)
+        [ button GameStrings.uiDebug GlobalButtonDebug (model.selected == Just GlobalButtonDebug)
+        , button GameStrings.uiBuild GlobalButtonBuild (model.selected == Just GlobalButtonBuild)
         ]
 viewGoldCounter : Model -> Html Msg
 viewGoldCounter model =
@@ -120,7 +121,7 @@ viewGoldCounter model =
             div
                 [ class "font-mono font-bold text-12 text-red-6b"
                 ]
-                [ text "PAUSED" ]
+                [ text GameStrings.uiPaused ]
           else
             text ""
         ]
@@ -232,7 +233,7 @@ viewTooltip model =
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
                             ]
-                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Test Building" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text GameStrings.buildingTypeTestBuilding ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt testBuildingTemplate.maxHp) ]
                             , div [ class "text-muted" ] [ text ("Size: 2×2") ]
                             , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
@@ -242,7 +243,7 @@ viewTooltip model =
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 120) ++ "px")
                             ]
-                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Castle" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text GameStrings.buildingTypeCastle ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt castleTemplate.maxHp) ]
                             , div [ class "text-muted" ] [ text "Size: 4×4" ]
                             , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt castleTemplate.garrisonSlots ++ " henchmen") ]
@@ -253,7 +254,7 @@ viewTooltip model =
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
                             ]
-                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "House" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text GameStrings.buildingTypeHouse ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt houseTemplate.maxHp) ]
                             , div [ class "text-muted" ] [ text "Size: 2×2" ]
                             , div [ class "text-gold", style "margin-top" "4px" ] [ text "Generates gold" ]
@@ -263,7 +264,7 @@ viewTooltip model =
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
                             ]
-                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Warrior's Guild" ]
+                            [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text GameStrings.buildingTypeWarriorsGuild ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt warriorsGuildTemplate.maxHp) ]
                             , div [ class "text-muted" ] [ text "Size: 3×3" ]
                             , div [ class "text-gold", style "margin-top" "4px" ] [ text "Trains warriors, generates gold" ]
@@ -382,7 +383,7 @@ viewPreGameOverlay model =
                 , style "top" "20px"
                 , style "z-index" "1000"
                 ]
-                [ text "Site your Castle" ]
+                [ text GameStrings.uiSiteYourCastle ]
         _ -> text ""
 viewGameOverOverlay : Model -> Html Msg
 viewGameOverOverlay model =
@@ -393,7 +394,7 @@ viewGameOverOverlay model =
                 [ div
                     [ class "font-mono font-bold text-red text-64"
                     ]
-                    [ text "GAME OVER" ]
+                    [ text GameStrings.uiGameOver ]
                 ]
         _ -> text ""
 decodeMinimapMouseEvent : (Float -> Float -> Msg) -> D.Decoder ( Msg, Bool )
