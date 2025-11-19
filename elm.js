@@ -8866,8 +8866,7 @@ var $author$project$Main$viewGameOverOverlay = function (model) {
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('overlay pe-none'),
-					A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(0, 0, 0, 0.9)')
+					$elm$html$Html$Attributes$class('overlay pe-none bg-black-alpha-9')
 				]),
 			_List_fromArray(
 				[
@@ -8921,8 +8920,7 @@ var $author$project$Main$viewGlobalButtonsPanel = F2(
 						[
 							$elm$html$Html$Attributes$class(
 							'button text-12 font-bold' + (isSelected ? ' button--selected' : '')),
-							A2($elm$html$Html$Attributes$style, 'width', '100%'),
-							A2($elm$html$Html$Attributes$style, 'height', '36px'),
+							$elm$html$Html$Attributes$class('w-full h-36'),
 							$elm$html$Html$Events$onClick(
 							$author$project$Main$SelectThing(selectable))
 						]),
@@ -8935,8 +8933,7 @@ var $author$project$Main$viewGlobalButtonsPanel = F2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('panel panel-col p-8 gap-6 abs'),
-					A2($elm$html$Html$Attributes$style, 'bottom', '20px'),
+					$elm$html$Html$Attributes$class('panel panel-col p-8 gap-6 abs bottom-20'),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'left',
@@ -8974,11 +8971,7 @@ var $author$project$Main$viewGoldCounter = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('flex items-center gap-8 rounded border-2 border-gold abs'),
-				A2($elm$html$Html$Attributes$style, 'bottom', '190px'),
-				A2($elm$html$Html$Attributes$style, 'right', '20px'),
-				A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(0, 0, 0, 0.7)'),
-				A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+				$elm$html$Html$Attributes$class('flex items-center gap-8 rounded border-2 border-gold abs py-8 px-12 bottom-190 right-20 bg-black-alpha-7')
 			]),
 		_List_fromArray(
 			[
@@ -8986,9 +8979,7 @@ var $author$project$Main$viewGoldCounter = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('rounded-full bg-gold border-2 border-gold'),
-						A2($elm$html$Html$Attributes$style, 'width', '20px'),
-						A2($elm$html$Html$Attributes$style, 'height', '20px')
+						$elm$html$Html$Attributes$class('square-20 rounded-full bg-gold border-2 border-gold')
 					]),
 				_List_Nil),
 				A2(
@@ -9007,9 +8998,7 @@ var $author$project$Main$viewGoldCounter = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('font-mono font-bold'),
-						A2($elm$html$Html$Attributes$style, 'color', '#FF6B6B'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '12px')
+						$elm$html$Html$Attributes$class('font-mono font-bold text-12 text-red-6b')
 					]),
 				_List_fromArray(
 					[
@@ -9060,7 +9049,7 @@ var $author$project$Main$viewBuildingOccupancy = F3(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(255, 165, 0, 0.4)')
+							$elm$html$Html$Attributes$class('bg-orange-alpha')
 						]),
 					_List_Nil);
 			};
@@ -9146,11 +9135,7 @@ var $author$project$Main$viewBuildingPreview = function (model) {
 					'height',
 					$elm$core$String$fromFloat(buildingSizePx) + 'px'),
 					A2($elm$html$Html$Attributes$style, 'background-color', previewColor),
-					A2($elm$html$Html$Attributes$style, 'border', '2px solid rgba(255, 255, 255, 0.8)'),
-					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-					A2($elm$html$Html$Attributes$style, 'justify-content', 'center'),
-					A2($elm$html$Html$Attributes$style, 'color', '#fff'),
+					$elm$html$Html$Attributes$class('border-white-alpha flex items-center justify-center text-fff'),
 					A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
 					A2($elm$html$Html$Attributes$style, 'font-weight', 'bold')
 				]),
@@ -9218,7 +9203,7 @@ var $author$project$Main$viewBuilding = F2(
 					'height',
 					$elm$core$String$fromFloat(buildingSizePx) + 'px'),
 					A2($elm$html$Html$Attributes$style, 'background-color', buildingColor),
-					A2($elm$html$Html$Attributes$style, 'border', '2px solid #333'),
+					$elm$html$Html$Attributes$class('border-333'),
 					$elm$html$Html$Events$onClick(
 					$author$project$Main$SelectThing(
 						$author$project$Main$BuildingSelected(building.id)))
@@ -9250,18 +9235,15 @@ var $author$project$Main$viewBuilding = F2(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(entranceTileSize) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(139, 69, 19, 0.5)'),
-							A2($elm$html$Html$Attributes$style, 'border', '1px solid rgba(0, 0, 0, 0.4)')
+							$elm$html$Html$Attributes$class('bg-brown-entrance border-entrance')
 						]),
 					_List_Nil),
 					isSelected ? A2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
+							$elm$html$Html$Attributes$class('abs pe-none rounded bg-gold-selection'),
 							A2($elm$html$Html$Attributes$style, 'inset', '0'),
-							A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(255, 215, 0, 0.3)'),
 							A2($elm$html$Html$Attributes$style, 'box-shadow', 'inset 0 0 10px rgba(255, 215, 0, 0.6)')
 						]),
 					_List_Nil) : $elm$html$Html$text(''),
@@ -9271,8 +9253,7 @@ var $author$project$Main$viewBuilding = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('bar'),
-								A2($elm$html$Html$Attributes$style, 'bottom', '-8px'),
+								$elm$html$Html$Attributes$class('bar bottom--8'),
 								A2($elm$html$Html$Attributes$style, 'height', '4px')
 							]),
 						_List_fromArray(
@@ -9356,7 +9337,7 @@ var $author$project$Main$viewCityActiveArea = F3(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(0, 255, 0, 0.2)')
+							$elm$html$Html$Attributes$class('bg-green-alpha-2')
 						]),
 					_List_Nil);
 			};
@@ -9444,7 +9425,7 @@ var $author$project$Main$viewCitySearchArea = F3(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(0, 255, 0, 0.1)')
+							$elm$html$Html$Attributes$class('bg-green-alpha-1')
 						]),
 					_List_Nil);
 			};
@@ -9574,7 +9555,7 @@ var $author$project$Main$viewGrid = F5(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
+							$elm$html$Html$Attributes$class('abs pe-none h-1'),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'left',
@@ -9587,7 +9568,6 @@ var $author$project$Main$viewGrid = F5(
 							$elm$html$Html$Attributes$style,
 							'width',
 							$elm$core$String$fromFloat(model.mapConfig.width) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'height', '1px'),
 							A2($elm$html$Html$Attributes$style, 'background-color', color)
 						]),
 					_List_Nil);
@@ -9609,7 +9589,7 @@ var $author$project$Main$viewGrid = F5(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
+							$elm$html$Html$Attributes$class('abs pe-none w-1'),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'left',
@@ -9618,7 +9598,6 @@ var $author$project$Main$viewGrid = F5(
 							$elm$html$Html$Attributes$style,
 							'top',
 							$elm$core$String$fromFloat(terrainTop) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'width', '1px'),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'height',
@@ -9681,7 +9660,7 @@ var $author$project$Main$viewPathfindingOccupancy = F3(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(0, 0, 139, 0.5)')
+							$elm$html$Html$Attributes$class('bg-dark-blue')
 						]),
 					_List_Nil);
 			};
@@ -9855,7 +9834,7 @@ var $author$project$Main$viewUnitRadii = function (model) {
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(unit.searchRadius * 2) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'border', '2px solid rgba(255, 255, 0, 0.3)')
+							$elm$html$Html$Attributes$class('border-yellow-alpha-3')
 						]),
 					_List_Nil);
 				var activeCircle = A2(
@@ -9879,7 +9858,7 @@ var $author$project$Main$viewUnitRadii = function (model) {
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(unit.activeRadius * 2) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'border', '2px solid rgba(255, 255, 0, 0.6)')
+							$elm$html$Html$Attributes$class('border-yellow-alpha-6')
 						]),
 					_List_Nil);
 				return A2(
@@ -9958,7 +9937,7 @@ var $author$project$Main$viewUnit = F4(
 							'height',
 							$elm$core$String$fromFloat(visualDiameter) + 'px'),
 							A2($elm$html$Html$Attributes$style, 'background-color', unit.color),
-							A2($elm$html$Html$Attributes$style, 'border', '2px solid #333'),
+							$elm$html$Html$Attributes$class('border-333'),
 							A2($elm$html$Html$Attributes$style, 'font-size', '8px')
 						]),
 					_List_fromArray(
@@ -9982,7 +9961,7 @@ var $author$project$Main$viewUnit = F4(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('abs pe-none rounded-full'),
+							$elm$html$Html$Attributes$class('abs pe-none rounded-full bg-gold-selection'),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'width',
@@ -9991,7 +9970,6 @@ var $author$project$Main$viewUnit = F4(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(visualDiameter) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(255, 215, 0, 0.3)'),
 							A2($elm$html$Html$Attributes$style, 'box-shadow', 'inset 0 0 10px rgba(255, 215, 0, 0.6)')
 						]),
 					_List_Nil) : $elm$html$Html$text(''),
@@ -10253,9 +10231,7 @@ var $author$project$Main$viewMinimap = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('abs'),
-				A2($elm$html$Html$Attributes$style, 'bottom', '20px'),
-				A2($elm$html$Html$Attributes$style, 'right', '20px'),
+				$elm$html$Html$Attributes$class('abs bottom-20 right-20 overflow-visible bg-333 border-fff'),
 				A2(
 				$elm$html$Html$Attributes$style,
 				'width',
@@ -10264,9 +10240,6 @@ var $author$project$Main$viewMinimap = function (model) {
 				$elm$html$Html$Attributes$style,
 				'height',
 				$elm$core$String$fromInt(minimapHeight) + 'px'),
-				A2($elm$html$Html$Attributes$style, 'background-color', '#333'),
-				A2($elm$html$Html$Attributes$style, 'border', '2px solid #fff'),
-				$elm$html$Html$Attributes$class('overflow-visible'),
 				A2($elm$html$Html$Attributes$style, 'cursor', cursor),
 				A2(
 				$elm$html$Html$Events$stopPropagationOn,
@@ -10287,8 +10260,7 @@ var $author$project$Main$viewMinimap = function (model) {
 						$elm$html$Html$Attributes$style,
 						'height',
 						$elm$core$String$fromFloat(model.mapConfig.height * scale) + 'px'),
-						$elm$html$Html$Attributes$class('bg-map'),
-						A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+						$elm$html$Html$Attributes$class('bg-map rel border-fff-1'),
 						A2(
 						$elm$html$Html$Attributes$style,
 						'left',
@@ -10296,8 +10268,7 @@ var $author$project$Main$viewMinimap = function (model) {
 						A2(
 						$elm$html$Html$Attributes$style,
 						'top',
-						$elm$core$String$fromFloat(padding) + 'px'),
-						A2($elm$html$Html$Attributes$style, 'border', '1px solid #fff')
+						$elm$core$String$fromFloat(padding) + 'px')
 					]),
 				_Utils_ap(
 					A2(
@@ -10344,13 +10315,8 @@ var $author$project$Main$viewPreGameOverlay = function (model) {
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('panel font-mono font-bold text-gold pe-none'),
-					A2($elm$html$Html$Attributes$style, 'position', 'fixed'),
+					$elm$html$Html$Attributes$class('panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3'),
 					A2($elm$html$Html$Attributes$style, 'top', '20px'),
-					A2($elm$html$Html$Attributes$style, 'right', '20px'),
-					$elm$html$Html$Attributes$class('border-gold'),
-					A2($elm$html$Html$Attributes$style, 'border', '3px solid'),
-					A2($elm$html$Html$Attributes$style, 'padding', '16px 24px'),
 					A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
 					A2($elm$html$Html$Attributes$style, 'z-index', '1000')
 				]),
@@ -10493,8 +10459,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('p-12 font-mono text-11 flex gap-16'),
-							A2($elm$html$Html$Attributes$style, 'color', '#fff')
+							$elm$html$Html$Attributes$class('p-12 font-mono text-11 flex gap-16 text-fff')
 						]),
 					_List_fromArray(
 						[
@@ -10763,10 +10728,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '14px'),
-										A2($elm$html$Html$Attributes$style, 'height', '14px'),
-										A2($elm$html$Html$Attributes$style, 'border', '2px solid #0f0'),
-										A2($elm$html$Html$Attributes$style, 'border-radius', '2px'),
+										$elm$html$Html$Attributes$class('square-14 border-neon-green rounded-sm'),
 										A2(
 										$elm$html$Html$Attributes$style,
 										'background-color',
@@ -10873,9 +10835,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('p-12 font-mono text-11 flex flex-col gap-6'),
-						A2($elm$html$Html$Attributes$style, 'color', '#0f0'),
-						A2($elm$html$Html$Attributes$style, 'flex-shrink', '0')
+						$elm$html$Html$Attributes$class('p-12 font-mono text-11 flex flex-col gap-6 text-neon-green shrink-0')
 					]),
 				_List_fromArray(
 					[
@@ -11048,13 +11008,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '12px'),
-										A2($elm$html$Html$Attributes$style, 'height', '12px'),
-										A2($elm$html$Html$Attributes$style, 'border', '2px solid #0f0'),
-										$elm$html$Html$Attributes$class('rounded-full'),
-										A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-										A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-										A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
+										$elm$html$Html$Attributes$class('square-12 rounded-full border-neon-green flex items-center justify-center')
 									]),
 								_List_fromArray(
 									[
@@ -11062,10 +11016,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 										$elm$html$Html$div,
 										_List_fromArray(
 											[
-												A2($elm$html$Html$Attributes$style, 'width', '6px'),
-												A2($elm$html$Html$Attributes$style, 'height', '6px'),
-												A2($elm$html$Html$Attributes$style, 'background-color', '#0f0'),
-												$elm$html$Html$Attributes$class('rounded-full')
+												$elm$html$Html$Attributes$class('square-6 rounded-full bg-neon-green')
 											]),
 										_List_Nil) : $elm$html$Html$text('')
 									])),
@@ -11140,12 +11091,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 														$elm$html$Html$Attributes$value(model.goldInputValue),
 														$elm$html$Html$Attributes$placeholder('Amount'),
 														$elm$html$Html$Events$onInput($author$project$Main$GoldInputChanged),
-														A2($elm$html$Html$Attributes$style, 'width', '80px'),
-														A2($elm$html$Html$Attributes$style, 'padding', '4px'),
-														A2($elm$html$Html$Attributes$style, 'background-color', '#222'),
-														A2($elm$html$Html$Attributes$style, 'color', '#0f0'),
-														A2($elm$html$Html$Attributes$style, 'border', '1px solid #0f0'),
-														A2($elm$html$Html$Attributes$style, 'border-radius', '2px'),
+														$elm$html$Html$Attributes$class('w-80 p-4 bg-222 text-neon-green border-neon-1 rounded-sm'),
 														$elm$html$Html$Attributes$class('font-mono text-11')
 													]),
 												_List_Nil),
@@ -11153,11 +11099,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 												$elm$html$Html$div,
 												_List_fromArray(
 													[
-														A2($elm$html$Html$Attributes$style, 'padding', '4px 8px'),
-														A2($elm$html$Html$Attributes$style, 'background-color', '#0f0'),
-														A2($elm$html$Html$Attributes$style, 'color', '#000'),
-														A2($elm$html$Html$Attributes$style, 'border-radius', '2px'),
-														$elm$html$Html$Attributes$class('cursor-pointer font-bold text-10'),
+														$elm$html$Html$Attributes$class('py-4 px-8 bg-neon-green text-000 rounded-sm cursor-pointer font-bold text-10'),
 														$elm$html$Html$Events$onClick($author$project$Main$SetGoldFromInput)
 													]),
 												_List_fromArray(
@@ -11188,8 +11130,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('button font-mono text-10 font-bold'),
-								A2($elm$html$Html$Attributes$style, 'padding', '6px 12px'),
+								$elm$html$Html$Attributes$class('button font-mono text-10 font-bold py-6 px-12'),
 								A2(
 								$elm$html$Html$Attributes$style,
 								'background-color',
@@ -11198,7 +11139,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 								$elm$html$Html$Attributes$style,
 								'color',
 								isActive ? '#000' : '#0f0'),
-								A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
+								$elm$html$Html$Attributes$class('rounded-3'),
 								$elm$html$Html$Events$onClick(
 								$author$project$Main$SetDebugTab(tab))
 							]),
@@ -11514,8 +11455,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 												$elm$html$Html$div,
 												_List_fromArray(
 													[
-														A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-														A2($elm$html$Html$Attributes$style, 'color', '#aaa')
+														$elm$html$Html$Attributes$class('text-10 text-aaa')
 													]),
 												_List_fromArray(
 													[
@@ -11589,13 +11529,11 @@ var $author$project$Main$viewSelectionPanel = F2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'padding', '6px 12px'),
+									$elm$html$Html$Attributes$class('py-6 px-12 cursor-pointer rounded-top'),
 									A2(
 									$elm$html$Html$Attributes$style,
 									'background-color',
 									_Utils_eq(model.buildingTab, tab) ? '#555' : '#333'),
-									A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '4px 4px 0 0'),
 									A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
 									A2($elm$html$Html$Attributes$style, 'font-weight', 'bold'),
 									A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
@@ -11619,8 +11557,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('flex gap-4'),
-									A2($elm$html$Html$Attributes$style, 'padding', '8px 8px 0 8px')
+									$elm$html$Html$Attributes$class('flex gap-4 pt-8 pr-8 pl-8 pb-0')
 								]),
 							_List_fromArray(
 								[
@@ -11744,10 +11681,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('abs pe-none'),
+								$elm$html$Html$Attributes$class('abs pe-none rounded bg-white-alpha-3'),
 								A2($elm$html$Html$Attributes$style, 'inset', '0'),
-								A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
-								A2($elm$html$Html$Attributes$style, 'background-color', 'rgba(255, 255, 255, 0.3)'),
 								A2($elm$html$Html$Attributes$style, 'box-shadow', 'inset 0 0 10px rgba(255, 255, 255, 0.6)')
 							]),
 						_List_Nil) : $elm$html$Html$text('')
@@ -11761,9 +11696,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-								A2($elm$html$Html$Attributes$style, 'gap', '8px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px')
+								$elm$html$Html$Attributes$class('flex gap-8 p-8')
 							]),
 						_List_fromArray(
 							[
@@ -11774,9 +11707,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-								A2($elm$html$Html$Attributes$style, 'gap', '8px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px')
+								$elm$html$Html$Attributes$class('flex gap-8 p-8')
 							]),
 						_List_fromArray(
 							[
@@ -11832,9 +11763,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('panel abs'),
-					A2($elm$html$Html$Attributes$style, 'bottom', '20px'),
-					A2($elm$html$Html$Attributes$style, 'right', '224px'),
+					$elm$html$Html$Attributes$class('panel abs bottom-20 right-224'),
 					A2(
 					$elm$html$Html$Attributes$style,
 					'width',
@@ -11855,8 +11784,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('flex items-start'),
-							A2($elm$html$Html$Attributes$style, 'width', 'max-content'),
+							$elm$html$Html$Attributes$class('flex items-start w-max'),
 							A2($elm$html$Html$Attributes$style, 'min-width', '100%')
 						]),
 					content)
@@ -11875,7 +11803,7 @@ var $author$project$Main$viewTooltip = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('tooltip pe-none'),
+								$elm$html$Html$Attributes$class('tooltip pe-none py-8 px-12'),
 								A2(
 								$elm$html$Html$Attributes$style,
 								'left',
@@ -11883,8 +11811,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								A2(
 								$elm$html$Html$Attributes$style,
 								'top',
-								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px')
 							]),
 						_List_fromArray(
 							[
@@ -11937,7 +11864,7 @@ var $author$project$Main$viewTooltip = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('tooltip pe-none'),
+								$elm$html$Html$Attributes$class('tooltip pe-none py-8 px-12'),
 								A2(
 								$elm$html$Html$Attributes$style,
 								'left',
@@ -11945,8 +11872,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								A2(
 								$elm$html$Html$Attributes$style,
 								'top',
-								$elm$core$String$fromFloat(tooltipState.mouseY - 120) + 'px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+								$elm$core$String$fromFloat(tooltipState.mouseY - 120) + 'px')
 							]),
 						_List_fromArray(
 							[
@@ -12010,7 +11936,7 @@ var $author$project$Main$viewTooltip = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('tooltip pe-none'),
+								$elm$html$Html$Attributes$class('tooltip pe-none py-8 px-12'),
 								A2(
 								$elm$html$Html$Attributes$style,
 								'left',
@@ -12018,8 +11944,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								A2(
 								$elm$html$Html$Attributes$style,
 								'top',
-								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px')
 							]),
 						_List_fromArray(
 							[
@@ -12072,7 +11997,7 @@ var $author$project$Main$viewTooltip = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('tooltip pe-none'),
+								$elm$html$Html$Attributes$class('tooltip pe-none py-8 px-12'),
 								A2(
 								$elm$html$Html$Attributes$style,
 								'left',
@@ -12080,8 +12005,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								A2(
 								$elm$html$Html$Attributes$style,
 								'top',
-								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px'),
-								A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+								$elm$core$String$fromFloat(tooltipState.mouseY - 100) + 'px')
 							]),
 						_List_fromArray(
 							[
@@ -12400,7 +12324,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('tooltip pe-none'),
+										$elm$html$Html$Attributes$class('tooltip pe-none py-8 px-12'),
 										A2(
 										$elm$html$Html$Attributes$style,
 										'left',
@@ -12408,8 +12332,7 @@ var $author$project$Main$viewTooltip = function (model) {
 										A2(
 										$elm$html$Html$Attributes$style,
 										'top',
-										$elm$core$String$fromFloat(tooltipState.mouseY - 80) + 'px'),
-										A2($elm$html$Html$Attributes$style, 'padding', '8px 12px')
+										$elm$core$String$fromFloat(tooltipState.mouseY - 80) + 'px')
 									]),
 								_List_fromArray(
 									[

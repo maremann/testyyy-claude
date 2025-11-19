@@ -3223,7 +3223,7 @@ viewBuilding model building =
         , style "width" (String.fromFloat buildingSizePx ++ "px")
         , style "height" (String.fromFloat buildingSizePx ++ "px")
         , style "background-color" buildingColor
-        , style "border" "2px solid #333"
+        , class "border-333"
         , Html.Events.onClick (SelectThing (BuildingSelected building.id))
         ]
         [ text (building.buildingType ++
@@ -3239,16 +3239,13 @@ viewBuilding model building =
             , style "top" (String.fromFloat entranceOffsetY ++ "px")
             , style "width" (String.fromFloat entranceTileSize ++ "px")
             , style "height" (String.fromFloat entranceTileSize ++ "px")
-            , style "background-color" "rgba(139, 69, 19, 0.5)"
-            , style "border" "1px solid rgba(0, 0, 0, 0.4)"
+            , class "bg-brown-entrance border-entrance"
             ]
             []
         , if isSelected then
             div
-                [ class "abs pe-none"
+                [ class "abs pe-none rounded bg-gold-selection"
                 , style "inset" "0"
-                , style "border-radius" "4px"
-                , style "background-color" "rgba(255, 215, 0, 0.3)"
                 , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
                 ]
                 []
@@ -3261,8 +3258,7 @@ viewBuilding model building =
                 toFloat building.hp / toFloat building.maxHp
           in
           div
-            [ class "bar"
-            , style "bottom" "-8px"
+            [ class "bar bottom--8"
             , style "height" "4px"
             ]
             [ div
@@ -3336,7 +3332,7 @@ viewUnit model unit worldX worldY =
             , style "width" (String.fromFloat visualDiameter ++ "px")
             , style "height" (String.fromFloat visualDiameter ++ "px")
             , style "background-color" unit.color
-            , style "border" "2px solid #333"
+            , class "border-333"
             , style "font-size" "8px"
             ]
             [ text (case unit.unitType of
@@ -3347,10 +3343,9 @@ viewUnit model unit worldX worldY =
             ) ]
         , if isSelected then
             div
-                [ class "abs pe-none rounded-full"
+                [ class "abs pe-none rounded-full bg-gold-selection"
                 , style "width" (String.fromFloat visualDiameter ++ "px")
                 , style "height" (String.fromFloat visualDiameter ++ "px")
-                , style "background-color" "rgba(255, 215, 0, 0.3)"
                 , style "box-shadow" "inset 0 0 10px rgba(255, 215, 0, 0.6)"
                 ]
                 []
@@ -3473,10 +3468,9 @@ viewGrid model gridSize color viewportWidth viewportHeight =
             List.map
                 (\x ->
                     div
-                        [ class "abs pe-none"
+                        [ class "abs pe-none w-1"
                         , style "left" (String.fromFloat (toFloat x - model.camera.x) ++ "px")
                         , style "top" (String.fromFloat terrainTop ++ "px")
-                        , style "width" "1px"
                         , style "height" (String.fromFloat model.mapConfig.height ++ "px")
                         , style "background-color" color
                         ]
@@ -3491,11 +3485,10 @@ viewGrid model gridSize color viewportWidth viewportHeight =
             List.map
                 (\y ->
                     div
-                        [ class "abs pe-none"
+                        [ class "abs pe-none h-1"
                         , style "left" (String.fromFloat terrainLeft ++ "px")
                         , style "top" (String.fromFloat (toFloat y - model.camera.y) ++ "px")
                         , style "width" (String.fromFloat model.mapConfig.width ++ "px")
-                        , style "height" "1px"
                         , style "background-color" color
                         ]
                         []
@@ -3565,7 +3558,7 @@ viewPathfindingOccupancy model viewportWidth viewportHeight =
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
-                    , style "background-color" "rgba(0, 0, 139, 0.5)"
+                    , class "bg-dark-blue"
                     ]
                     []
         in
@@ -3630,7 +3623,7 @@ viewBuildingOccupancy model viewportWidth viewportHeight =
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
-                    , style "background-color" "rgba(255, 165, 0, 0.4)"
+                    , class "bg-orange-alpha"
                     ]
                     []
         in
@@ -3702,7 +3695,7 @@ viewCityActiveArea model viewportWidth viewportHeight =
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
-                    , style "background-color" "rgba(0, 255, 0, 0.2)"
+                    , class "bg-green-alpha-2"
                     ]
                     []
         in
@@ -3774,7 +3767,7 @@ viewCitySearchArea model viewportWidth viewportHeight =
                     , style "top" (String.fromFloat screenY ++ "px")
                     , style "width" (String.fromFloat gridSize ++ "px")
                     , style "height" (String.fromFloat gridSize ++ "px")
-                    , style "background-color" "rgba(0, 255, 0, 0.1)"
+                    , class "bg-green-alpha-1"
                     ]
                     []
         in
@@ -3809,7 +3802,7 @@ viewUnitRadii model =
                                         , style "top" (String.fromFloat (screenY - unit.activeRadius) ++ "px")
                                         , style "width" (String.fromFloat (unit.activeRadius * 2) ++ "px")
                                         , style "height" (String.fromFloat (unit.activeRadius * 2) ++ "px")
-                                        , style "border" "2px solid rgba(255, 255, 0, 0.6)"
+                                        , class "border-yellow-alpha-6"
                                         ]
                                         []
 
@@ -3821,7 +3814,7 @@ viewUnitRadii model =
                                         , style "top" (String.fromFloat (screenY - unit.searchRadius) ++ "px")
                                         , style "width" (String.fromFloat (unit.searchRadius * 2) ++ "px")
                                         , style "height" (String.fromFloat (unit.searchRadius * 2) ++ "px")
-                                        , style "border" "2px solid rgba(255, 255, 0, 0.3)"
+                                        , class "border-yellow-alpha-3"
                                         ]
                                         []
                             in
@@ -3894,11 +3887,7 @@ viewBuildingPreview model =
                 , style "width" (String.fromFloat buildingSizePx ++ "px")
                 , style "height" (String.fromFloat buildingSizePx ++ "px")
                 , style "background-color" previewColor
-                , style "border" "2px solid rgba(255, 255, 255, 0.8)"
-                , style "display" "flex"
-                , style "align-items" "center"
-                , style "justify-content" "center"
-                , style "color" "#fff"
+                , class "border-white-alpha flex items-center justify-center text-fff"
                 , style "font-size" "14px"
                 , style "font-weight" "bold"
                 ]
@@ -3924,15 +3913,13 @@ viewGlobalButtonsPanel model leftPosition =
                                 ""
                            )
                     )
-                , style "width" "100%"
-                , style "height" "36px"
+                , class "w-full h-36"
                 , Html.Events.onClick (SelectThing selectable)
                 ]
                 [ text label ]
     in
     div
-        [ class "panel panel-col p-8 gap-6 abs"
-        , style "bottom" "20px"
+        [ class "panel panel-col p-8 gap-6 abs bottom-20"
         , style "left" (String.fromFloat leftPosition ++ "px")
         , style "width" (String.fromInt panelSize ++ "px")
         , style "height" (String.fromInt panelSize ++ "px")
@@ -3957,8 +3944,7 @@ viewSelectionPanel model panelWidth =
                             m.debugTab == tab
                     in
                     div
-                        [ class "button font-mono text-10 font-bold"
-                        , style "padding" "6px 12px"
+                        [ class "button font-mono text-10 font-bold py-6 px-12"
                         , style "background-color"
                             (if isActive then
                                 "#0f0"
@@ -3973,7 +3959,7 @@ viewSelectionPanel model panelWidth =
                              else
                                 "#0f0"
                             )
-                        , style "border-radius" "3px"
+                        , class "rounded-3"
                         , Html.Events.onClick (SetDebugTab tab)
                         ]
                         [ text label ]
@@ -4046,10 +4032,7 @@ viewSelectionPanel model panelWidth =
                         , Html.Events.onClick onClick
                         ]
                         [ div
-                            [ style "width" "14px"
-                            , style "height" "14px"
-                            , style "border" "2px solid #0f0"
-                            , style "border-radius" "2px"
+                            [ class "square-14 border-neon-green rounded-sm"
                             , style "background-color"
                                 (if isChecked then
                                     "#0f0"
@@ -4097,20 +4080,11 @@ viewSelectionPanel model panelWidth =
                         , Html.Events.onClick (SetSimulationSpeed speed)
                         ]
                         [ div
-                            [ style "width" "12px"
-                            , style "height" "12px"
-                            , style "border" "2px solid #0f0"
-                            , class "rounded-full"
-                            , style "display" "flex"
-                            , style "align-items" "center"
-                            , style "justify-content" "center"
+                            [ class "square-12 rounded-full border-neon-green flex items-center justify-center"
                             ]
                             [ if isSelected then
                                 div
-                                    [ style "width" "6px"
-                                    , style "height" "6px"
-                                    , style "background-color" "#0f0"
-                                    , class "rounded-full"
+                                    [ class "square-6 rounded-full bg-neon-green"
                                     ]
                                     []
 
@@ -4148,21 +4122,12 @@ viewSelectionPanel model panelWidth =
                                 , Html.Attributes.value model.goldInputValue
                                 , Html.Attributes.placeholder "Amount"
                                 , Html.Events.onInput GoldInputChanged
-                                , style "width" "80px"
-                                , style "padding" "4px"
-                                , style "background-color" "#222"
-                                , style "color" "#0f0"
-                                , style "border" "1px solid #0f0"
-                                , style "border-radius" "2px"
+                                , class "w-80 p-4 bg-222 text-neon-green border-neon-1 rounded-sm"
                                 , class "font-mono text-11"
                                 ]
                                 []
                             , div
-                                [ style "padding" "4px 8px"
-                                , style "background-color" "#0f0"
-                                , style "color" "#000"
-                                , style "border-radius" "2px"
-                                , class "cursor-pointer font-bold text-10"
+                                [ class "py-4 px-8 bg-neon-green text-000 rounded-sm cursor-pointer font-bold text-10"
                                 , Html.Events.onClick SetGoldFromInput
                                 ]
                                 [ text "SET" ]
@@ -4182,9 +4147,7 @@ viewSelectionPanel model panelWidth =
                         (List.sum model.lastSimulationDeltas) / toFloat (List.length model.lastSimulationDeltas)
             in
             div
-                [ class "p-12 font-mono text-11 flex flex-col gap-6"
-                , style "color" "#0f0"
-                , style "flex-shrink" "0"
+                [ class "p-12 font-mono text-11 flex flex-col gap-6 text-neon-green shrink-0"
                 ]
                 [ div []
                     [ text "Camera: ("
@@ -4338,10 +4301,8 @@ viewSelectionPanel model panelWidth =
                     [ text (String.fromInt template.cost ++ "g") ]
                 , if isActive then
                     div
-                        [ class "abs pe-none"
+                        [ class "abs pe-none rounded bg-white-alpha-3"
                         , style "inset" "0"
-                        , style "border-radius" "4px"
-                        , style "background-color" "rgba(255, 255, 255, 0.3)"
                         , style "box-shadow" "inset 0 0 10px rgba(255, 255, 255, 0.6)"
                         ]
                         []
@@ -4355,18 +4316,14 @@ viewSelectionPanel model panelWidth =
                 PreGame ->
                     -- Only show Castle during pre-game
                     div
-                        [ style "display" "flex"
-                        , style "gap" "8px"
-                        , style "padding" "8px"
+                        [ class "flex gap-8 p-8"
                         ]
                         [ buildingOption castleTemplate ]
 
                 Playing ->
                     -- Show all buildings except Castle
                     div
-                        [ style "display" "flex"
-                        , style "gap" "8px"
-                        , style "padding" "8px"
+                        [ class "flex gap-8 p-8"
                         ]
                         [ buildingOption testBuildingTemplate
                         , buildingOption warriorsGuildTemplate
@@ -4419,10 +4376,8 @@ viewSelectionPanel model panelWidth =
                         -- Tab buttons
                         tabButton label tab =
                             div
-                                [ style "padding" "6px 12px"
+                                [ class "py-6 px-12 cursor-pointer rounded-top"
                                 , style "background-color" (if model.buildingTab == tab then "#555" else "#333")
-                                , style "cursor" "pointer"
-                                , style "border-radius" "4px 4px 0 0"
                                 , style "font-size" "10px"
                                 , style "font-weight" "bold"
                                 , style "user-select" "none"
@@ -4551,8 +4506,7 @@ viewSelectionPanel model panelWidth =
                                                     ))
                                                 ]
                                             , div
-                                                [ style "font-size" "10px"
-                                                , style "color" "#aaa"
+                                                [ class "text-10 text-aaa"
                                                 ]
                                                 [ text ("Timer: " ++ String.fromFloat (round (building.behaviorTimer * 10) |> toFloat |> (\x -> x / 10)) ++ "s / " ++ String.fromFloat (round (building.behaviorDuration * 10) |> toFloat |> (\x -> x / 10)) ++ "s") ]
                                             ]
@@ -4597,8 +4551,7 @@ viewSelectionPanel model panelWidth =
                                                 ]
                         [ -- Tab buttons
                           div
-                                                        [ class "flex gap-4"
-                                                        , style "padding" "8px 8px 0 8px"
+                                                        [ class "flex gap-4 pt-8 pr-8 pl-8 pb-0"
                                                         ]
                             [ tabButton "Main" MainTab
                             , tabButton "Info" InfoTab
@@ -4647,8 +4600,7 @@ viewSelectionPanel model panelWidth =
                                     "Coffer"
                     in
                     div
-                        [ class "p-12 font-mono text-11 flex gap-16"
-                        , style "color" "#fff"
+                        [ class "p-12 font-mono text-11 flex gap-16 text-fff"
                         ]
                         [ -- Column 1: Name and HP
                           div
@@ -4770,9 +4722,7 @@ viewSelectionPanel model panelWidth =
                     [ unitSelectedContent unitId ]
     in
     div
-        [ class "panel abs"
-        , style "bottom" "20px"
-        , style "right" "224px"
+        [ class "panel abs bottom-20 right-224"
         , style "width" (String.fromFloat panelWidth ++ "px")
         , style "height" (String.fromInt panelHeight ++ "px")
         , style "overflow-x" "scroll"
@@ -4782,8 +4732,7 @@ viewSelectionPanel model panelWidth =
         , style "scrollbar-color" "#888 #222"
         ]
         [ div
-            [ class "flex items-start"
-            , style "width" "max-content"
+            [ class "flex items-start w-max"
             , style "min-width" "100%"
             ]
             content
@@ -4797,16 +4746,10 @@ viewGoldCounter model =
             model.simulationSpeed == Pause
     in
     div
-        [ class "flex items-center gap-8 rounded border-2 border-gold abs"
-        , style "bottom" "190px"
-        , style "right" "20px"
-        , style "background-color" "rgba(0, 0, 0, 0.7)"
-        , style "padding" "8px 12px"
+        [ class "flex items-center gap-8 rounded border-2 border-gold abs py-8 px-12 bottom-190 right-20 bg-black-alpha-7"
         ]
         [ div
-            [ class "rounded-full bg-gold border-2 border-gold"
-            , style "width" "20px"
-            , style "height" "20px"
+            [ class "square-20 rounded-full bg-gold border-2 border-gold"
             ]
             []
         , div
@@ -4816,9 +4759,7 @@ viewGoldCounter model =
             [ text (String.fromInt model.gold) ]
         , if isPaused then
             div
-                [ class "font-mono font-bold"
-                , style "color" "#FF6B6B"
-                , style "font-size" "12px"
+                [ class "font-mono font-bold text-12 text-red-6b"
                 ]
                 [ text "PAUSED" ]
 
@@ -4869,25 +4810,18 @@ viewMinimap model =
                     "grab"
     in
     div
-        [ class "abs"
-        , style "bottom" "20px"
-        , style "right" "20px"
+        [ class "abs bottom-20 right-20 overflow-visible bg-333 border-fff"
         , style "width" (String.fromInt minimapWidth ++ "px")
         , style "height" (String.fromInt minimapHeight ++ "px")
-        , style "background-color" "#333"
-        , style "border" "2px solid #fff"
-        , class "overflow-visible"
         , style "cursor" cursor
         , stopPropagationOn "mousedown" (decodeMinimapMouseEvent MinimapMouseDown)
         ]
         [ div
             [ style "width" (String.fromFloat (model.mapConfig.width * scale) ++ "px")
             , style "height" (String.fromFloat (model.mapConfig.height * scale) ++ "px")
-            , class "bg-map"
-            , style "position" "relative"
+            , class "bg-map rel border-fff-1"
             , style "left" (String.fromFloat padding ++ "px")
             , style "top" (String.fromFloat padding ++ "px")
-            , style "border" "1px solid #fff"
             ]
             (List.map (viewMinimapBuilding scale model.gridConfig.buildGridSize) model.buildings
                 ++ List.map (viewMinimapUnit scale) model.units
@@ -5001,10 +4935,9 @@ viewTooltip model =
                 case tooltipState.elementId of
                     "building-Test Building" ->
                         div
-                            [ class "tooltip pe-none"
+                            [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "padding" "8px 12px"
                             ]
                             [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Test Building" ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt testBuildingTemplate.maxHp) ]
@@ -5014,10 +4947,9 @@ viewTooltip model =
 
                     "building-Castle" ->
                         div
-                            [ class "tooltip pe-none"
+                            [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 120) ++ "px")
-                            , style "padding" "8px 12px"
                             ]
                             [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Castle" ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt castleTemplate.maxHp) ]
@@ -5028,10 +4960,9 @@ viewTooltip model =
 
                     "building-House" ->
                         div
-                            [ class "tooltip pe-none"
+                            [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "padding" "8px 12px"
                             ]
                             [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "House" ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt houseTemplate.maxHp) ]
@@ -5041,10 +4972,9 @@ viewTooltip model =
 
                     "building-Warrior's Guild" ->
                         div
-                            [ class "tooltip pe-none"
+                            [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
-                            , style "padding" "8px 12px"
                             ]
                             [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Warrior's Guild" ]
                             , div [ class "text-muted" ] [ text ("HP: " ++ String.fromInt warriorsGuildTemplate.maxHp) ]
@@ -5178,10 +5108,9 @@ viewTooltip model =
                             case maybeBuilding of
                                 Just building ->
                                     div
-                                        [ class "tooltip pe-none"
+                                        [ class "tooltip pe-none py-8 px-12"
                                         , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                                         , style "top" (String.fromFloat (tooltipState.mouseY - 80) ++ "px")
-                                        , style "padding" "8px 12px"
                                         ]
                                         [ div [ class "font-bold", style "margin-bottom" "4px" ] [ text "Garrison" ]
                                         , div [ class "text-muted" ] [ text ("Current: " ++ String.fromInt building.garrisonOccupied) ]
@@ -5207,13 +5136,8 @@ viewPreGameOverlay model =
     case model.gameState of
         PreGame ->
             div
-                [ class "panel font-mono font-bold text-gold pe-none"
-                , style "position" "fixed"
+                [ class "panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3"
                 , style "top" "20px"
-                , style "right" "20px"
-                , class "border-gold"
-                , style "border" "3px solid"
-                , style "padding" "16px 24px"
                 , style "font-size" "18px"
                 , style "z-index" "1000"
                 ]
@@ -5228,8 +5152,7 @@ viewGameOverOverlay model =
     case model.gameState of
         GameOver ->
             div
-                [ class "overlay pe-none"
-                , style "background-color" "rgba(0, 0, 0, 0.9)"
+                [ class "overlay pe-none bg-black-alpha-9"
                 ]
                 [ div
                     [ class "font-mono font-bold text-red"
