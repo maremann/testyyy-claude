@@ -1,12 +1,14 @@
 module View exposing (view)
 
+import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
 import Dict
+import Grid exposing (getBuildingEntrance, getCityActiveArea, getCitySearchArea, isPathfindingCellOccupied, isValidBuildingPlacement)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style, placeholder, value)
 import Html.Events exposing (on, onClick, onInput, onMouseLeave, stopPropagationOn)
 import Json.Decode as D
 import Message exposing (Msg(..))
-import Model exposing (..)
+import Types exposing (..)
 
 
 -- VIEW

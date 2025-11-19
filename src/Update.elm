@@ -2,12 +2,18 @@ module Update exposing (update, subscriptions, init, generateShapes)
 
 import Browser.Dom as Dom
 import Browser.Events as E
+import BuildingBehavior exposing (updateBuildingBehavior)
+import BuildingTemplates exposing (castleTemplate, houseTemplate, randomUnitColor, warriorsGuildTemplate)
 import Dict
+import GameHelpers exposing (createHenchman, randomNearbyCell, recalculateAllPaths, updateUnitMovement)
+import Grid exposing (..)
 import Json.Decode as D
 import Message exposing (Msg(..))
-import Model exposing (..)
+import Pathfinding exposing (calculateUnitPath, findPath)
 import Random
 import Task
+import Types exposing (..)
+import UnitBehavior exposing (updateGarrisonSpawning, updateUnitBehavior)
 
 
 init : () -> ( Model, Cmd Msg )

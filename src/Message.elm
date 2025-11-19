@@ -1,7 +1,7 @@
 module Message exposing (Msg(..))
 
 import Browser.Dom as Dom
-import Model exposing (BuildingTemplate, DecorativeShape, DebugTab, BuildingTab, Selectable, SimulationSpeed)
+import Types exposing (BuildingTemplate, DecorativeShape, DebugTab, BuildingTab, Selectable, SimulationSpeed)
 
 
 type Msg
