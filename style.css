@@ -196,16 +196,33 @@ body {
 .ml-4 { margin-left: 4px; }
 .mr-4 { margin-right: 4px; }
 
+/* Sizing */
+.square-14 { width: 14px; height: 14px; }
+
+/* Flex shrink */
+.shrink-0 { flex-shrink: 0; }
+
 /* Colors & accents */
 .bg-gold { background-color: #FFD700; }
+.bg-333 { background-color: #333; }
+.bg-222 { background-color: #222; }
 .border-gold { border-color: #FFA500; }
+.border-dark { border-color: #444; }
+.border-neon { border-color: #0f0; }
 .text-error { color: #ff4d4f; }
 .text-green { color: #22c55e; }
 .text-red { color: #ef4444; }
 .opacity-80 { opacity: 0.8; }
+.opacity-50 { opacity: 0.5; }
+
+/* Cursors */
+.cursor-not-allowed { cursor: not-allowed; }
 
 /* Minimap viewport indicator */
 .minimap-viewport {
   border: 2px solid #ff0000;
   background-color: rgba(255, 255, 255, 0.2);
 }
+
+/* Neon background helper */
+.bg-neon { background-color: #0f0; }

@@ -3113,7 +3113,7 @@ viewTerrain model viewportWidth viewportHeight =
             model.mapConfig.height
     in
     div
-        [ style "position" "absolute"
+        [ class "abs"
         , style "left" (String.fromFloat terrainLeft ++ "px")
         , style "top" (String.fromFloat terrainTop ++ "px")
         , style "width" (String.fromFloat terrainWidth ++ "px")
@@ -3141,13 +3141,13 @@ viewShape model shape =
         ( shapeStyle, shapeRadius ) =
             case shape.shapeType of
                 Circle ->
-                    ( [ style "border-radius" "50%" ], shape.size / 2 )
+                    ( [ class "rounded-full" ], shape.size / 2 )
 
                 Rectangle ->
                     ( [], 0 )
     in
     div
-        ([ style "position" "absolute"
+        ([ class "abs"
          , style "left" (String.fromFloat (screenX - shapeRadius) ++ "px")
          , style "top" (String.fromFloat (screenY - shapeRadius) ++ "px")
          , style "width" (String.fromFloat shape.size ++ "px")
@@ -3218,7 +3218,6 @@ viewBuilding model building =
     in
     div
         [ class "abs flex items-center justify-center text-white text-12 font-bold cursor-pointer select-none"
-        , style "position" "absolute"
         , style "left" (String.fromFloat screenX ++ "px")
         , style "top" (String.fromFloat screenY ++ "px")
         , style "width" (String.fromFloat buildingSizePx ++ "px")
@@ -3325,7 +3324,6 @@ viewUnit model unit worldX worldY =
     -- Outer clickable area (larger)
     div
         [ class "abs cursor-pointer select-none flex items-center justify-center"
-        , style "position" "absolute"
         , style "left" (String.fromFloat (screenX - selectionRadius) ++ "px")
         , style "top" (String.fromFloat (screenY - selectionRadius) ++ "px")
         , style "width" (String.fromFloat selectionDiameter ++ "px")
@@ -3806,28 +3804,24 @@ viewUnitRadii model =
                                 -- Active radius circle
                                 activeCircle =
                                     div
-                                        [ style "position" "absolute"
+                                        [ class "abs pe-none rounded-full"
                                         , style "left" (String.fromFloat (screenX - unit.activeRadius) ++ "px")
                                         , style "top" (String.fromFloat (screenY - unit.activeRadius) ++ "px")
                                         , style "width" (String.fromFloat (unit.activeRadius * 2) ++ "px")
                                         , style "height" (String.fromFloat (unit.activeRadius * 2) ++ "px")
                                         , style "border" "2px solid rgba(255, 255, 0, 0.6)"
-                                        , style "border-radius" "50%"
-                                        , style "pointer-events" "none"
                                         ]
                                         []
 
                                 -- Search radius circle
                                 searchCircle =
                                     div
-                                        [ style "position" "absolute"
+                                        [ class "abs pe-none rounded-full"
                                         , style "left" (String.fromFloat (screenX - unit.searchRadius) ++ "px")
                                         , style "top" (String.fromFloat (screenY - unit.searchRadius) ++ "px")
                                         , style "width" (String.fromFloat (unit.searchRadius * 2) ++ "px")
                                         , style "height" (String.fromFloat (unit.searchRadius * 2) ++ "px")
                                         , style "border" "2px solid rgba(255, 255, 0, 0.3)"
-                                        , style "border-radius" "50%"
-                                        , style "pointer-events" "none"
                                         ]
                                         []
                             in
@@ -3894,14 +3888,13 @@ viewBuildingPreview model =
                         "rgba(255, 0, 0, 0.5)"
             in
             div
-                [ style "position" "absolute"
+                [ class "abs pe-none"
                 , style "left" (String.fromFloat screenX ++ "px")
                 , style "top" (String.fromFloat screenY ++ "px")
                 , style "width" (String.fromFloat buildingSizePx ++ "px")
                 , style "height" (String.fromFloat buildingSizePx ++ "px")
                 , style "background-color" previewColor
                 , style "border" "2px solid rgba(255, 255, 255, 0.8)"
-                , style "pointer-events" "none"
                 , style "display" "flex"
                 , style "align-items" "center"
                 , style "justify-content" "center"
@@ -3938,8 +3931,7 @@ viewGlobalButtonsPanel model leftPosition =
                 [ text label ]
     in
     div
-        [ class "panel panel-col p-8 gap-6"
-        , style "position" "absolute"
+        [ class "panel panel-col p-8 gap-6 abs"
         , style "bottom" "20px"
         , style "left" (String.fromFloat leftPosition ++ "px")
         , style "width" (String.fromInt panelSize ++ "px")
@@ -4023,8 +4015,7 @@ viewSelectionPanel model panelWidth =
                         (List.sum m.lastSimulationDeltas) / toFloat (List.length m.lastSimulationDeltas)
             in
             div
-                [ class "p-12 font-mono text-11 flex gap-16"
-                , style "color" "#0f0"
+                [ class "p-12 font-mono text-11 flex gap-16 text-green"
                 ]
                 [ div
                     [ class "flex flex-col gap-6"
@@ -4072,8 +4063,7 @@ viewSelectionPanel model panelWidth =
                         ]
             in
             div
-                [ class "p-12 font-mono text-11 flex gap-16"
-                , style "color" "#0f0"
+                [ class "p-12 font-mono text-11 flex gap-16 text-green"
                 ]
                 [ div
                     [ class "flex flex-col gap-6"
@@ -4110,7 +4100,7 @@ viewSelectionPanel model panelWidth =
                             [ style "width" "12px"
                             , style "height" "12px"
                             , style "border" "2px solid #0f0"
-                            , style "border-radius" "50%"
+                            , class "rounded-full"
                             , style "display" "flex"
                             , style "align-items" "center"
                             , style "justify-content" "center"
@@ -4120,7 +4110,7 @@ viewSelectionPanel model panelWidth =
                                     [ style "width" "6px"
                                     , style "height" "6px"
                                     , style "background-color" "#0f0"
-                                    , style "border-radius" "50%"
+                                    , class "rounded-full"
                                     ]
                                     []
 
@@ -4131,8 +4121,7 @@ viewSelectionPanel model panelWidth =
                         ]
             in
             div
-                [ class "p-12 font-mono text-11 flex gap-16"
-                , style "color" "#0f0"
+                [ class "p-12 font-mono text-11 flex gap-16 text-green"
                 ]
                 [ div
                     [ class "flex flex-col gap-6"
@@ -4231,17 +4220,9 @@ viewSelectionPanel model panelWidth =
                     , Html.Events.onClick ToggleBuildGrid
                     ]
                     [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showBuildGrid then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
+                        [ class "square-14 border-2 border-neon rounded-sm"
+                        , Html.Attributes.classList
+                            [ ( "bg-neon", model.showBuildGrid ) ]
                         ]
                         []
                     , text "Build Grid"
@@ -4251,17 +4232,9 @@ viewSelectionPanel model panelWidth =
                     , Html.Events.onClick TogglePathfindingGrid
                     ]
                     [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showPathfindingGrid then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
+                        [ class "square-14 border-2 border-neon rounded-sm"
+                        , Html.Attributes.classList
+                            [ ( "bg-neon", model.showPathfindingGrid ) ]
                         ]
                         []
                     , text "Pathfinding Grid"
@@ -4271,17 +4244,9 @@ viewSelectionPanel model panelWidth =
                     , Html.Events.onClick TogglePathfindingOccupancy
                     ]
                     [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showPathfindingOccupancy then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
+                        [ class "square-14 border-2 border-neon rounded-sm"
+                        , Html.Attributes.classList
+                            [ ( "bg-neon", model.showPathfindingOccupancy ) ]
                         ]
                         []
                     , text "PF Occupancy"
@@ -4291,17 +4256,9 @@ viewSelectionPanel model panelWidth =
                     , Html.Events.onClick ToggleBuildingOccupancy
                     ]
                     [ div
-                        [ style "width" "14px"
-                        , style "height" "14px"
-                        , style "border" "2px solid #0f0"
-                        , style "border-radius" "2px"
-                        , style "background-color"
-                            (if model.showBuildingOccupancy then
-                                "#0f0"
-
-                             else
-                                "transparent"
-                            )
+                        [ class "square-14 border-2 border-neon rounded-sm"
+                        , Html.Attributes.classList
+                            [ ( "bg-neon", model.showBuildingOccupancy ) ]
                         ]
                         []
                     , text "Build Occupancy"
@@ -4348,42 +4305,15 @@ viewSelectionPanel model panelWidth =
                         Html.Attributes.class ""
             in
             div
-                [ style "display" "flex"
-                , style "flex-direction" "column"
-                , style "align-items" "center"
-                , style "gap" "4px"
-                , style "padding" "8px"
-                , style "background-color"
-                    (if canAfford then
-                        "#333"
-
-                     else
-                        "#222"
-                    )
-                , style "border"
-                    (if canAfford then
-                        "2px solid #666"
-
-                     else
-                        "2px solid #444"
-                    )
-                , style "border-radius" "4px"
-                , style "cursor"
-                    (if canAfford then
-                        "pointer"
-
-                     else
-                        "not-allowed"
-                    )
-                , style "flex-shrink" "0"
-                , style "opacity"
-                    (if canAfford then
-                        "1"
-
-                     else
-                        "0.5"
-                    )
-                , style "position" "relative"
+                [ class "flex flex-col items-center gap-4 p-8 rounded shrink-0 rel border-2"
+                , Html.Attributes.classList
+                    [ ("bg-333", canAfford)
+                    , ("bg-222", not canAfford)
+                    , ("border-dark", not canAfford)
+                    , ("cursor-pointer", canAfford)
+                    , ("cursor-not-allowed", not canAfford)
+                    , ("opacity-50", not canAfford)
+                    ]
                 , clickHandler
                 , on "mouseenter"
                     (D.map2 (\x y -> TooltipEnter ("building-" ++ template.name) x y)
@@ -4399,23 +4329,19 @@ viewSelectionPanel model panelWidth =
                     ]
                     [ text template.name ]
                 , div
-                    [ style "font-size" "10px"
-                    , style "color" "#aaa"
+                    [ class "text-10 text-muted"
                     ]
                     [ text sizeLabel ]
                 , div
-                    [ style "color" "#FFD700"
-                    , style "font-size" "12px"
-                    , style "font-weight" "bold"
+                    [ class "text-gold text-12 font-bold"
                     ]
                     [ text (String.fromInt template.cost ++ "g") ]
                 , if isActive then
                     div
-                        [ style "position" "absolute"
+                        [ class "abs pe-none"
                         , style "inset" "0"
                         , style "border-radius" "4px"
                         , style "background-color" "rgba(255, 255, 255, 0.3)"
-                        , style "pointer-events" "none"
                         , style "box-shadow" "inset 0 0 10px rgba(255, 255, 255, 0.6)"
                         ]
                         []
@@ -4449,19 +4375,14 @@ viewSelectionPanel model panelWidth =
                 GameOver ->
                     -- Show nothing during game over
                     div
-                        [ style "padding" "12px"
-                        , style "color" "#f00"
-                        , style "font-family" "monospace"
-                        , style "font-size" "14px"
-                        , style "font-weight" "bold"
+                        [ class "p-12 text-red font-mono text-14 font-bold"
                         ]
                         [ text "GAME OVER" ]
 
         noSelectionContent =
             div
-                [ class "p-12 italic flex items-center"
+                [ class "p-12 italic flex items-center text-14"
                 , style "color" "#888"
-                , style "font-size" "14px"
                 , style "height" "100%"
                 ]
                 [ text "No selection" ]
@@ -4532,7 +4453,7 @@ viewSelectionPanel model panelWidth =
                                                 ]
                                             , div
                                                 [ style "font-size" "9px"
-                                                , style "color" "#aaa"
+                                                , class "text-muted"
                                                 , style "display" "flex"
                                                 , style "gap" "4px"
                                                 ]
@@ -4587,8 +4508,7 @@ viewSelectionPanel model panelWidth =
                                                 ++ List.map
                                                     (\slot ->
                                                         div
-                                                            [ style "font-size" "10px"
-                                                            , style "color" "#aaa"
+                                                            [ class "text-10 text-muted"
                                                             , style "padding-left" "8px"
                                                             ]
                                                             [ text ("  " ++ slot.unitType ++ ": " ++ String.fromInt slot.currentCount ++ "/" ++ String.fromInt slot.maxCount) ]
@@ -4655,8 +4575,7 @@ viewSelectionPanel model panelWidth =
                                                 ++ List.map
                                                     (\slot ->
                                                         div
-                                                            [ style "font-size" "10px"
-                                                            , style "color" "#aaa"
+                                                            [ class "text-10 text-muted"
                                                             , style "padding-left" "8px"
                                                             ]
                                                             [ text ("  " ++ slot.unitType ++ ": " ++
@@ -4694,9 +4613,7 @@ viewSelectionPanel model panelWidth =
 
                 Nothing ->
                     div
-                        [ style "padding" "12px"
-                        , style "color" "#f00"
-                        , style "font-size" "12px"
+                        [ class "p-12 text-red text-12"
                         ]
                         [ text "Building not found" ]
 
@@ -4831,9 +4748,7 @@ viewSelectionPanel model panelWidth =
 
                 Nothing ->
                     div
-                        [ style "padding" "12px"
-                        , style "color" "#f00"
-                        , style "font-size" "12px"
+                        [ class "p-12 text-red text-12"
                         ]
                         [ text "Unit not found" ]
 
@@ -4855,8 +4770,7 @@ viewSelectionPanel model panelWidth =
                     [ unitSelectedContent unitId ]
     in
     div
-        [ class "panel"
-        , style "position" "absolute"
+        [ class "panel abs"
         , style "bottom" "20px"
         , style "right" "224px"
         , style "width" (String.fromFloat panelWidth ++ "px")
@@ -4883,13 +4797,11 @@ viewGoldCounter model =
             model.simulationSpeed == Pause
     in
     div
-        [ class "flex items-center gap-8 rounded"
-        , style "position" "absolute"
+        [ class "flex items-center gap-8 rounded border-2 border-gold abs"
         , style "bottom" "190px"
         , style "right" "20px"
         , style "background-color" "rgba(0, 0, 0, 0.7)"
         , style "padding" "8px 12px"
-        , style "border" "2px solid #FFD700"
         ]
         [ div
             [ class "rounded-full bg-gold border-2 border-gold"
@@ -4957,7 +4869,7 @@ viewMinimap model =
                     "grab"
     in
     div
-        [ style "position" "absolute"
+        [ class "abs"
         , style "bottom" "20px"
         , style "right" "20px"
         , style "width" (String.fromInt minimapWidth ++ "px")
@@ -5031,13 +4943,13 @@ viewMinimapBuilding scale buildGridSize building =
                     "#FF0000"
     in
     div
-        [ style "position" "absolute"
+        [ class "abs"
         , style "left" (String.fromFloat minimapX ++ "px")
         , style "top" (String.fromFloat minimapY ++ "px")
         , style "width" (String.fromFloat minimapWidth ++ "px")
         , style "height" (String.fromFloat minimapHeight ++ "px")
         , style "background-color" buildingColor
-        , style "pointer-events" "none"
+        , class "pe-none"
         ]
         []
 
@@ -5066,14 +4978,13 @@ viewMinimapUnit scale unit =
                             "#FF0000"
             in
             div
-                [ style "position" "absolute"
+                [ class "abs pe-none"
                 , style "left" (String.fromFloat (minimapX - dotSize / 2) ++ "px")
                 , style "top" (String.fromFloat (minimapY - dotSize / 2) ++ "px")
                 , style "width" (String.fromFloat dotSize ++ "px")
                 , style "height" (String.fromFloat dotSize ++ "px")
                 , style "background-color" unitColor
                 , class "rounded-full"
-                , style "pointer-events" "none"
                 ]
                 []
 
@@ -5300,7 +5211,8 @@ viewPreGameOverlay model =
                 , style "position" "fixed"
                 , style "top" "20px"
                 , style "right" "20px"
-                , style "border" "3px solid #FFD700"
+                , class "border-gold"
+                , style "border" "3px solid"
                 , style "padding" "16px 24px"
                 , style "font-size" "18px"
                 , style "z-index" "1000"
@@ -5320,8 +5232,7 @@ viewGameOverOverlay model =
                 , style "background-color" "rgba(0, 0, 0, 0.9)"
                 ]
                 [ div
-                    [ class "font-mono font-bold"
-                    , style "color" "#f00"
+                    [ class "font-mono font-bold text-red"
                     , style "font-size" "64px"
                     ]
                     [ text "GAME OVER" ]
