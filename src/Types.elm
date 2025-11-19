@@ -1,21 +1,11 @@
 module Types exposing (..)
-
 import Dict exposing (Dict)
-
-
--- CORE TYPES
-
-
-type alias TooltipState =
-    { elementId : String
+type alias TooltipState = { elementId : String
     , hoverTime : Float
     , mouseX : Float
     , mouseY : Float
     }
-
-
-type alias Model =
-    { camera : Camera
+type alias Model = { camera : Camera
     , dragState : DragState
     , windowSize : ( Int, Int )
     , decorativeShapes : List DecorativeShape
@@ -47,33 +37,23 @@ type alias Model =
     , showCitySearchArea : Bool
     , tooltipHover : Maybe TooltipState
     }
-
-
 type GameState
     = PreGame
     | Playing
     | GameOver
-
-
 type SimulationSpeed
     = Pause
     | Speed1x
     | Speed2x
     | Speed10x
     | Speed100x
-
-
 type DebugTab
     = StatsTab
     | VisualizationTab
     | ControlsTab
-
-
 type BuildingTab
     = MainTab
     | InfoTab
-
-
 type UnitBehavior
     = Dead
     | DebugError String
@@ -88,8 +68,6 @@ type UnitBehavior
     | CollectingTaxes
     | ReturnToCastle
     | DeliveringGold
-
-
 type BuildingBehavior
     = Idle
     | UnderConstruction
@@ -97,13 +75,9 @@ type BuildingBehavior
     | GenerateGold
     | BuildingDead
     | BuildingDebugError String
-
-
 type UnitKind
     = Hero
     | Henchman
-
-
 type Tag
     = BuildingTag
     | HeroTag
@@ -111,37 +85,25 @@ type Tag
     | GuildTag
     | ObjectiveTag
     | CofferTag
-
-
 type Selectable
     = GlobalButtonDebug
     | GlobalButtonBuild
     | BuildingSelected Int
     | UnitSelected Int
-
-
 type BuildingSize
     = Small
     | Medium
     | Large
     | Huge
-
-
 type BuildingOwner
     = Player
     | Enemy
-
-
-type alias GarrisonSlotConfig =
-    { unitType : String
+type alias GarrisonSlotConfig = { unitType : String
     , maxCount : Int
     , currentCount : Int
     , spawnTimer : Float
     }
-
-
-type alias Building =
-    { id : Int
+type alias Building = { id : Int
     , owner : BuildingOwner
     , gridX : Int
     , gridY : Int
@@ -160,24 +122,16 @@ type alias Building =
     , searchRadius : Float
     , tags : List Tag
     }
-
-
-type alias BuildingTemplate =
-    { name : String
+type alias BuildingTemplate = { name : String
     , size : BuildingSize
     , cost : Int
     , maxHp : Int
     , garrisonSlots : Int
     }
-
-
 type UnitLocation
     = OnMap Float Float
     | Garrisoned Int
-
-
-type alias Unit =
-    { id : Int
+type alias Unit = { id : Int
     , owner : BuildingOwner
     , location : UnitLocation
     , hp : Int
@@ -199,67 +153,36 @@ type alias Unit =
     , searchRadius : Float
     , tags : List Tag
     }
-
-
-type alias Camera =
-    { x : Float
+type alias Camera = { x : Float
     , y : Float
     }
-
-
 type DragState
     = NotDragging
     | DraggingViewport Position
     | DraggingMinimap Position
-
-
-type alias Position =
-    { x : Float
+type alias Position = { x : Float
     , y : Float
     }
-
-
-type alias DecorativeShape =
-    { x : Float
+type alias DecorativeShape = { x : Float
     , y : Float
     , size : Float
     , shapeType : ShapeType
     , color : String
     }
-
-
 type ShapeType
     = Circle
     | Rectangle
-
-
-type alias MapConfig =
-    { width : Float
+type alias MapConfig = { width : Float
     , height : Float
     , boundary : Float
     }
-
-
-type alias GridConfig =
-    { buildGridSize : Float
+type alias GridConfig = { buildGridSize : Float
     , pathfindingGridSize : Float
     }
-
-
--- HELPER FUNCTIONS
-
-
 buildingSizeToGridCells : BuildingSize -> Int
 buildingSizeToGridCells size =
     case size of
-        Small ->
-            1
-
-        Medium ->
-            2
-
-        Large ->
-            3
-
-        Huge ->
-            4
+        Small -> 1
+        Medium -> 2
+        Large -> 3
+        Huge -> 4

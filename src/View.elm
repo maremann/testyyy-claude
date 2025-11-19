@@ -1,5 +1,4 @@
 module View exposing (view)
-
 import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
 import Dict
 import Grid exposing (getBuildingEntrance, getCityActiveArea, getCitySearchArea, isPathfindingCellOccupied, isValidBuildingPlacement)
@@ -12,101 +11,48 @@ import Types exposing (..)
 import View.Debug exposing (viewBuildingOccupancy, viewCityActiveArea, viewCitySearchArea, viewGrids, viewPathfindingOccupancy, viewUnitRadii)
 import View.SelectionPanel exposing (viewSelectionPanel)
 import View.Viewport exposing (viewBuildingPreview, viewBuildings, viewDecorativeShapes, viewMainViewport, viewSelectedUnitPath, viewTerrain, viewUnits)
-
-
--- VIEW
-
-
 view : Model -> Html Msg
 view model =
     let
-        ( winWidth, winHeight ) =
-            model.windowSize
-
-        aspectRatio =
-            4 / 3
-
-        viewportWidth =
-            toFloat winWidth
-
-        viewportHeight =
-            toFloat winHeight
-
+        ( winWidth, winHeight ) = model.windowSize
+        aspectRatio = 4 / 3
+        viewportWidth = toFloat winWidth
+        viewportHeight = toFloat winHeight
         cursor =
             case model.dragState of
-                DraggingViewport _ ->
-                    "grabbing"
-
-                DraggingMinimap _ ->
-                    "grabbing"
-
-                NotDragging ->
-                    "grab"
-
-        -- Panel sizing calculations
-        minimapWidth =
-            204
-
-        minimapMargin =
-            20
-
-        globalButtonsWidth =
-            120
-
-        globalButtonsBorder =
-            4
-
-        globalButtonsMargin =
-            20
-
-        panelGap =
-            10
-
-        selectionPanelBorder =
-            4
-
-        selectionPanelMinWidth =
-            100
-
-        selectionPanelMaxWidth =
-            700
-
-        -- Calculate initial available space for selection panel (without global buttons)
+                DraggingViewport _ -> "grabbing"
+                DraggingMinimap _ -> "grabbing"
+                NotDragging -> "grab"
+        minimapWidth = 204
+        minimapMargin = 20
+        globalButtonsWidth = 120
+        globalButtonsBorder = 4
+        globalButtonsMargin = 20
+        panelGap = 10
+        selectionPanelBorder = 4
+        selectionPanelMinWidth = 100
+        selectionPanelMaxWidth = 700
         initialAvailableWidth =
             toFloat winWidth - toFloat (minimapWidth + minimapMargin) - toFloat selectionPanelBorder
-
-        -- Try max width first to determine if panels can stick together
         trialSelectionPanelWidth =
             clamp (toFloat selectionPanelMinWidth) (toFloat selectionPanelMaxWidth) initialAvailableWidth
-
-        -- Check if global buttons should stick to selection panel or be flush left
-        -- Account for borders in total width calculation
         totalPanelsWidth =
             globalButtonsWidth + globalButtonsBorder + panelGap + round trialSelectionPanelWidth + selectionPanelBorder
-
         canStickToPanel =
             totalPanelsWidth <= (winWidth - minimapWidth - minimapMargin - globalButtonsMargin)
-
-        -- Final selection panel width (reduced if global buttons are flush left)
         selectionPanelWidth =
             if canStickToPanel then
                 trialSelectionPanelWidth
-
             else
-                -- Global buttons are flush left, reduce available width to avoid overlap
                 let
                     reducedAvailableWidth =
                         toFloat winWidth - toFloat (minimapWidth + minimapMargin + selectionPanelBorder + panelGap + globalButtonsWidth + globalButtonsBorder + globalButtonsMargin + panelGap)
                 in
                 clamp (toFloat selectionPanelMinWidth) (toFloat selectionPanelMaxWidth) reducedAvailableWidth
-
         globalButtonsLeft =
             if canStickToPanel then
-                -- Stick to selection panel, account for borders
                 toFloat winWidth - toFloat (minimapWidth + minimapMargin) - selectionPanelWidth - toFloat selectionPanelBorder - toFloat panelGap - toFloat globalButtonsWidth - toFloat globalButtonsBorder
-
             else
-                -- Flush to window left
                 toFloat globalButtonsMargin
     in
     div
@@ -127,16 +73,11 @@ view model =
         , viewPreGameOverlay model
         , viewGameOverOverlay model
         ]
-
-
 viewGlobalButtonsPanel : Model -> Float -> Html Msg
 viewGlobalButtonsPanel model leftPosition =
     let
-        panelSize =
-            120
-
-        button label selectable isSelected =
-            div
+        panelSize = 120
+        button label selectable isSelected = div
                 [ class
                     ("button text-12 font-bold"
                         ++ (if isSelected then
@@ -159,13 +100,10 @@ viewGlobalButtonsPanel model leftPosition =
         [ button "Debug" GlobalButtonDebug (model.selected == Just GlobalButtonDebug)
         , button "Build" GlobalButtonBuild (model.selected == Just GlobalButtonBuild)
         ]
-
-
 viewGoldCounter : Model -> Html Msg
 viewGoldCounter model =
     let
-        isPaused =
-            model.simulationSpeed == Pause
+        isPaused = model.simulationSpeed == Pause
     in
     div
         [ class "flex items-center gap-8 rounded border-2 border-gold abs py-8 px-12 bottom-190 right-20 bg-black-alpha-7"
@@ -183,52 +121,27 @@ viewGoldCounter model =
                 [ class "font-mono font-bold text-12 text-red-6b"
                 ]
                 [ text "PAUSED" ]
-
           else
             text ""
         ]
-
-
 viewMinimap : Model -> Html Msg
 viewMinimap model =
     let
-        minimapWidth =
-            200
-
-        minimapHeight =
-            150
-
-        padding =
-            10
-
+        minimapWidth = 200
+        minimapHeight = 150
+        padding = 10
         scale =
             min ((toFloat minimapWidth - padding * 2) / model.mapConfig.width) ((toFloat minimapHeight - padding * 2) / model.mapConfig.height)
-
-        ( winWidth, winHeight ) =
-            model.windowSize
-
-        viewportIndicatorX =
-            padding + (model.camera.x * scale)
-
-        viewportIndicatorY =
-            padding + (model.camera.y * scale)
-
-        viewportIndicatorWidth =
-            toFloat winWidth * scale
-
-        viewportIndicatorHeight =
-            toFloat winHeight * scale
-
+        ( winWidth, winHeight ) = model.windowSize
+        viewportIndicatorX = padding + (model.camera.x * scale)
+        viewportIndicatorY = padding + (model.camera.y * scale)
+        viewportIndicatorWidth = toFloat winWidth * scale
+        viewportIndicatorHeight = toFloat winHeight * scale
         cursor =
             case model.dragState of
-                DraggingViewport _ ->
-                    "grabbing"
-
-                DraggingMinimap _ ->
-                    "grabbing"
-
-                NotDragging ->
-                    "grab"
+                DraggingViewport _ -> "grabbing"
+                DraggingMinimap _ -> "grabbing"
+                NotDragging -> "grab"
     in
     div
         [ class "abs bottom-20 right-20 overflow-visible bg-333 border-fff"
@@ -257,45 +170,22 @@ viewMinimap model =
                    ]
             )
         ]
-
-
 viewMinimapBuilding : Float -> Float -> Building -> Html Msg
 viewMinimapBuilding scale buildGridSize building =
     let
-        worldX =
-            toFloat building.gridX * buildGridSize
-
-        worldY =
-            toFloat building.gridY * buildGridSize
-
-        buildingSizeCells =
-            buildingSizeToGridCells building.size
-
-        worldWidth =
-            toFloat buildingSizeCells * buildGridSize
-
-        worldHeight =
-            toFloat buildingSizeCells * buildGridSize
-
-        minimapX =
-            worldX * scale
-
-        minimapY =
-            worldY * scale
-
-        minimapWidth =
-            worldWidth * scale
-
-        minimapHeight =
-            worldHeight * scale
-
+        worldX = toFloat building.gridX * buildGridSize
+        worldY = toFloat building.gridY * buildGridSize
+        buildingSizeCells = buildingSizeToGridCells building.size
+        worldWidth = toFloat buildingSizeCells * buildGridSize
+        worldHeight = toFloat buildingSizeCells * buildGridSize
+        minimapX = worldX * scale
+        minimapY = worldY * scale
+        minimapWidth = worldWidth * scale
+        minimapHeight = worldHeight * scale
         buildingColor =
             case building.owner of
-                Player ->
-                    "#7FFFD4"
-
-                Enemy ->
-                    "#FF0000"
+                Player -> "#7FFFD4"
+                Enemy -> "#FF0000"
     in
     div
         [ class "abs"
@@ -307,30 +197,18 @@ viewMinimapBuilding scale buildGridSize building =
         , class "pe-none"
         ]
         []
-
-
 viewMinimapUnit : Float -> Unit -> Html Msg
 viewMinimapUnit scale unit =
     case unit.location of
         OnMap worldX worldY ->
             let
-                minimapX =
-                    worldX * scale
-
-                minimapY =
-                    worldY * scale
-
-                -- Unit dot size on minimap
-                dotSize =
-                    3
-
+                minimapX = worldX * scale
+                minimapY = worldY * scale
+                dotSize = 3
                 unitColor =
                     case unit.owner of
-                        Player ->
-                            "#7FFFD4"
-
-                        Enemy ->
-                            "#FF0000"
+                        Player -> "#7FFFD4"
+                        Enemy -> "#FF0000"
             in
             div
                 [ class "abs pe-none"
@@ -342,20 +220,14 @@ viewMinimapUnit scale unit =
                 , class "rounded-full"
                 ]
                 []
-
-        Garrisoned _ ->
-            text ""
-
-
+        Garrisoned _ -> text ""
 viewTooltip : Model -> Html Msg
 viewTooltip model =
     case model.tooltipHover of
         Just tooltipState ->
             if tooltipState.hoverTime >= 500 then
-                -- Show tooltip after 500ms
                 case tooltipState.elementId of
-                    "building-Test Building" ->
-                        div
+                    "building-Test Building" -> div
                             [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
@@ -365,9 +237,7 @@ viewTooltip model =
                             , div [ class "text-muted" ] [ text ("Size: 2×2") ]
                             , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt testBuildingTemplate.garrisonSlots) ]
                             ]
-
-                    "building-Castle" ->
-                        div
+                    "building-Castle" -> div
                             [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 120) ++ "px")
@@ -378,9 +248,7 @@ viewTooltip model =
                             , div [ class "text-muted" ] [ text ("Garrison: " ++ String.fromInt castleTemplate.garrisonSlots ++ " henchmen") ]
                             , div [ class "text-gold", style "margin-top" "4px" ] [ text "Mission-critical building" ]
                             ]
-
-                    "building-House" ->
-                        div
+                    "building-House" -> div
                             [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
@@ -390,9 +258,7 @@ viewTooltip model =
                             , div [ class "text-muted" ] [ text "Size: 2×2" ]
                             , div [ class "text-gold", style "margin-top" "4px" ] [ text "Generates gold" ]
                             ]
-
-                    "building-Warrior's Guild" ->
-                        div
+                    "building-Warrior's Guild" -> div
                             [ class "tooltip pe-none py-8 px-12"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 100) ++ "px")
@@ -402,133 +268,97 @@ viewTooltip model =
                             , div [ class "text-muted" ] [ text "Size: 3×3" ]
                             , div [ class "text-gold", style "margin-top" "4px" ] [ text "Trains warriors, generates gold" ]
                             ]
-
-                    "tag-Building" ->
-                        div
+                    "tag-Building" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "This is a building" ]
-
-                    "tag-Hero" ->
-                        div
+                    "tag-Hero" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "This is a hero" ]
-
-                    "tag-Henchman" ->
-                        div
+                    "tag-Henchman" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "This is a henchman" ]
-
-                    "tag-Guild" ->
-                        div
+                    "tag-Guild" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "This building produces and houses Heroes" ]
-
-                    "tag-Objective" ->
-                        div
+                    "tag-Objective" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "If this dies, the player loses the game" ]
-
-                    "tag-Coffer" ->
-                        div
+                    "tag-Coffer" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "This building has a Gold Coffer" ]
-
-                    "behavior-Idle" ->
-                        div
+                    "behavior-Idle" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The building is not performing any actions" ]
-
-                    "behavior-Under Construction" ->
-                        div
+                    "behavior-Under Construction" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The building is under construction" ]
-
-                    "behavior-Spawn House" ->
-                        div
+                    "behavior-Spawn House" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The Castle is periodically spawning Houses for the kingdom" ]
-
-                    "behavior-Generate Gold" ->
-                        div
+                    "behavior-Generate Gold" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The building is generating gold into its coffer" ]
-
-                    "behavior-Thinking" ->
-                        div
+                    "behavior-Thinking" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The unit is pausing before deciding on next action" ]
-
-                    "behavior-Finding Target" ->
-                        div
+                    "behavior-Finding Target" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The unit is calculating a path to a random destination" ]
-
-                    "behavior-Moving" ->
-                        div
+                    "behavior-Moving" -> div
                             [ class "tooltip pe-none"
                             , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                             , style "top" (String.fromFloat (tooltipState.mouseY - 50) ++ "px")
                             ]
                             [ text "The unit is following its path to the destination" ]
-
                     _ ->
-                        -- Check if it's a garrison tooltip
                         if String.startsWith "garrison-" tooltipState.elementId then
                             let
-                                buildingIdStr =
-                                    String.dropLeft 9 tooltipState.elementId
-
-                                maybeBuildingId =
-                                    String.toInt buildingIdStr
-
+                                buildingIdStr = String.dropLeft 9 tooltipState.elementId
+                                maybeBuildingId = String.toInt buildingIdStr
                                 maybeBuilding =
                                     case maybeBuildingId of
-                                        Just buildingId ->
-                                            List.filter (\b -> b.id == buildingId) model.buildings
+                                        Just buildingId -> List.filter (\b -> b.id == buildingId) model.buildings
                                                 |> List.head
-
-                                        Nothing ->
-                                            Nothing
+                                        Nothing -> Nothing
                             in
                             case maybeBuilding of
-                                Just building ->
-                                    div
+                                Just building -> div
                                         [ class "tooltip pe-none py-8 px-12"
                                         , style "left" (String.fromFloat tooltipState.mouseX ++ "px")
                                         , style "top" (String.fromFloat (tooltipState.mouseY - 80) ++ "px")
@@ -538,40 +368,26 @@ viewTooltip model =
                                         , div [ class "text-muted" ] [ text ("Capacity: " ++ String.fromInt building.garrisonSlots) ]
                                         , div [ class "text-muted" ] [ text "Next unit: Not implemented" ]
                                         ]
-
-                                Nothing ->
-                                    text ""
-
+                                Nothing -> text ""
                         else
                             text ""
-
             else
                 text ""
-
-        Nothing ->
-            text ""
-
-
+        Nothing -> text ""
 viewPreGameOverlay : Model -> Html Msg
 viewPreGameOverlay model =
     case model.gameState of
-        PreGame ->
-            div
+        PreGame -> div
                 [ class "panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3 text-18"
                 , style "top" "20px"
                 , style "z-index" "1000"
                 ]
                 [ text "Site your Castle" ]
-
-        _ ->
-            text ""
-
-
+        _ -> text ""
 viewGameOverOverlay : Model -> Html Msg
 viewGameOverOverlay model =
     case model.gameState of
-        GameOver ->
-            div
+        GameOver -> div
                 [ class "overlay pe-none bg-black-alpha-9"
                 ]
                 [ div
@@ -579,13 +395,8 @@ viewGameOverOverlay model =
                     ]
                     [ text "GAME OVER" ]
                 ]
-
-        _ ->
-            text ""
-
-
+        _ -> text ""
 decodeMinimapMouseEvent : (Float -> Float -> Msg) -> D.Decoder ( Msg, Bool )
-decodeMinimapMouseEvent msg =
-    D.map2 (\x y -> ( msg x y, True ))
+decodeMinimapMouseEvent msg = D.map2 (\x y -> ( msg x y, True ))
         (D.field "clientX" D.float)
         (D.field "clientY" D.float)

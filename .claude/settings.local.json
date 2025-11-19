@@ -19,7 +19,15 @@
       "Bash(/tmp/update_no_camera.elm)",
       "Bash(/tmp/view_trimmed.elm)",
       "Bash(/tmp/view_correct.elm)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(for file in /Users/rare/proj/testa4/src/*.elm /Users/rare/proj/testa4/src/View/*.elm)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(/tmp/clean_elm_final.sh:*)",
+      "Bash(\"$file.tmp\")",
+      "Bash(done)",
+      "Bash(/tmp/contract_lines.sh:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,4 @@
 module View.SelectionPanel exposing (viewSelectionPanel)
-
 import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, placeholder, style, value)
@@ -7,35 +6,28 @@ import Html.Events exposing (on, onClick, onInput, onMouseLeave)
 import Json.Decode as D
 import Message exposing (Msg(..))
 import Types exposing (..)
-
-
 viewSelectionPanel : Model -> Float -> Html Msg
 viewSelectionPanel model panelWidth =
     let
-        panelHeight =
-            120
-
+        panelHeight = 120
         debugTabbedContent : Model -> Html Msg
         debugTabbedContent m =
             let
                 tabButton tab label =
                     let
-                        isActive =
-                            m.debugTab == tab
+                        isActive = m.debugTab == tab
                     in
                     div
                         [ class "button font-mono text-10 font-bold py-6 px-12"
                         , style "background-color"
                             (if isActive then
                                 "#0f0"
-
                              else
                                 "#222"
                             )
                         , style "color"
                             (if isActive then
                                 "#000"
-
                              else
                                 "#0f0"
                             )
@@ -43,9 +35,7 @@ viewSelectionPanel model panelWidth =
                         , Html.Events.onClick (SetDebugTab tab)
                         ]
                         [ text label ]
-
-                tabsColumn =
-                    div
+                tabsColumn = div
                         [ class "flex flex-col gap-4 p-8"
                         , style "border-right" "1px solid #0f0"
                         , style "flex-shrink" "0"
@@ -54,29 +44,21 @@ viewSelectionPanel model panelWidth =
                         , tabButton VisualizationTab "VISUAL"
                         , tabButton ControlsTab "CONTROLS"
                         ]
-
                 tabContent =
                     case m.debugTab of
-                        StatsTab ->
-                            debugStatsContent m
-
-                        VisualizationTab ->
-                            debugVisualizationContent
-
-                        ControlsTab ->
-                            debugControlsContent
+                        StatsTab -> debugStatsContent m
+                        VisualizationTab -> debugVisualizationContent
+                        ControlsTab -> debugControlsContent
             in
             div
                 [ class "flex"
                 ]
                 [ tabsColumn, tabContent ]
-
         debugStatsContent m =
             let
                 avgDelta =
                     if List.isEmpty m.lastSimulationDeltas then
                         0
-
                     else
                         (List.sum m.lastSimulationDeltas) / toFloat (List.length m.lastSimulationDeltas)
             in
@@ -103,11 +85,9 @@ viewSelectionPanel model panelWidth =
                         []
                     ]
                 ]
-
         debugVisualizationContent =
             let
-                checkbox isChecked label onClick =
-                    div
+                checkbox isChecked label onClick = div
                         [ class "flex items-center gap-8 cursor-pointer"
                         , Html.Events.onClick onClick
                         ]
@@ -116,7 +96,6 @@ viewSelectionPanel model panelWidth =
                             , style "background-color"
                                 (if isChecked then
                                     "#0f0"
-
                                  else
                                     "transparent"
                                 )
@@ -147,13 +126,11 @@ viewSelectionPanel model panelWidth =
                     , checkbox model.showCitySearchArea "City Search" ToggleCitySearchArea
                     ]
                 ]
-
         debugControlsContent =
             let
                 speedRadio speed label =
                     let
-                        isSelected =
-                            model.simulationSpeed == speed
+                        isSelected = model.simulationSpeed == speed
                     in
                     div
                         [ class "flex items-center gap-6 cursor-pointer"
@@ -167,7 +144,6 @@ viewSelectionPanel model panelWidth =
                                     [ class "square-6 rounded-full bg-neon-green"
                                     ]
                                     []
-
                               else
                                 text ""
                             ]
@@ -215,14 +191,11 @@ viewSelectionPanel model panelWidth =
                         ]
                     ]
                 ]
-
         debugInfoSection =
             let
-                -- Calculate running average of last 3 simulation deltas
                 avgDelta =
                     if List.isEmpty model.lastSimulationDeltas then
                         0
-
                     else
                         (List.sum model.lastSimulationDeltas) / toFloat (List.length model.lastSimulationDeltas)
             in
@@ -250,9 +223,7 @@ viewSelectionPanel model panelWidth =
                     , text "ms"
                     ]
                 ]
-
-        debugGridSection =
-            div
+        debugGridSection = div
                 [ class "p-12 font-mono text-11 flex flex-col gap-6"
                 , style "color" "#0f0"
                 , style "flex-shrink" "0"
@@ -307,43 +278,26 @@ viewSelectionPanel model panelWidth =
                     , text "Build Occupancy"
                     ]
                 ]
-
         buildingOption : BuildingTemplate -> Html Msg
         buildingOption template =
             let
-                canAfford =
-                    model.gold >= template.cost
-
+                canAfford = model.gold >= template.cost
                 isActive =
                     case model.buildMode of
-                        Just activeTemplate ->
-                            activeTemplate.name == template.name
-
-                        Nothing ->
-                            False
-
+                        Just activeTemplate -> activeTemplate.name == template.name
+                        Nothing -> False
                 sizeLabel =
                     case template.size of
-                        Small ->
-                            "1×1"
-
-                        Medium ->
-                            "2×2"
-
-                        Large ->
-                            "3×3"
-
-                        Huge ->
-                            "4×4"
-
+                        Small -> "1×1"
+                        Medium -> "2×2"
+                        Large -> "3×3"
+                        Huge -> "4×4"
                 clickHandler =
                     if canAfford then
                         if isActive then
                             Html.Events.onClick ExitBuildMode
-
                         else
                             Html.Events.onClick (EnterBuildMode template)
-
                     else
                         Html.Attributes.class ""
             in
@@ -384,48 +338,34 @@ viewSelectionPanel model panelWidth =
                         , style "box-shadow" "inset 0 0 10px rgba(255, 255, 255, 0.6)"
                         ]
                         []
-
                   else
                     text ""
                 ]
-
         buildContent =
             case model.gameState of
-                PreGame ->
-                    -- Only show Castle during pre-game
-                    div
+                PreGame -> div
                         [ class "flex gap-8 p-8"
                         ]
                         [ buildingOption castleTemplate ]
-
-                Playing ->
-                    -- Show all buildings except Castle
-                    div
+                Playing -> div
                         [ class "flex gap-8 p-8"
                         ]
                         [ buildingOption testBuildingTemplate
                         , buildingOption warriorsGuildTemplate
                         ]
-
-                GameOver ->
-                    -- Show nothing during game over
-                    div
+                GameOver -> div
                         [ class "p-12 text-red font-mono text-14 font-bold"
                         ]
                         [ text "GAME OVER" ]
-
-        noSelectionContent =
-            div
+        noSelectionContent = div
                 [ class "p-12 italic flex items-center text-14"
                 , style "color" "#888"
                 , style "height" "100%"
                 ]
                 [ text "No selection" ]
-
         buildingSelectedContent buildingId =
             let
-                maybeBuilding =
-                    List.filter (\b -> b.id == buildingId) model.buildings
+                maybeBuilding = List.filter (\b -> b.id == buildingId) model.buildings
                         |> List.head
             in
             case maybeBuilding of
@@ -433,37 +373,21 @@ viewSelectionPanel model panelWidth =
                     let
                         tagToString tag =
                             case tag of
-                                BuildingTag ->
-                                    "Building"
-
-                                HeroTag ->
-                                    "Hero"
-
-                                HenchmanTag ->
-                                    "Henchman"
-
-                                GuildTag ->
-                                    "Guild"
-
-                                ObjectiveTag ->
-                                    "Objective"
-
-                                CofferTag ->
-                                    "Coffer"
-
-                        -- Tab buttons
-                        tabButton label tab =
-                            div
+                                BuildingTag -> "Building"
+                                HeroTag -> "Hero"
+                                HenchmanTag -> "Henchman"
+                                GuildTag -> "Guild"
+                                ObjectiveTag -> "Objective"
+                                CofferTag -> "Coffer"
+                        tabButton label tab = div
                                 [ class "py-6 px-12 cursor-pointer rounded-top text-10 font-bold select-none"
                                 , style "background-color" (if model.buildingTab == tab then "#555" else "#333")
                                 , Html.Events.onClick (SetBuildingTab tab)
                                 ]
                                 [ text label ]
-
                         tabContent =
                             case model.buildingTab of
-                                MainTab ->
-                                    div
+                                MainTab -> div
                                         [ class "flex gap-16 items-start"
                                         ]
                                         [ -- Column 1: Name, HP, Owner
@@ -486,8 +410,7 @@ viewSelectionPanel model panelWidth =
                                                 ([ text "[" ]
                                                     ++ (building.tags
                                                             |> List.map
-                                                                (\tag ->
-                                                                    div
+                                                                (\tag -> div
                                                                         [ style "cursor" "help"
                                                                         , on "mouseenter"
                                                                             (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
@@ -532,8 +455,7 @@ viewSelectionPanel model panelWidth =
                                                     [ text "Garrison:" ]
                                                 ]
                                                 ++ List.map
-                                                    (\slot ->
-                                                        div
+                                                    (\slot -> div
                                                             [ class "text-10 text-muted"
                                                             , style "padding-left" "8px"
                                                             ]
@@ -542,9 +464,7 @@ viewSelectionPanel model panelWidth =
                                                     building.garrisonConfig
                                             )
                                         ]
-
-                                InfoTab ->
-                                    div
+                                InfoTab -> div
                                         [ class "flex gap-16 items-start"
                                         ]
                                         [ -- Column 1: Behavior, Timer, Coffer
@@ -598,8 +518,7 @@ viewSelectionPanel model panelWidth =
                                                     [ text "Garrison Cooldowns:" ]
                                                 ]
                                                 ++ List.map
-                                                    (\slot ->
-                                                        div
+                                                    (\slot -> div
                                                             [ class "text-10 text-muted"
                                                             , style "padding-left" "8px"
                                                             ]
@@ -634,17 +553,13 @@ viewSelectionPanel model panelWidth =
                             ]
                             [ tabContent ]
                         ]
-
-                Nothing ->
-                    div
+                Nothing -> div
                         [ class "p-12 text-red text-12"
                         ]
                         [ text "Building not found" ]
-
         unitSelectedContent unitId =
             let
-                maybeUnit =
-                    List.filter (\u -> u.id == unitId) model.units
+                maybeUnit = List.filter (\u -> u.id == unitId) model.units
                         |> List.head
             in
             case maybeUnit of
@@ -652,23 +567,12 @@ viewSelectionPanel model panelWidth =
                     let
                         tagToString tag =
                             case tag of
-                                BuildingTag ->
-                                    "Building"
-
-                                HeroTag ->
-                                    "Hero"
-
-                                HenchmanTag ->
-                                    "Henchman"
-
-                                GuildTag ->
-                                    "Guild"
-
-                                ObjectiveTag ->
-                                    "Objective"
-
-                                CofferTag ->
-                                    "Coffer"
+                                BuildingTag -> "Building"
+                                HeroTag -> "Hero"
+                                HenchmanTag -> "Henchman"
+                                GuildTag -> "Guild"
+                                ObjectiveTag -> "Objective"
+                                CofferTag -> "Coffer"
                     in
                     div
                         [ class "p-12 font-mono text-11 flex gap-16 text-fff"
@@ -687,8 +591,7 @@ viewSelectionPanel model panelWidth =
                                 ([ text "[" ]
                                     ++ (unit.tags
                                             |> List.map
-                                                (\tag ->
-                                                    div
+                                                (\tag -> div
                                                         [ class "cursor-help"
                                                         , on "mouseenter"
                                                             (D.map2 (\x y -> TooltipEnter ("tag-" ++ tagToString tag) x y)
@@ -765,29 +668,17 @@ viewSelectionPanel model panelWidth =
                                 ]
                             ]
                         ]
-
-                Nothing ->
-                    div
+                Nothing -> div
                         [ class "p-12 text-red text-12"
                         ]
                         [ text "Unit not found" ]
-
         content =
             case model.selected of
-                Nothing ->
-                    [ noSelectionContent ]
-
-                Just GlobalButtonDebug ->
-                    [ debugTabbedContent model ]
-
-                Just GlobalButtonBuild ->
-                    [ buildContent ]
-
-                Just (BuildingSelected buildingId) ->
-                    [ buildingSelectedContent buildingId ]
-
-                Just (UnitSelected unitId) ->
-                    [ unitSelectedContent unitId ]
+                Nothing -> [ noSelectionContent ]
+                Just GlobalButtonDebug -> [ debugTabbedContent model ]
+                Just GlobalButtonBuild -> [ buildContent ]
+                Just (BuildingSelected buildingId) -> [ buildingSelectedContent buildingId ]
+                Just (UnitSelected unitId) -> [ unitSelectedContent unitId ]
     in
     div
         [ class "panel abs bottom-20 right-224"
@@ -805,5 +696,3 @@ viewSelectionPanel model panelWidth =
             ]
             content
         ]
-
-
