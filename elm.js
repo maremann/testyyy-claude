@@ -8855,8 +8855,6 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$viewGameOverOverlay = function (model) {
@@ -8874,8 +8872,7 @@ var $author$project$Main$viewGameOverOverlay = function (model) {
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('font-mono font-bold text-red'),
-							A2($elm$html$Html$Attributes$style, 'font-size', '64px')
+							$elm$html$Html$Attributes$class('font-mono font-bold text-red text-64')
 						]),
 					_List_fromArray(
 						[
@@ -8909,6 +8906,8 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Main$viewGlobalButtonsPanel = F2(
 	function (model, leftPosition) {
 		var panelSize = 120;
@@ -8986,8 +8985,7 @@ var $author$project$Main$viewGoldCounter = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('text-gold font-mono font-bold'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '18px')
+						$elm$html$Html$Attributes$class('text-gold font-mono font-bold text-18')
 					]),
 				_List_fromArray(
 					[
@@ -9135,9 +9133,7 @@ var $author$project$Main$viewBuildingPreview = function (model) {
 					'height',
 					$elm$core$String$fromFloat(buildingSizePx) + 'px'),
 					A2($elm$html$Html$Attributes$style, 'background-color', previewColor),
-					$elm$html$Html$Attributes$class('border-white-alpha flex items-center justify-center text-fff'),
-					A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
-					A2($elm$html$Html$Attributes$style, 'font-weight', 'bold')
+					$elm$html$Html$Attributes$class('border-white-alpha flex items-center justify-center text-fff text-14 font-bold')
 				]),
 			_List_fromArray(
 				[
@@ -9927,7 +9923,7 @@ var $author$project$Main$viewUnit = F4(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('rounded-full flex items-center justify-center text-white font-bold pe-none'),
+							$elm$html$Html$Attributes$class('rounded-full flex items-center justify-center text-white font-bold pe-none border-333 text-8'),
 							A2(
 							$elm$html$Html$Attributes$style,
 							'width',
@@ -9936,9 +9932,7 @@ var $author$project$Main$viewUnit = F4(
 							$elm$html$Html$Attributes$style,
 							'height',
 							$elm$core$String$fromFloat(visualDiameter) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', unit.color),
-							$elm$html$Html$Attributes$class('border-333'),
-							A2($elm$html$Html$Attributes$style, 'font-size', '8px')
+							A2($elm$html$Html$Attributes$style, 'background-color', unit.color)
 						]),
 					_List_fromArray(
 						[
@@ -10315,9 +10309,8 @@ var $author$project$Main$viewPreGameOverlay = function (model) {
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3'),
+					$elm$html$Html$Attributes$class('panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3 text-18'),
 					A2($elm$html$Html$Attributes$style, 'top', '20px'),
-					A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
 					A2($elm$html$Html$Attributes$style, 'z-index', '1000')
 				]),
 			_List_fromArray(
@@ -10475,8 +10468,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											A2($elm$html$Html$Attributes$style, 'font-weight', 'bold'),
-											A2($elm$html$Html$Attributes$style, 'font-size', '12px')
+											$elm$html$Html$Attributes$class('font-bold text-12')
 										]),
 									_List_fromArray(
 										[
@@ -10486,9 +10478,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 									$elm$html$Html$div,
 									_List_fromArray(
 										[
-											A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-											A2($elm$html$Html$Attributes$style, 'color', '#aaa'),
-											$elm$html$Html$Attributes$class('flex gap-4')
+											$elm$html$Html$Attributes$class('text-9 text-aaa flex gap-4')
 										]),
 									_Utils_ap(
 										_List_fromArray(
@@ -11220,8 +11210,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 											$elm$html$Html$div,
 											_List_fromArray(
 												[
-													A2($elm$html$Html$Attributes$style, 'font-weight', 'bold'),
-													A2($elm$html$Html$Attributes$style, 'font-size', '12px')
+													$elm$html$Html$Attributes$class('font-bold text-12')
 												]),
 											_List_fromArray(
 												[
@@ -11234,10 +11223,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 											$elm$html$Html$div,
 											_List_fromArray(
 												[
-													A2($elm$html$Html$Attributes$style, 'font-size', '9px'),
-													$elm$html$Html$Attributes$class('text-muted'),
-													A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-													A2($elm$html$Html$Attributes$style, 'gap', '4px')
+													$elm$html$Html$Attributes$class('text-9 text-muted flex gap-4')
 												]),
 											_Utils_ap(
 												_List_fromArray(
@@ -11529,14 +11515,11 @@ var $author$project$Main$viewSelectionPanel = F2(
 							$elm$html$Html$div,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('py-6 px-12 cursor-pointer rounded-top'),
+									$elm$html$Html$Attributes$class('py-6 px-12 cursor-pointer rounded-top text-10 font-bold select-none'),
 									A2(
 									$elm$html$Html$Attributes$style,
 									'background-color',
 									_Utils_eq(model.buildingTab, tab) ? '#555' : '#333'),
-									A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
-									A2($elm$html$Html$Attributes$style, 'font-weight', 'bold'),
-									A2($elm$html$Html$Attributes$style, 'user-select', 'none'),
 									$elm$html$Html$Events$onClick(
 									$author$project$Main$SetBuildingTab(tab))
 								]),
@@ -11648,9 +11631,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
-								A2($elm$html$Html$Attributes$style, 'color', '#fff'),
-								A2($elm$html$Html$Attributes$style, 'font-weight', 'bold')
+								$elm$html$Html$Attributes$class('text-12 text-fff font-bold')
 							]),
 						_List_fromArray(
 							[

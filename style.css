@@ -161,10 +161,14 @@ body {
 .text-white { color: var(--color-white); }
 .text-muted { color: var(--color-muted); }
 .text-gold { color: var(--color-gold); }
+.text-8 { font-size: 8px; }
+.text-9 { font-size: 9px; }
 .text-10 { font-size: 10px; }
 .text-11 { font-size: 11px; }
 .text-12 { font-size: 12px; }
 .text-14 { font-size: 14px; }
+.text-18 { font-size: 18px; }
+.text-64 { font-size: 64px; }
 .nowrap { white-space: nowrap; }
 .italic { font-style: italic; }
 .select-none { user-select: none; -webkit-user-select: none; -moz-user-select: none; }

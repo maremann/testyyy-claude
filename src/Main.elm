@@ -3328,12 +3328,10 @@ viewUnit model unit worldX worldY =
         ]
         [ -- Inner visual representation (smaller)
           div
-            [ class "rounded-full flex items-center justify-center text-white font-bold pe-none"
+            [ class "rounded-full flex items-center justify-center text-white font-bold pe-none border-333 text-8"
             , style "width" (String.fromFloat visualDiameter ++ "px")
             , style "height" (String.fromFloat visualDiameter ++ "px")
             , style "background-color" unit.color
-            , class "border-333"
-            , style "font-size" "8px"
             ]
             [ text (case unit.unitType of
                 "Peasant" -> "P"
@@ -3887,9 +3885,7 @@ viewBuildingPreview model =
                 , style "width" (String.fromFloat buildingSizePx ++ "px")
                 , style "height" (String.fromFloat buildingSizePx ++ "px")
                 , style "background-color" previewColor
-                , class "border-white-alpha flex items-center justify-center text-fff"
-                , style "font-size" "14px"
-                , style "font-weight" "bold"
+                , class "border-white-alpha flex items-center justify-center text-fff text-14 font-bold"
                 ]
                 [ text template.name ]
 
@@ -4286,9 +4282,7 @@ viewSelectionPanel model panelWidth =
                 , Html.Events.onMouseLeave TooltipLeave
                 ]
                 [ div
-                    [ style "font-size" "12px"
-                    , style "color" "#fff"
-                    , style "font-weight" "bold"
+                    [ class "text-12 text-fff font-bold"
                     ]
                     [ text template.name ]
                 , div
@@ -4376,11 +4370,8 @@ viewSelectionPanel model panelWidth =
                         -- Tab buttons
                         tabButton label tab =
                             div
-                                [ class "py-6 px-12 cursor-pointer rounded-top"
+                                [ class "py-6 px-12 cursor-pointer rounded-top text-10 font-bold select-none"
                                 , style "background-color" (if model.buildingTab == tab then "#555" else "#333")
-                                , style "font-size" "10px"
-                                , style "font-weight" "bold"
-                                , style "user-select" "none"
                                 , Html.Events.onClick (SetBuildingTab tab)
                                 ]
                                 [ text label ]
@@ -4396,8 +4387,7 @@ viewSelectionPanel model panelWidth =
                                             [ class "flex flex-col gap-4"
                                             ]
                                             [ div
-                                                [ style "font-weight" "bold"
-                                                , style "font-size" "12px"
+                                                [ class "font-bold text-12"
                                                 ]
                                                 [ text (building.buildingType ++
                                                     (if building.behavior == UnderConstruction then
@@ -4407,10 +4397,7 @@ viewSelectionPanel model panelWidth =
                                                     ))
                                                 ]
                                             , div
-                                                [ style "font-size" "9px"
-                                                , class "text-muted"
-                                                , style "display" "flex"
-                                                , style "gap" "4px"
+                                                [ class "text-9 text-muted flex gap-4"
                                                 ]
                                                 ([ text "[" ]
                                                     ++ (building.tags
@@ -4607,14 +4594,11 @@ viewSelectionPanel model panelWidth =
                             [ class "flex flex-col gap-4"
                             ]
                             [ div
-                                [ style "font-weight" "bold"
-                                , style "font-size" "12px"
+                                [ class "font-bold text-12"
                                 ]
                                 [ text unit.unitType ]
                             , div
-                                [ style "font-size" "9px"
-                                , style "color" "#aaa"
-                                , class "flex gap-4"
+                                [ class "text-9 text-aaa flex gap-4"
                                 ]
                                 ([ text "[" ]
                                     ++ (unit.tags
@@ -4753,8 +4737,7 @@ viewGoldCounter model =
             ]
             []
         , div
-            [ class "text-gold font-mono font-bold"
-            , style "font-size" "18px"
+            [ class "text-gold font-mono font-bold text-18"
             ]
             [ text (String.fromInt model.gold) ]
         , if isPaused then
@@ -5136,9 +5119,8 @@ viewPreGameOverlay model =
     case model.gameState of
         PreGame ->
             div
-                [ class "panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3"
+                [ class "panel font-mono font-bold text-gold pe-none fix right-20 border-gold py-16 px-24 border-gold-3 text-18"
                 , style "top" "20px"
-                , style "font-size" "18px"
                 , style "z-index" "1000"
                 ]
                 [ text "Site your Castle" ]
@@ -5155,8 +5137,7 @@ viewGameOverOverlay model =
                 [ class "overlay pe-none bg-black-alpha-9"
                 ]
                 [ div
-                    [ class "font-mono font-bold text-red"
-                    , style "font-size" "64px"
+                    [ class "font-mono font-bold text-red text-64"
                     ]
                     [ text "GAME OVER" ]
                 ]
