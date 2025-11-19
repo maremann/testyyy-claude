@@ -6197,19 +6197,13 @@ var $author$project$Update$subscriptions = function (model) {
 	}
 };
 var $author$project$Types$BuildingTag = {$: 'BuildingTag'};
-var $author$project$Types$CofferTag = {$: 'CofferTag'};
 var $author$project$Types$DraggingMinimap = function (a) {
 	return {$: 'DraggingMinimap', a: a};
 };
 var $author$project$Types$DraggingViewport = function (a) {
 	return {$: 'DraggingViewport', a: a};
 };
-var $author$project$Types$GameOver = {$: 'GameOver'};
-var $author$project$Types$GenerateGold = {$: 'GenerateGold'};
-var $author$project$Types$GuildTag = {$: 'GuildTag'};
-var $author$project$Types$Medium = {$: 'Medium'};
 var $author$project$Types$ObjectiveTag = {$: 'ObjectiveTag'};
-var $author$project$Types$Pause = {$: 'Pause'};
 var $author$project$Types$Player = {$: 'Player'};
 var $author$project$Types$Playing = {$: 'Playing'};
 var $author$project$Types$SpawnHouse = {$: 'SpawnHouse'};
@@ -6727,51 +6721,124 @@ var $author$project$Grid$addBuildingOccupancy = F3(
 		var cells = A2($author$project$Grid$getBuildingPathfindingCells, gridConfig, building);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
-var $author$project$Grid$getUnitPathfindingCells = F3(
-	function (gridConfig, worldX, worldY) {
-		var unitRadius = gridConfig.pathfindingGridSize / 4;
-		var minY = worldY - unitRadius;
-		var startPfY = $elm$core$Basics$floor(minY / gridConfig.pathfindingGridSize);
-		var minX = worldX - unitRadius;
-		var startPfX = $elm$core$Basics$floor(minX / gridConfig.pathfindingGridSize);
-		var maxY = worldY + unitRadius;
-		var maxX = worldX + unitRadius;
-		var endPfY = $elm$core$Basics$floor(maxY / gridConfig.pathfindingGridSize);
-		var ys = A2($elm$core$List$range, startPfY, endPfY);
-		var endPfX = $elm$core$Basics$floor(maxX / gridConfig.pathfindingGridSize);
-		var xs = A2($elm$core$List$range, startPfX, endPfX);
-		return A2(
-			$elm$core$List$concatMap,
-			function (x) {
-				return A2(
-					$elm$core$List$map,
-					function (y) {
-						return _Utils_Tuple2(x, y);
-					},
-					ys);
-			},
-			xs);
+var $elm$core$Basics$clamp = F3(
+	function (low, high, number) {
+		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
 	});
-var $author$project$Grid$addUnitOccupancy = F4(
-	function (gridConfig, worldX, worldY, occupancy) {
-		var incrementCell = F2(
-			function (cell, dict) {
-				return A3(
-					$elm$core$Dict$update,
-					cell,
-					function (maybeCount) {
-						if (maybeCount.$ === 'Just') {
-							var count = maybeCount.a;
-							return $elm$core$Maybe$Just(count + 1);
-						} else {
-							return $elm$core$Maybe$Just(1);
-						}
-					},
-					dict);
-			});
-		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
-		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
+var $author$project$Update$getMinimapScale = F2(
+	function (minimapConfig, mapConfig) {
+		return A2($elm$core$Basics$min, (minimapConfig.width - (minimapConfig.padding * 2)) / mapConfig.width, (minimapConfig.height - (minimapConfig.padding * 2)) / mapConfig.height);
+	});
+var $author$project$Update$centerCameraOnMinimapClick = F4(
+	function (model, minimapConfig, clickX, clickY) {
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var terrainHeight = model.mapConfig.height * scale;
+		var terrainWidth = model.mapConfig.width * scale;
+		var clampedY = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainHeight, clickY);
+		var clampedX = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainWidth, clickX);
+		var _v0 = model.windowSize;
+		var winWidth = _v0.a;
+		var winHeight = _v0.b;
+		var worldY = ((clampedY - minimapConfig.padding) / scale) - (winHeight / 2);
+		var worldX = ((clampedX - minimapConfig.padding) / scale) - (winWidth / 2);
+		return {x: worldX, y: worldY};
+	});
+var $author$project$Update$constrainCamera = F3(
+	function (config, _v0, camera) {
+		var winWidth = _v0.a;
+		var winHeight = _v0.b;
+		var viewWidth = winWidth;
+		var viewHeight = winHeight;
+		var minY = 0 - config.boundary;
+		var minX = 0 - config.boundary;
+		var maxY = (config.height + config.boundary) - viewHeight;
+		var maxX = (config.width + config.boundary) - viewWidth;
+		return {
+			x: A3($elm$core$Basics$clamp, minX, maxX, camera.x),
+			y: A3($elm$core$Basics$clamp, minY, maxY, camera.y)
+		};
+	});
+var $author$project$Types$Garrisoned = function (a) {
+	return {$: 'Garrisoned', a: a};
+};
+var $author$project$Types$Henchman = {$: 'Henchman'};
+var $author$project$Types$HenchmanTag = {$: 'HenchmanTag'};
+var $author$project$Types$Sleeping = {$: 'Sleeping'};
+var $author$project$GameHelpers$createHenchman = F4(
+	function (unitType, unitId, buildingId, homeBuilding) {
+		var _v0 = function () {
+			switch (unitType) {
+				case 'Peasant':
+					return _Utils_Tuple3(
+						50,
+						2.0,
+						_List_fromArray(
+							[$author$project$Types$HenchmanTag]));
+				case 'Tax Collector':
+					return _Utils_Tuple3(
+						50,
+						1.5,
+						_List_fromArray(
+							[$author$project$Types$HenchmanTag]));
+				case 'Castle Guard':
+					return _Utils_Tuple3(
+						100,
+						2.0,
+						_List_fromArray(
+							[$author$project$Types$HenchmanTag]));
+				default:
+					return _Utils_Tuple3(
+						50,
+						2.0,
+						_List_fromArray(
+							[$author$project$Types$HenchmanTag]));
+			}
+		}();
+		var hp = _v0.a;
+		var speed = _v0.b;
+		var tags = _v0.c;
+		return {
+			activeRadius: 192,
+			behavior: $author$project$Types$Sleeping,
+			behaviorDuration: 0,
+			behaviorTimer: 0,
+			carriedGold: 0,
+			color: '#888',
+			homeBuilding: $elm$core$Maybe$Just(buildingId),
+			hp: hp,
+			id: unitId,
+			location: $author$project$Types$Garrisoned(buildingId),
+			maxHp: hp,
+			movementSpeed: speed,
+			owner: $author$project$Types$Player,
+			path: _List_Nil,
+			searchRadius: 384,
+			tags: tags,
+			targetDestination: $elm$core$Maybe$Nothing,
+			thinkingDuration: 0,
+			thinkingTimer: 0,
+			unitKind: $author$project$Types$Henchman,
+			unitType: unitType
+		};
+	});
+var $elm$core$Basics$ge = _Utils_ge;
+var $author$project$Update$isClickOnViewbox = F4(
+	function (model, minimapConfig, clickX, clickY) {
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
+		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
+		var _v0 = model.windowSize;
+		var winWidth = _v0.a;
+		var winHeight = _v0.b;
+		var viewboxHeight = winHeight * scale;
+		var viewboxWidth = winWidth * scale;
+		return (_Utils_cmp(clickX, viewboxLeft) > -1) && ((_Utils_cmp(clickX, viewboxLeft + viewboxWidth) < 1) && ((_Utils_cmp(clickY, viewboxTop) > -1) && (_Utils_cmp(clickY, viewboxTop + viewboxHeight) < 1)));
+	});
+var $author$project$Types$Idle = {$: 'Idle'};
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -6793,6 +6860,24 @@ var $elm$core$List$any = F2(
 			}
 		}
 	});
+var $elm$core$Dict$member = F2(
+	function (key, dict) {
+		var _v0 = A2($elm$core$Dict$get, key, dict);
+		if (_v0.$ === 'Just') {
+			return true;
+		} else {
+			return false;
+		}
+	});
+var $author$project$Grid$areBuildGridCellsOccupied = F2(
+	function (cells, occupancy) {
+		return A2(
+			$elm$core$List$any,
+			function (cell) {
+				return A2($elm$core$Dict$member, cell, occupancy);
+			},
+			cells);
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -6804,6 +6889,146 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
+var $author$project$Grid$getBuildingGridCellsWithSpacing = function (building) {
+	var startY = building.gridY - 1;
+	var startX = building.gridX - 1;
+	var sizeCells = $author$project$Types$buildingSizeToGridCells(building.size);
+	var endY = building.gridY + sizeCells;
+	var ys = A2($elm$core$List$range, startY, endY);
+	var endX = building.gridX + sizeCells;
+	var xs = A2($elm$core$List$range, startX, endX);
+	return A2(
+		$elm$core$List$concatMap,
+		function (x) {
+			return A2(
+				$elm$core$List$map,
+				function (y) {
+					return _Utils_Tuple2(x, y);
+				},
+				ys);
+		},
+		xs);
+};
+var $author$project$Grid$getBuildingAreaCells = F2(
+	function (building, radiusInCells) {
+		var sizeCells = $author$project$Types$buildingSizeToGridCells(building.size);
+		var centerY = building.gridY + ((sizeCells / 2) | 0);
+		var maxY = centerY + radiusInCells;
+		var minY = centerY - radiusInCells;
+		var centerX = building.gridX + ((sizeCells / 2) | 0);
+		var maxX = centerX + radiusInCells;
+		var minX = centerX - radiusInCells;
+		var allCells = A2(
+			$elm$core$List$concatMap,
+			function (x) {
+				return A2(
+					$elm$core$List$map,
+					function (y) {
+						return _Utils_Tuple2(x, y);
+					},
+					A2($elm$core$List$range, minY, maxY));
+			},
+			A2($elm$core$List$range, minX, maxX));
+		return allCells;
+	});
+var $author$project$Grid$getCitySearchArea = function (buildings) {
+	return $elm$core$Dict$keys(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (cell, acc) {
+					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
+				}),
+			$elm$core$Dict$empty,
+			A2(
+				$elm$core$List$concatMap,
+				function (b) {
+					return A2($author$project$Grid$getBuildingAreaCells, b, 6);
+				},
+				A2(
+					$elm$core$List$filter,
+					function (b) {
+						return _Utils_eq(b.owner, $author$project$Types$Player);
+					},
+					buildings))));
+};
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Grid$isValidBuildingPlacement = F7(
+	function (gridX, gridY, size, mapConfig, gridConfig, buildingOccupancy, buildings) {
+		var tempBuilding = {
+			activeRadius: 192,
+			behavior: $author$project$Types$Idle,
+			behaviorDuration: 0,
+			behaviorTimer: 0,
+			buildingType: '',
+			coffer: 0,
+			garrisonConfig: _List_Nil,
+			garrisonOccupied: 0,
+			garrisonSlots: 0,
+			gridX: gridX,
+			gridY: gridY,
+			hp: 0,
+			id: 0,
+			maxHp: 0,
+			owner: $author$project$Types$Player,
+			searchRadius: 384,
+			size: size,
+			tags: _List_fromArray(
+				[$author$project$Types$BuildingTag])
+		};
+		var sizeCells = $author$project$Types$buildingSizeToGridCells(size);
+		var maxGridY = $elm$core$Basics$floor(mapConfig.height / gridConfig.buildGridSize);
+		var maxGridX = $elm$core$Basics$floor(mapConfig.width / gridConfig.buildGridSize);
+		var inBounds = (gridX >= 0) && ((gridY >= 0) && ((_Utils_cmp(gridX + sizeCells, maxGridX) < 1) && (_Utils_cmp(gridY + sizeCells, maxGridY) < 1)));
+		var citySearchArea = $author$project$Grid$getCitySearchArea(buildings);
+		var searchAreaSet = A3(
+			$elm$core$List$foldl,
+			F2(
+				function (cell, acc) {
+					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
+				}),
+			$elm$core$Dict$empty,
+			citySearchArea);
+		var cellsWithSpacing = $author$project$Grid$getBuildingGridCellsWithSpacing(tempBuilding);
+		var notOccupied = !A2($author$project$Grid$areBuildGridCellsOccupied, cellsWithSpacing, buildingOccupancy);
+		var buildingCells = $author$project$Grid$getBuildingGridCells(tempBuilding);
+		var tilesInSearchArea = $elm$core$List$length(
+			A2(
+				$elm$core$List$filter,
+				function (cell) {
+					return A2($elm$core$Dict$member, cell, searchAreaSet);
+				},
+				buildingCells));
+		var totalTiles = $elm$core$List$length(buildingCells);
+		var atLeastHalfInSearchArea = $elm$core$List$isEmpty(buildings) ? true : (_Utils_cmp(tilesInSearchArea, totalTiles / 2) > -1);
+		return inBounds && (notOccupied && atLeastHalfInSearchArea);
+	});
+var $author$project$Update$minimapClickOffset = F4(
+	function (model, minimapConfig, clickX, clickY) {
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
+		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
+		var offsetY = clickY - viewboxTop;
+		var offsetX = clickX - viewboxLeft;
+		return {x: offsetX, y: offsetY};
+	});
+var $author$project$Update$minimapDragToCamera = F4(
+	function (model, offset, clickX, clickY) {
+		var minimapConfig = {height: 150, padding: 10, width: 200};
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var worldX = ((clickX - minimapConfig.padding) - offset.x) / scale;
+		var worldY = ((clickY - minimapConfig.padding) - offset.y) / scale;
+		return {x: worldX, y: worldY};
+	});
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -6823,7 +7048,6 @@ var $author$project$Pathfinding$findNode = F2(
 				},
 				nodes));
 	});
-var $elm$core$Basics$ge = _Utils_ge;
 var $elm$core$List$sortBy = _List_sortBy;
 var $author$project$Pathfinding$getLowestFCostNode = function (nodes) {
 	if (!nodes.b) {
@@ -6887,11 +7111,6 @@ var $elm$core$List$member = F2(
 				return _Utils_eq(a, x);
 			},
 			xs);
-	});
-var $elm$core$Basics$not = _Basics_not;
-var $elm$core$Basics$min = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
 var $author$project$Pathfinding$octileDistance = F2(
 	function (_v0, _v1) {
@@ -7075,116 +7294,57 @@ var $author$project$Pathfinding$calculateUnitPath = F6(
 		var path = A5($author$project$Pathfinding$findPath, gridConfig, mapConfig, occupancy, currentCell, targetCell);
 		return path;
 	});
-var $elm$core$Basics$clamp = F3(
-	function (low, high, number) {
-		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
+var $author$project$GameHelpers$recalculateAllPaths = F4(
+	function (gridConfig, mapConfig, occupancy, units) {
+		return A2(
+			$elm$core$List$map,
+			function (unit) {
+				if ($elm$core$List$isEmpty(unit.path)) {
+					return unit;
+				} else {
+					var _v0 = unit.location;
+					if (_v0.$ === 'OnMap') {
+						var x = _v0.a;
+						var y = _v0.b;
+						var _v1 = $elm$core$List$head(
+							$elm$core$List$reverse(unit.path));
+						if (_v1.$ === 'Just') {
+							var goalCell = _v1.a;
+							var newPath = A6($author$project$Pathfinding$calculateUnitPath, gridConfig, mapConfig, occupancy, x, y, goalCell);
+							return _Utils_update(
+								unit,
+								{path: newPath});
+						} else {
+							return unit;
+						}
+					} else {
+						return unit;
+					}
+				}
+			},
+			units);
 	});
-var $author$project$Update$getMinimapScale = F2(
-	function (minimapConfig, mapConfig) {
-		return A2($elm$core$Basics$min, (minimapConfig.width - (minimapConfig.padding * 2)) / mapConfig.width, (minimapConfig.height - (minimapConfig.padding * 2)) / mapConfig.height);
-	});
-var $author$project$Update$centerCameraOnMinimapClick = F4(
-	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
-		var terrainHeight = model.mapConfig.height * scale;
-		var terrainWidth = model.mapConfig.width * scale;
-		var clampedY = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainHeight, clickY);
-		var clampedX = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainWidth, clickX);
-		var _v0 = model.windowSize;
-		var winWidth = _v0.a;
-		var winHeight = _v0.b;
-		var worldY = ((clampedY - minimapConfig.padding) / scale) - (winHeight / 2);
-		var worldX = ((clampedX - minimapConfig.padding) / scale) - (winWidth / 2);
-		return {x: worldX, y: worldY};
-	});
-var $author$project$Update$constrainCamera = F3(
-	function (config, _v0, camera) {
-		var winWidth = _v0.a;
-		var winHeight = _v0.b;
-		var viewWidth = winWidth;
-		var viewHeight = winHeight;
-		var minY = 0 - config.boundary;
-		var minX = 0 - config.boundary;
-		var maxY = (config.height + config.boundary) - viewHeight;
-		var maxX = (config.width + config.boundary) - viewWidth;
-		return {
-			x: A3($elm$core$Basics$clamp, minX, maxX, camera.x),
-			y: A3($elm$core$Basics$clamp, minY, maxY, camera.y)
-		};
-	});
-var $author$project$Types$Garrisoned = function (a) {
-	return {$: 'Garrisoned', a: a};
-};
-var $author$project$Types$Henchman = {$: 'Henchman'};
-var $author$project$Types$HenchmanTag = {$: 'HenchmanTag'};
-var $author$project$Types$Sleeping = {$: 'Sleeping'};
-var $author$project$GameHelpers$createHenchman = F4(
-	function (unitType, unitId, buildingId, homeBuilding) {
-		var _v0 = function () {
-			switch (unitType) {
-				case 'Peasant':
-					return _Utils_Tuple3(
-						50,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				case 'Tax Collector':
-					return _Utils_Tuple3(
-						50,
-						1.5,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				case 'Castle Guard':
-					return _Utils_Tuple3(
-						100,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-				default:
-					return _Utils_Tuple3(
-						50,
-						2.0,
-						_List_fromArray(
-							[$author$project$Types$HenchmanTag]));
-			}
-		}();
-		var hp = _v0.a;
-		var speed = _v0.b;
-		var tags = _v0.c;
-		return {
-			activeRadius: 192,
-			behavior: $author$project$Types$Sleeping,
-			behaviorDuration: 0,
-			behaviorTimer: 0,
-			carriedGold: 0,
-			color: '#888',
-			homeBuilding: $elm$core$Maybe$Just(buildingId),
-			hp: hp,
-			id: unitId,
-			location: $author$project$Types$Garrisoned(buildingId),
-			maxHp: hp,
-			movementSpeed: speed,
-			owner: $author$project$Types$Player,
-			path: _List_Nil,
-			searchRadius: 384,
-			tags: tags,
-			targetDestination: $elm$core$Maybe$Nothing,
-			thinkingDuration: 0,
-			thinkingTimer: 0,
-			unitKind: $author$project$Types$Henchman,
-			unitType: unitType
-		};
-	});
-var $author$project$Grid$getBuildingAreaCells = F2(
-	function (building, radiusInCells) {
-		var sizeCells = $author$project$Types$buildingSizeToGridCells(building.size);
-		var centerY = building.gridY + ((sizeCells / 2) | 0);
-		var maxY = centerY + radiusInCells;
-		var minY = centerY - radiusInCells;
-		var centerX = building.gridX + ((sizeCells / 2) | 0);
-		var maxX = centerX + radiusInCells;
-		var minX = centerX - radiusInCells;
-		var allCells = A2(
+var $elm$core$Basics$round = _Basics_round;
+var $author$project$Types$CofferTag = {$: 'CofferTag'};
+var $author$project$Types$GameOver = {$: 'GameOver'};
+var $author$project$Types$GenerateGold = {$: 'GenerateGold'};
+var $author$project$Types$GuildTag = {$: 'GuildTag'};
+var $author$project$Types$Medium = {$: 'Medium'};
+var $author$project$Types$Pause = {$: 'Pause'};
+var $author$project$Grid$getUnitPathfindingCells = F3(
+	function (gridConfig, worldX, worldY) {
+		var unitRadius = gridConfig.pathfindingGridSize / 4;
+		var minY = worldY - unitRadius;
+		var startPfY = $elm$core$Basics$floor(minY / gridConfig.pathfindingGridSize);
+		var minX = worldX - unitRadius;
+		var startPfX = $elm$core$Basics$floor(minX / gridConfig.pathfindingGridSize);
+		var maxY = worldY + unitRadius;
+		var maxX = worldX + unitRadius;
+		var endPfY = $elm$core$Basics$floor(maxY / gridConfig.pathfindingGridSize);
+		var ys = A2($elm$core$List$range, startPfY, endPfY);
+		var endPfX = $elm$core$Basics$floor(maxX / gridConfig.pathfindingGridSize);
+		var xs = A2($elm$core$List$range, startPfX, endPfX);
+		return A2(
 			$elm$core$List$concatMap,
 			function (x) {
 				return A2(
@@ -7192,127 +7352,29 @@ var $author$project$Grid$getBuildingAreaCells = F2(
 					function (y) {
 						return _Utils_Tuple2(x, y);
 					},
-					A2($elm$core$List$range, minY, maxY));
+					ys);
 			},
-			A2($elm$core$List$range, minX, maxX));
-		return allCells;
+			xs);
 	});
-var $author$project$Types$Idle = {$: 'Idle'};
-var $elm$core$Dict$member = F2(
-	function (key, dict) {
-		var _v0 = A2($elm$core$Dict$get, key, dict);
-		if (_v0.$ === 'Just') {
-			return true;
-		} else {
-			return false;
-		}
-	});
-var $author$project$Grid$areBuildGridCellsOccupied = F2(
-	function (cells, occupancy) {
-		return A2(
-			$elm$core$List$any,
-			function (cell) {
-				return A2($elm$core$Dict$member, cell, occupancy);
-			},
-			cells);
-	});
-var $author$project$Grid$getBuildingGridCellsWithSpacing = function (building) {
-	var startY = building.gridY - 1;
-	var startX = building.gridX - 1;
-	var sizeCells = $author$project$Types$buildingSizeToGridCells(building.size);
-	var endY = building.gridY + sizeCells;
-	var ys = A2($elm$core$List$range, startY, endY);
-	var endX = building.gridX + sizeCells;
-	var xs = A2($elm$core$List$range, startX, endX);
-	return A2(
-		$elm$core$List$concatMap,
-		function (x) {
-			return A2(
-				$elm$core$List$map,
-				function (y) {
-					return _Utils_Tuple2(x, y);
-				},
-				ys);
-		},
-		xs);
-};
-var $author$project$Grid$getCitySearchArea = function (buildings) {
-	return $elm$core$Dict$keys(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (cell, acc) {
-					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
-				}),
-			$elm$core$Dict$empty,
-			A2(
-				$elm$core$List$concatMap,
-				function (b) {
-					return A2($author$project$Grid$getBuildingAreaCells, b, 6);
-				},
-				A2(
-					$elm$core$List$filter,
-					function (b) {
-						return _Utils_eq(b.owner, $author$project$Types$Player);
+var $author$project$Grid$addUnitOccupancy = F4(
+	function (gridConfig, worldX, worldY, occupancy) {
+		var incrementCell = F2(
+			function (cell, dict) {
+				return A3(
+					$elm$core$Dict$update,
+					cell,
+					function (maybeCount) {
+						if (maybeCount.$ === 'Just') {
+							var count = maybeCount.a;
+							return $elm$core$Maybe$Just(count + 1);
+						} else {
+							return $elm$core$Maybe$Just(1);
+						}
 					},
-					buildings))));
-};
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $author$project$Grid$isValidBuildingPlacement = F7(
-	function (gridX, gridY, size, mapConfig, gridConfig, buildingOccupancy, buildings) {
-		var tempBuilding = {
-			activeRadius: 192,
-			behavior: $author$project$Types$Idle,
-			behaviorDuration: 0,
-			behaviorTimer: 0,
-			buildingType: '',
-			coffer: 0,
-			garrisonConfig: _List_Nil,
-			garrisonOccupied: 0,
-			garrisonSlots: 0,
-			gridX: gridX,
-			gridY: gridY,
-			hp: 0,
-			id: 0,
-			maxHp: 0,
-			owner: $author$project$Types$Player,
-			searchRadius: 384,
-			size: size,
-			tags: _List_fromArray(
-				[$author$project$Types$BuildingTag])
-		};
-		var sizeCells = $author$project$Types$buildingSizeToGridCells(size);
-		var maxGridY = $elm$core$Basics$floor(mapConfig.height / gridConfig.buildGridSize);
-		var maxGridX = $elm$core$Basics$floor(mapConfig.width / gridConfig.buildGridSize);
-		var inBounds = (gridX >= 0) && ((gridY >= 0) && ((_Utils_cmp(gridX + sizeCells, maxGridX) < 1) && (_Utils_cmp(gridY + sizeCells, maxGridY) < 1)));
-		var citySearchArea = $author$project$Grid$getCitySearchArea(buildings);
-		var searchAreaSet = A3(
-			$elm$core$List$foldl,
-			F2(
-				function (cell, acc) {
-					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
-				}),
-			$elm$core$Dict$empty,
-			citySearchArea);
-		var cellsWithSpacing = $author$project$Grid$getBuildingGridCellsWithSpacing(tempBuilding);
-		var notOccupied = !A2($author$project$Grid$areBuildGridCellsOccupied, cellsWithSpacing, buildingOccupancy);
-		var buildingCells = $author$project$Grid$getBuildingGridCells(tempBuilding);
-		var tilesInSearchArea = $elm$core$List$length(
-			A2(
-				$elm$core$List$filter,
-				function (cell) {
-					return A2($elm$core$Dict$member, cell, searchAreaSet);
-				},
-				buildingCells));
-		var totalTiles = $elm$core$List$length(buildingCells);
-		var atLeastHalfInSearchArea = $elm$core$List$isEmpty(buildings) ? true : (_Utils_cmp(tilesInSearchArea, totalTiles / 2) > -1);
-		return inBounds && (notOccupied && atLeastHalfInSearchArea);
+					dict);
+			});
+		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
+		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
@@ -7461,67 +7523,6 @@ var $author$project$Grid$findAdjacentHouseLocation = F4(
 					buildings)));
 		return $elm$core$List$head(adjacentCells);
 	});
-var $author$project$Update$isClickOnViewbox = F4(
-	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
-		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
-		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
-		var _v0 = model.windowSize;
-		var winWidth = _v0.a;
-		var winHeight = _v0.b;
-		var viewboxHeight = winHeight * scale;
-		var viewboxWidth = winWidth * scale;
-		return (_Utils_cmp(clickX, viewboxLeft) > -1) && ((_Utils_cmp(clickX, viewboxLeft + viewboxWidth) < 1) && ((_Utils_cmp(clickY, viewboxTop) > -1) && (_Utils_cmp(clickY, viewboxTop + viewboxHeight) < 1)));
-	});
-var $author$project$Update$minimapClickOffset = F4(
-	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
-		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
-		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
-		var offsetY = clickY - viewboxTop;
-		var offsetX = clickX - viewboxLeft;
-		return {x: offsetX, y: offsetY};
-	});
-var $author$project$Update$minimapDragToCamera = F4(
-	function (model, offset, clickX, clickY) {
-		var minimapConfig = {height: 150, padding: 10, width: 200};
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
-		var worldX = ((clickX - minimapConfig.padding) - offset.x) / scale;
-		var worldY = ((clickY - minimapConfig.padding) - offset.y) / scale;
-		return {x: worldX, y: worldY};
-	});
-var $elm$core$Basics$modBy = _Basics_modBy;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$GameHelpers$recalculateAllPaths = F4(
-	function (gridConfig, mapConfig, occupancy, units) {
-		return A2(
-			$elm$core$List$map,
-			function (unit) {
-				if ($elm$core$List$isEmpty(unit.path)) {
-					return unit;
-				} else {
-					var _v0 = unit.location;
-					if (_v0.$ === 'OnMap') {
-						var x = _v0.a;
-						var y = _v0.b;
-						var _v1 = $elm$core$List$head(
-							$elm$core$List$reverse(unit.path));
-						if (_v1.$ === 'Just') {
-							var goalCell = _v1.a;
-							var newPath = A6($author$project$Pathfinding$calculateUnitPath, gridConfig, mapConfig, occupancy, x, y, goalCell);
-							return _Utils_update(
-								unit,
-								{path: newPath});
-						} else {
-							return unit;
-						}
-					} else {
-						return unit;
-					}
-				}
-			},
-			units);
-	});
 var $author$project$Grid$removeUnitOccupancy = F4(
 	function (gridConfig, worldX, worldY, occupancy) {
 		var decrementCell = F2(
@@ -7542,7 +7543,6 @@ var $author$project$Grid$removeUnitOccupancy = F4(
 		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
 		return A3($elm$core$List$foldl, decrementCell, occupancy, cells);
 	});
-var $elm$core$Basics$round = _Basics_round;
 var $author$project$BuildingBehavior$updateBuildingBehavior = F2(
 	function (deltaSeconds, building) {
 		var _v0 = building.behavior;
@@ -8115,6 +8115,300 @@ var $author$project$GameHelpers$updateUnitMovement = F5(
 			return unit;
 		}
 	});
+var $author$project$Simulation$simulationTick = F2(
+	function (delta, model) {
+		var updatedTooltipHover = function () {
+			var _v30 = model.tooltipHover;
+			if (_v30.$ === 'Just') {
+				var tooltipState = _v30.a;
+				return $elm$core$Maybe$Just(
+					_Utils_update(
+						tooltipState,
+						{hoverTime: tooltipState.hoverTime + delta}));
+			} else {
+				return $elm$core$Maybe$Nothing;
+			}
+		}();
+		var speedMultiplier = function () {
+			var _v29 = model.simulationSpeed;
+			switch (_v29.$) {
+				case 'Pause':
+					return 0;
+				case 'Speed1x':
+					return 1;
+				case 'Speed2x':
+					return 2;
+				case 'Speed10x':
+					return 10;
+				default:
+					return 100;
+			}
+		}();
+		var simulationTimestep = 50.0;
+		var isPaused = (delta > 1000) || _Utils_eq(model.simulationSpeed, $author$project$Types$Pause);
+		var newAccumulatedTime = isPaused ? model.accumulatedTime : (model.accumulatedTime + (delta * speedMultiplier));
+		var shouldSimulate = (_Utils_cmp(newAccumulatedTime, simulationTimestep) > -1) && (!isPaused);
+		if (shouldSimulate) {
+			var remainingTime = newAccumulatedTime - simulationTimestep;
+			var newSimulationDeltas = A2(
+				$elm$core$List$take,
+				3,
+				A2($elm$core$List$cons, newAccumulatedTime, model.lastSimulationDeltas));
+			var deltaSeconds = simulationTimestep / 1000.0;
+			var _v0 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (unit, _v1) {
+						var accUnits = _v1.a;
+						var accOccupancy = _v1.b;
+						var accNeedingPaths = _v1.c;
+						var _v2 = unit.location;
+						if (_v2.$ === 'OnMap') {
+							var oldX = _v2.a;
+							var oldY = _v2.b;
+							var occupancyWithoutUnit = A4($author$project$Grid$removeUnitOccupancy, model.gridConfig, oldX, oldY, accOccupancy);
+							var _v3 = A3($author$project$UnitBehavior$updateUnitBehavior, deltaSeconds, model.buildings, unit);
+							var behaviorUpdatedUnit = _v3.a;
+							var shouldGeneratePath = _v3.b;
+							var movedUnit = A5($author$project$GameHelpers$updateUnitMovement, model.gridConfig, model.mapConfig, occupancyWithoutUnit, deltaSeconds, behaviorUpdatedUnit);
+							var newOccupancyForUnit = function () {
+								var _v4 = movedUnit.location;
+								if (_v4.$ === 'OnMap') {
+									var newX = _v4.a;
+									var newY = _v4.b;
+									return A4($author$project$Grid$addUnitOccupancy, model.gridConfig, newX, newY, occupancyWithoutUnit);
+								} else {
+									return occupancyWithoutUnit;
+								}
+							}();
+							var needsPath = shouldGeneratePath ? A2($elm$core$List$cons, movedUnit, accNeedingPaths) : accNeedingPaths;
+							return _Utils_Tuple3(
+								A2($elm$core$List$cons, movedUnit, accUnits),
+								newOccupancyForUnit,
+								needsPath);
+						} else {
+							var _v5 = A3($author$project$UnitBehavior$updateUnitBehavior, deltaSeconds, model.buildings, unit);
+							var behaviorUpdatedUnit = _v5.a;
+							var shouldGeneratePath = _v5.b;
+							var needsPath = shouldGeneratePath ? A2($elm$core$List$cons, behaviorUpdatedUnit, accNeedingPaths) : accNeedingPaths;
+							return _Utils_Tuple3(
+								A2($elm$core$List$cons, behaviorUpdatedUnit, accUnits),
+								accOccupancy,
+								needsPath);
+						}
+					}),
+				_Utils_Tuple3(_List_Nil, model.pathfindingOccupancy, _List_Nil),
+				model.units);
+			var updatedUnits = _v0.a;
+			var updatedOccupancy = _v0.b;
+			var unitsNeedingPaths = _v0.c;
+			var _v6 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (building, _v7) {
+						var accBuildings = _v7.a;
+						var accNeedingHouseSpawn = _v7.b;
+						var accHenchmenSpawn = _v7.c;
+						var _v8 = A2($author$project$BuildingBehavior$updateBuildingBehavior, deltaSeconds, building);
+						var behaviorUpdatedBuilding = _v8.a;
+						var shouldSpawnHouse = _v8.b;
+						var _v9 = A2($author$project$UnitBehavior$updateGarrisonSpawning, deltaSeconds, behaviorUpdatedBuilding);
+						var garrisonUpdatedBuilding = _v9.a;
+						var unitsToSpawn = _v9.b;
+						var needsHouseSpawn = shouldSpawnHouse ? A2($elm$core$List$cons, garrisonUpdatedBuilding, accNeedingHouseSpawn) : accNeedingHouseSpawn;
+						return _Utils_Tuple3(
+							A2($elm$core$List$cons, garrisonUpdatedBuilding, accBuildings),
+							needsHouseSpawn,
+							_Utils_ap(unitsToSpawn, accHenchmenSpawn));
+					}),
+				_Utils_Tuple3(_List_Nil, _List_Nil, _List_Nil),
+				model.buildings);
+			var updatedBuildings = _v6.a;
+			var buildingsNeedingHouseSpawn = _v6.b;
+			var henchmenToSpawn = _v6.c;
+			var _v10 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (castleBuilding, _v13) {
+						var _v14 = _v13.a;
+						var accBuildings = _v14.a;
+						var accBuildOcc = _v14.b;
+						var _v15 = _v13.b;
+						var accPfOcc = _v15.a;
+						var currentBuildingId = _v15.b;
+						var _v16 = A4($author$project$Grid$findAdjacentHouseLocation, model.mapConfig, model.gridConfig, accBuildings, accBuildOcc);
+						if (_v16.$ === 'Just') {
+							var _v17 = _v16.a;
+							var gridX = _v17.a;
+							var gridY = _v17.b;
+							var newHouse = {
+								activeRadius: 192,
+								behavior: $author$project$Types$GenerateGold,
+								behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 30000, currentBuildingId * 1000) / 1000.0),
+								behaviorTimer: 0,
+								buildingType: 'House',
+								coffer: 0,
+								garrisonConfig: _List_Nil,
+								garrisonOccupied: 0,
+								garrisonSlots: 0,
+								gridX: gridX,
+								gridY: gridY,
+								hp: 500,
+								id: currentBuildingId,
+								maxHp: 500,
+								owner: $author$project$Types$Player,
+								searchRadius: 384,
+								size: $author$project$Types$Medium,
+								tags: _List_fromArray(
+									[$author$project$Types$BuildingTag, $author$project$Types$CofferTag])
+							};
+							var newPfOcc = A3($author$project$Grid$addBuildingOccupancy, model.gridConfig, newHouse, accPfOcc);
+							var newBuildOcc = A2($author$project$Grid$addBuildingGridOccupancy, newHouse, accBuildOcc);
+							return _Utils_Tuple2(
+								_Utils_Tuple2(
+									A2($elm$core$List$cons, newHouse, accBuildings),
+									newBuildOcc),
+								_Utils_Tuple2(newPfOcc, currentBuildingId + 1));
+						} else {
+							return _Utils_Tuple2(
+								_Utils_Tuple2(accBuildings, accBuildOcc),
+								_Utils_Tuple2(accPfOcc, currentBuildingId));
+						}
+					}),
+				_Utils_Tuple2(
+					_Utils_Tuple2(updatedBuildings, model.buildingOccupancy),
+					_Utils_Tuple2(updatedOccupancy, model.nextBuildingId)),
+				buildingsNeedingHouseSpawn);
+			var _v11 = _v10.a;
+			var buildingsAfterHouseSpawn = _v11.a;
+			var buildingOccupancyAfterHouses = _v11.b;
+			var _v12 = _v10.b;
+			var pathfindingOccupancyAfterHouses = _v12.a;
+			var nextBuildingIdAfterHouses = _v12.b;
+			var _v18 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (_v19, _v20) {
+						var unitType = _v19.a;
+						var buildingId = _v19.b;
+						var accUnits = _v20.a;
+						var currentUnitId = _v20.b;
+						var _v21 = $elm$core$List$head(
+							A2(
+								$elm$core$List$filter,
+								function (b) {
+									return _Utils_eq(b.id, buildingId);
+								},
+								updatedBuildings));
+						if (_v21.$ === 'Just') {
+							var homeBuilding = _v21.a;
+							var newUnit = A4($author$project$GameHelpers$createHenchman, unitType, currentUnitId, buildingId, homeBuilding);
+							return _Utils_Tuple2(
+								A2($elm$core$List$cons, newUnit, accUnits),
+								currentUnitId + 1);
+						} else {
+							return _Utils_Tuple2(accUnits, currentUnitId);
+						}
+					}),
+				_Utils_Tuple2(_List_Nil, model.nextUnitId),
+				henchmenToSpawn);
+			var newHenchmen = _v18.a;
+			var nextUnitIdAfterSpawning = _v18.b;
+			var allUnits = _Utils_ap(updatedUnits, newHenchmen);
+			var unitsAfterHouseSpawn = $elm$core$List$isEmpty(buildingsNeedingHouseSpawn) ? allUnits : A4($author$project$GameHelpers$recalculateAllPaths, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, allUnits);
+			var buildingsAfterRepairs = A2(
+				$elm$core$List$map,
+				function (building) {
+					var repairingPeasants = A2(
+						$elm$core$List$filter,
+						function (unit) {
+							var _v26 = _Utils_Tuple2(unit.behavior, unit.location);
+							if ((_v26.a.$ === 'Repairing') && (_v26.b.$ === 'OnMap')) {
+								var _v27 = _v26.a;
+								var _v28 = _v26.b;
+								var x = _v28.a;
+								var y = _v28.b;
+								var canBuild = unit.behaviorTimer >= 0.15;
+								var buildGridSize = 64;
+								var buildingMinX = building.gridX * buildGridSize;
+								var buildingMinY = building.gridY * buildGridSize;
+								var buildingSize = $author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize;
+								var buildingMaxX = buildingMinX + buildingSize;
+								var buildingMaxY = buildingMinY + buildingSize;
+								var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
+								return isNear && (canBuild && (_Utils_cmp(building.hp, building.maxHp) < 0));
+							} else {
+								return false;
+							}
+						},
+						unitsAfterHouseSpawn);
+					var hpGain = $elm$core$List$length(repairingPeasants) * 5;
+					var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
+					var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Types$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
+					var _v24 = function () {
+						if (isConstructionComplete) {
+							var _v25 = building.buildingType;
+							switch (_v25) {
+								case 'Warrior\'s Guild':
+									return _Utils_Tuple3(
+										$author$project$Types$GenerateGold,
+										_List_fromArray(
+											[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
+										15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
+								case 'House':
+									return _Utils_Tuple3(
+										$author$project$Types$GenerateGold,
+										_List_fromArray(
+											[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
+										15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
+								default:
+									return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
+							}
+						} else {
+							return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
+						}
+					}();
+					var completedBehavior = _v24.a;
+					var completedTags = _v24.b;
+					var completedDuration = _v24.c;
+					return _Utils_update(
+						building,
+						{behavior: completedBehavior, behaviorDuration: completedDuration, behaviorTimer: 0, hp: newHp, tags: completedTags});
+				},
+				buildingsAfterHouseSpawn);
+			var newGameState = A2(
+				$elm$core$List$any,
+				function (b) {
+					return A2($elm$core$List$member, $author$project$Types$ObjectiveTag, b.tags) && (b.hp <= 0);
+				},
+				buildingsAfterRepairs) ? $author$project$Types$GameOver : model.gameState;
+			var unitsWithPaths = A2(
+				$elm$core$List$map,
+				function (unit) {
+					var _v22 = _Utils_Tuple2(unit.location, unit.targetDestination);
+					if ((_v22.a.$ === 'OnMap') && (_v22.b.$ === 'Just')) {
+						var _v23 = _v22.a;
+						var x = _v23.a;
+						var y = _v23.b;
+						var targetCell = _v22.b.a;
+						var newPath = A6($author$project$Pathfinding$calculateUnitPath, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, x, y, targetCell);
+						return _Utils_update(
+							unit,
+							{path: newPath});
+					} else {
+						return unit;
+					}
+				},
+				unitsAfterHouseSpawn);
+			return _Utils_update(
+				model,
+				{accumulatedTime: remainingTime, buildingOccupancy: buildingOccupancyAfterHouses, buildings: buildingsAfterRepairs, gameState: newGameState, lastSimulationDeltas: newSimulationDeltas, nextBuildingId: nextBuildingIdAfterHouses, nextUnitId: nextUnitIdAfterSpawning, pathfindingOccupancy: pathfindingOccupancyAfterHouses, simulationFrameCount: model.simulationFrameCount + 1, tooltipHover: updatedTooltipHover, units: unitsWithPaths});
+		} else {
+			return _Utils_update(
+				model,
+				{accumulatedTime: newAccumulatedTime, tooltipHover: updatedTooltipHover});
+		}
+	});
 var $author$project$Update$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -8500,301 +8794,9 @@ var $author$project$Update$update = F2(
 					$elm$core$Platform$Cmd$none);
 			default:
 				var delta = msg.a;
-				var updatedTooltipHover = function () {
-					var _v44 = model.tooltipHover;
-					if (_v44.$ === 'Just') {
-						var tooltipState = _v44.a;
-						return $elm$core$Maybe$Just(
-							_Utils_update(
-								tooltipState,
-								{hoverTime: tooltipState.hoverTime + delta}));
-					} else {
-						return $elm$core$Maybe$Nothing;
-					}
-				}();
-				var speedMultiplier = function () {
-					var _v43 = model.simulationSpeed;
-					switch (_v43.$) {
-						case 'Pause':
-							return 0;
-						case 'Speed1x':
-							return 1;
-						case 'Speed2x':
-							return 2;
-						case 'Speed10x':
-							return 10;
-						default:
-							return 100;
-					}
-				}();
-				var simulationTimestep = 50.0;
-				var isPaused = (delta > 1000) || _Utils_eq(model.simulationSpeed, $author$project$Types$Pause);
-				var newAccumulatedTime = isPaused ? model.accumulatedTime : (model.accumulatedTime + (delta * speedMultiplier));
-				var shouldSimulate = (_Utils_cmp(newAccumulatedTime, simulationTimestep) > -1) && (!isPaused);
-				if (shouldSimulate) {
-					var remainingTime = newAccumulatedTime - simulationTimestep;
-					var newSimulationDeltas = A2(
-						$elm$core$List$take,
-						3,
-						A2($elm$core$List$cons, newAccumulatedTime, model.lastSimulationDeltas));
-					var deltaSeconds = simulationTimestep / 1000.0;
-					var _v14 = A3(
-						$elm$core$List$foldl,
-						F2(
-							function (unit, _v15) {
-								var accUnits = _v15.a;
-								var accOccupancy = _v15.b;
-								var accNeedingPaths = _v15.c;
-								var _v16 = unit.location;
-								if (_v16.$ === 'OnMap') {
-									var oldX = _v16.a;
-									var oldY = _v16.b;
-									var occupancyWithoutUnit = A4($author$project$Grid$removeUnitOccupancy, model.gridConfig, oldX, oldY, accOccupancy);
-									var _v17 = A3($author$project$UnitBehavior$updateUnitBehavior, deltaSeconds, model.buildings, unit);
-									var behaviorUpdatedUnit = _v17.a;
-									var shouldGeneratePath = _v17.b;
-									var movedUnit = A5($author$project$GameHelpers$updateUnitMovement, model.gridConfig, model.mapConfig, occupancyWithoutUnit, deltaSeconds, behaviorUpdatedUnit);
-									var newOccupancyForUnit = function () {
-										var _v18 = movedUnit.location;
-										if (_v18.$ === 'OnMap') {
-											var newX = _v18.a;
-											var newY = _v18.b;
-											return A4($author$project$Grid$addUnitOccupancy, model.gridConfig, newX, newY, occupancyWithoutUnit);
-										} else {
-											return occupancyWithoutUnit;
-										}
-									}();
-									var needsPath = shouldGeneratePath ? A2($elm$core$List$cons, movedUnit, accNeedingPaths) : accNeedingPaths;
-									return _Utils_Tuple3(
-										A2($elm$core$List$cons, movedUnit, accUnits),
-										newOccupancyForUnit,
-										needsPath);
-								} else {
-									var _v19 = A3($author$project$UnitBehavior$updateUnitBehavior, deltaSeconds, model.buildings, unit);
-									var behaviorUpdatedUnit = _v19.a;
-									var shouldGeneratePath = _v19.b;
-									var needsPath = shouldGeneratePath ? A2($elm$core$List$cons, behaviorUpdatedUnit, accNeedingPaths) : accNeedingPaths;
-									return _Utils_Tuple3(
-										A2($elm$core$List$cons, behaviorUpdatedUnit, accUnits),
-										accOccupancy,
-										needsPath);
-								}
-							}),
-						_Utils_Tuple3(_List_Nil, model.pathfindingOccupancy, _List_Nil),
-						model.units);
-					var updatedUnits = _v14.a;
-					var updatedOccupancy = _v14.b;
-					var unitsNeedingPaths = _v14.c;
-					var _v20 = A3(
-						$elm$core$List$foldl,
-						F2(
-							function (building, _v21) {
-								var accBuildings = _v21.a;
-								var accNeedingHouseSpawn = _v21.b;
-								var accHenchmenSpawn = _v21.c;
-								var _v22 = A2($author$project$BuildingBehavior$updateBuildingBehavior, deltaSeconds, building);
-								var behaviorUpdatedBuilding = _v22.a;
-								var shouldSpawnHouse = _v22.b;
-								var _v23 = A2($author$project$UnitBehavior$updateGarrisonSpawning, deltaSeconds, behaviorUpdatedBuilding);
-								var garrisonUpdatedBuilding = _v23.a;
-								var unitsToSpawn = _v23.b;
-								var needsHouseSpawn = shouldSpawnHouse ? A2($elm$core$List$cons, garrisonUpdatedBuilding, accNeedingHouseSpawn) : accNeedingHouseSpawn;
-								return _Utils_Tuple3(
-									A2($elm$core$List$cons, garrisonUpdatedBuilding, accBuildings),
-									needsHouseSpawn,
-									_Utils_ap(unitsToSpawn, accHenchmenSpawn));
-							}),
-						_Utils_Tuple3(_List_Nil, _List_Nil, _List_Nil),
-						model.buildings);
-					var updatedBuildings = _v20.a;
-					var buildingsNeedingHouseSpawn = _v20.b;
-					var henchmenToSpawn = _v20.c;
-					var _v24 = A3(
-						$elm$core$List$foldl,
-						F2(
-							function (castleBuilding, _v27) {
-								var _v28 = _v27.a;
-								var accBuildings = _v28.a;
-								var accBuildOcc = _v28.b;
-								var _v29 = _v27.b;
-								var accPfOcc = _v29.a;
-								var currentBuildingId = _v29.b;
-								var _v30 = A4($author$project$Grid$findAdjacentHouseLocation, model.mapConfig, model.gridConfig, accBuildings, accBuildOcc);
-								if (_v30.$ === 'Just') {
-									var _v31 = _v30.a;
-									var gridX = _v31.a;
-									var gridY = _v31.b;
-									var newHouse = {
-										activeRadius: 192,
-										behavior: $author$project$Types$GenerateGold,
-										behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 30000, currentBuildingId * 1000) / 1000.0),
-										behaviorTimer: 0,
-										buildingType: 'House',
-										coffer: 0,
-										garrisonConfig: _List_Nil,
-										garrisonOccupied: 0,
-										garrisonSlots: 0,
-										gridX: gridX,
-										gridY: gridY,
-										hp: 500,
-										id: currentBuildingId,
-										maxHp: 500,
-										owner: $author$project$Types$Player,
-										searchRadius: 384,
-										size: $author$project$Types$Medium,
-										tags: _List_fromArray(
-											[$author$project$Types$BuildingTag, $author$project$Types$CofferTag])
-									};
-									var newPfOcc = A3($author$project$Grid$addBuildingOccupancy, model.gridConfig, newHouse, accPfOcc);
-									var newBuildOcc = A2($author$project$Grid$addBuildingGridOccupancy, newHouse, accBuildOcc);
-									return _Utils_Tuple2(
-										_Utils_Tuple2(
-											A2($elm$core$List$cons, newHouse, accBuildings),
-											newBuildOcc),
-										_Utils_Tuple2(newPfOcc, currentBuildingId + 1));
-								} else {
-									return _Utils_Tuple2(
-										_Utils_Tuple2(accBuildings, accBuildOcc),
-										_Utils_Tuple2(accPfOcc, currentBuildingId));
-								}
-							}),
-						_Utils_Tuple2(
-							_Utils_Tuple2(updatedBuildings, model.buildingOccupancy),
-							_Utils_Tuple2(updatedOccupancy, model.nextBuildingId)),
-						buildingsNeedingHouseSpawn);
-					var _v25 = _v24.a;
-					var buildingsAfterHouseSpawn = _v25.a;
-					var buildingOccupancyAfterHouses = _v25.b;
-					var _v26 = _v24.b;
-					var pathfindingOccupancyAfterHouses = _v26.a;
-					var nextBuildingIdAfterHouses = _v26.b;
-					var _v32 = A3(
-						$elm$core$List$foldl,
-						F2(
-							function (_v33, _v34) {
-								var unitType = _v33.a;
-								var buildingId = _v33.b;
-								var accUnits = _v34.a;
-								var currentUnitId = _v34.b;
-								var _v35 = $elm$core$List$head(
-									A2(
-										$elm$core$List$filter,
-										function (b) {
-											return _Utils_eq(b.id, buildingId);
-										},
-										updatedBuildings));
-								if (_v35.$ === 'Just') {
-									var homeBuilding = _v35.a;
-									var newUnit = A4($author$project$GameHelpers$createHenchman, unitType, currentUnitId, buildingId, homeBuilding);
-									return _Utils_Tuple2(
-										A2($elm$core$List$cons, newUnit, accUnits),
-										currentUnitId + 1);
-								} else {
-									return _Utils_Tuple2(accUnits, currentUnitId);
-								}
-							}),
-						_Utils_Tuple2(_List_Nil, model.nextUnitId),
-						henchmenToSpawn);
-					var newHenchmen = _v32.a;
-					var nextUnitIdAfterSpawning = _v32.b;
-					var allUnits = _Utils_ap(updatedUnits, newHenchmen);
-					var unitsAfterHouseSpawn = $elm$core$List$isEmpty(buildingsNeedingHouseSpawn) ? allUnits : A4($author$project$GameHelpers$recalculateAllPaths, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, allUnits);
-					var buildingsAfterRepairs = A2(
-						$elm$core$List$map,
-						function (building) {
-							var repairingPeasants = A2(
-								$elm$core$List$filter,
-								function (unit) {
-									var _v40 = _Utils_Tuple2(unit.behavior, unit.location);
-									if ((_v40.a.$ === 'Repairing') && (_v40.b.$ === 'OnMap')) {
-										var _v41 = _v40.a;
-										var _v42 = _v40.b;
-										var x = _v42.a;
-										var y = _v42.b;
-										var canBuild = unit.behaviorTimer >= 0.15;
-										var buildGridSize = 64;
-										var buildingMinX = building.gridX * buildGridSize;
-										var buildingMinY = building.gridY * buildGridSize;
-										var buildingSize = $author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize;
-										var buildingMaxX = buildingMinX + buildingSize;
-										var buildingMaxY = buildingMinY + buildingSize;
-										var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
-										return isNear && (canBuild && (_Utils_cmp(building.hp, building.maxHp) < 0));
-									} else {
-										return false;
-									}
-								},
-								unitsAfterHouseSpawn);
-							var hpGain = $elm$core$List$length(repairingPeasants) * 5;
-							var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
-							var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Types$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
-							var _v38 = function () {
-								if (isConstructionComplete) {
-									var _v39 = building.buildingType;
-									switch (_v39) {
-										case 'Warrior\'s Guild':
-											return _Utils_Tuple3(
-												$author$project$Types$GenerateGold,
-												_List_fromArray(
-													[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
-												15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
-										case 'House':
-											return _Utils_Tuple3(
-												$author$project$Types$GenerateGold,
-												_List_fromArray(
-													[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
-												15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
-										default:
-											return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
-									}
-								} else {
-									return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
-								}
-							}();
-							var completedBehavior = _v38.a;
-							var completedTags = _v38.b;
-							var completedDuration = _v38.c;
-							return _Utils_update(
-								building,
-								{behavior: completedBehavior, behaviorDuration: completedDuration, behaviorTimer: 0, hp: newHp, tags: completedTags});
-						},
-						buildingsAfterHouseSpawn);
-					var newGameState = A2(
-						$elm$core$List$any,
-						function (b) {
-							return A2($elm$core$List$member, $author$project$Types$ObjectiveTag, b.tags) && (b.hp <= 0);
-						},
-						buildingsAfterRepairs) ? $author$project$Types$GameOver : model.gameState;
-					var unitsWithPaths = A2(
-						$elm$core$List$map,
-						function (unit) {
-							var _v36 = _Utils_Tuple2(unit.location, unit.targetDestination);
-							if ((_v36.a.$ === 'OnMap') && (_v36.b.$ === 'Just')) {
-								var _v37 = _v36.a;
-								var x = _v37.a;
-								var y = _v37.b;
-								var targetCell = _v36.b.a;
-								var newPath = A6($author$project$Pathfinding$calculateUnitPath, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, x, y, targetCell);
-								return _Utils_update(
-									unit,
-									{path: newPath});
-							} else {
-								return unit;
-							}
-						},
-						unitsAfterHouseSpawn);
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{accumulatedTime: remainingTime, buildingOccupancy: buildingOccupancyAfterHouses, buildings: buildingsAfterRepairs, gameState: newGameState, lastSimulationDeltas: newSimulationDeltas, nextBuildingId: nextBuildingIdAfterHouses, nextUnitId: nextUnitIdAfterSpawning, pathfindingOccupancy: pathfindingOccupancyAfterHouses, simulationFrameCount: model.simulationFrameCount + 1, tooltipHover: updatedTooltipHover, units: unitsWithPaths}),
-						$elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{accumulatedTime: newAccumulatedTime, tooltipHover: updatedTooltipHover}),
-						$elm$core$Platform$Cmd$none);
-				}
+				return _Utils_Tuple2(
+					A2($author$project$Simulation$simulationTick, delta, model),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$json$Json$Encode$string = _Json_wrap;
@@ -10372,7 +10374,7 @@ var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Types$Large = {$: 'Large'};
 var $author$project$BuildingTemplates$warriorsGuildTemplate = {cost: 1500, garrisonSlots: 0, maxHp: 1000, name: 'Warrior\'s Guild', size: $author$project$Types$Large};
-var $author$project$View$viewSelectionPanel = F2(
+var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 	function (model, panelWidth) {
 		var unitSelectedContent = function (unitId) {
 			var maybeUnit = $elm$core$List$head(
@@ -12378,7 +12380,7 @@ var $author$project$View$view = function (model) {
 				A4($author$project$View$viewMainViewport, model, cursor, viewportWidth, viewportHeight),
 				$author$project$View$viewGoldCounter(model),
 				A2($author$project$View$viewGlobalButtonsPanel, model, globalButtonsLeft),
-				A2($author$project$View$viewSelectionPanel, model, selectionPanelWidth),
+				A2($author$project$View$SelectionPanel$viewSelectionPanel, model, selectionPanelWidth),
 				$author$project$View$viewMinimap(model),
 				$author$project$View$viewTooltip(model),
 				$author$project$View$viewPreGameOverlay(model),
