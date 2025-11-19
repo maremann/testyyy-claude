@@ -5246,17 +5246,17 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$GotViewport = function (a) {
+var $author$project$Message$GotViewport = function (a) {
 	return {$: 'GotViewport', a: a};
 };
-var $author$project$Main$MainTab = {$: 'MainTab'};
-var $author$project$Main$NotDragging = {$: 'NotDragging'};
-var $author$project$Main$PreGame = {$: 'PreGame'};
-var $author$project$Main$ShapesGenerated = function (a) {
+var $author$project$Model$MainTab = {$: 'MainTab'};
+var $author$project$Model$NotDragging = {$: 'NotDragging'};
+var $author$project$Model$PreGame = {$: 'PreGame'};
+var $author$project$Message$ShapesGenerated = function (a) {
 	return {$: 'ShapesGenerated', a: a};
 };
-var $author$project$Main$Speed1x = {$: 'Speed1x'};
-var $author$project$Main$StatsTab = {$: 'StatsTab'};
+var $author$project$Model$Speed1x = {$: 'Speed1x'};
+var $author$project$Model$StatsTab = {$: 'StatsTab'};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
@@ -5367,7 +5367,7 @@ var $elm$random$Random$generate = F2(
 			$elm$random$Random$Generate(
 				A2($elm$random$Random$map, tagger, generator)));
 	});
-var $author$project$Main$DecorativeShape = F5(
+var $author$project$Model$DecorativeShape = F5(
 	function (x, y, size, shapeType, color) {
 		return {color: color, shapeType: shapeType, size: size, x: x, y: y};
 	});
@@ -5454,18 +5454,18 @@ var $elm$random$Random$uniform = F2(
 			$elm$random$Random$addOne(value),
 			A2($elm$core$List$map, $elm$random$Random$addOne, valueList));
 	});
-var $author$project$Main$generateColor = A2(
+var $author$project$Update$generateColor = A2(
 	$elm$random$Random$uniform,
 	'#8B4513',
 	_List_fromArray(
 		['#A0522D', '#D2691E', '#CD853F', '#DEB887', '#228B22', '#006400']));
-var $author$project$Main$Circle = {$: 'Circle'};
-var $author$project$Main$Rectangle = {$: 'Rectangle'};
-var $author$project$Main$generateShapeType = A2(
+var $author$project$Model$Circle = {$: 'Circle'};
+var $author$project$Model$Rectangle = {$: 'Rectangle'};
+var $author$project$Update$generateShapeType = A2(
 	$elm$random$Random$uniform,
-	$author$project$Main$Circle,
+	$author$project$Model$Circle,
 	_List_fromArray(
-		[$author$project$Main$Rectangle]));
+		[$author$project$Model$Rectangle]));
 var $elm$random$Random$map5 = F6(
 	function (func, _v0, _v1, _v2, _v3, _v4) {
 		var genA = _v0.a;
@@ -5495,15 +5495,15 @@ var $elm$random$Random$map5 = F6(
 					seed5);
 			});
 	});
-var $author$project$Main$generateShape = function (config) {
+var $author$project$Update$generateShape = function (config) {
 	return A6(
 		$elm$random$Random$map5,
-		$author$project$Main$DecorativeShape,
+		$author$project$Model$DecorativeShape,
 		A2($elm$random$Random$float, 0, config.width),
 		A2($elm$random$Random$float, 0, config.height),
 		A2($elm$random$Random$float, 20, 80),
-		$author$project$Main$generateShapeType,
-		$author$project$Main$generateColor);
+		$author$project$Update$generateShapeType,
+		$author$project$Update$generateColor);
 };
 var $elm$random$Random$listHelp = F4(
 	function (revList, n, gen, seed) {
@@ -5535,28 +5535,28 @@ var $elm$random$Random$list = F2(
 				return A4($elm$random$Random$listHelp, _List_Nil, n, gen, seed);
 			});
 	});
-var $author$project$Main$generateShapes = F2(
+var $author$project$Update$generateShapes = F2(
 	function (count, config) {
 		return A2(
 			$elm$random$Random$list,
 			count,
-			$author$project$Main$generateShape(config));
+			$author$project$Update$generateShape(config));
 	});
 var $elm$browser$Browser$Dom$getViewport = _Browser_withWindow(_Browser_getViewport);
-var $author$project$Main$init = function (_v0) {
+var $author$project$Update$init = function (_v0) {
 	var mapConfig = {boundary: 500, height: 4992, width: 4992};
 	var gridConfig = {buildGridSize: 64, pathfindingGridSize: 32};
 	var initialModel = {
 		accumulatedTime: 0,
 		buildMode: $elm$core$Maybe$Nothing,
 		buildingOccupancy: $elm$core$Dict$empty,
-		buildingTab: $author$project$Main$MainTab,
+		buildingTab: $author$project$Model$MainTab,
 		buildings: _List_Nil,
 		camera: {x: 2496, y: 2496},
-		debugTab: $author$project$Main$StatsTab,
+		debugTab: $author$project$Model$StatsTab,
 		decorativeShapes: _List_Nil,
-		dragState: $author$project$Main$NotDragging,
-		gameState: $author$project$Main$PreGame,
+		dragState: $author$project$Model$NotDragging,
+		gameState: $author$project$Model$PreGame,
 		gold: 50000,
 		goldInputValue: '',
 		gridConfig: gridConfig,
@@ -5574,7 +5574,7 @@ var $author$project$Main$init = function (_v0) {
 		showPathfindingGrid: false,
 		showPathfindingOccupancy: false,
 		simulationFrameCount: 0,
-		simulationSpeed: $author$project$Main$Speed1x,
+		simulationSpeed: $author$project$Model$Speed1x,
 		tooltipHover: $elm$core$Maybe$Nothing,
 		units: _List_Nil,
 		windowSize: _Utils_Tuple2(800, 600)
@@ -5586,24 +5586,24 @@ var $author$project$Main$init = function (_v0) {
 				[
 					A2(
 					$elm$random$Random$generate,
-					$author$project$Main$ShapesGenerated,
-					A2($author$project$Main$generateShapes, 150, mapConfig)),
-					A2($elm$core$Task$perform, $author$project$Main$GotViewport, $elm$browser$Browser$Dom$getViewport)
+					$author$project$Message$ShapesGenerated,
+					A2($author$project$Update$generateShapes, 150, mapConfig)),
+					A2($elm$core$Task$perform, $author$project$Message$GotViewport, $elm$browser$Browser$Dom$getViewport)
 				])));
 };
-var $author$project$Main$Frame = function (a) {
+var $author$project$Message$Frame = function (a) {
 	return {$: 'Frame', a: a};
 };
-var $author$project$Main$MinimapMouseMove = F2(
+var $author$project$Message$MinimapMouseMove = F2(
 	function (a, b) {
 		return {$: 'MinimapMouseMove', a: a, b: b};
 	});
-var $author$project$Main$MouseMove = F2(
+var $author$project$Message$MouseMove = F2(
 	function (a, b) {
 		return {$: 'MouseMove', a: a, b: b};
 	});
-var $author$project$Main$MouseUp = {$: 'MouseUp'};
-var $author$project$Main$WindowResize = F2(
+var $author$project$Message$MouseUp = {$: 'MouseUp'};
+var $author$project$Message$WindowResize = F2(
 	function (a, b) {
 		return {$: 'WindowResize', a: a, b: b};
 	});
@@ -6154,67 +6154,67 @@ var $elm$browser$Browser$Events$onResize = function (func) {
 				A2($elm$json$Json$Decode$field, 'innerWidth', $elm$json$Json$Decode$int),
 				A2($elm$json$Json$Decode$field, 'innerHeight', $elm$json$Json$Decode$int))));
 };
-var $author$project$Main$subscriptions = function (model) {
+var $author$project$Update$subscriptions = function (model) {
 	var _v0 = model.dragState;
 	switch (_v0.$) {
 		case 'NotDragging':
 			return $elm$core$Platform$Sub$batch(
 				_List_fromArray(
 					[
-						$elm$browser$Browser$Events$onResize($author$project$Main$WindowResize),
-						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Main$Frame)
+						$elm$browser$Browser$Events$onResize($author$project$Message$WindowResize),
+						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Message$Frame)
 					]));
 		case 'DraggingViewport':
 			return $elm$core$Platform$Sub$batch(
 				_List_fromArray(
 					[
-						$elm$browser$Browser$Events$onResize($author$project$Main$WindowResize),
+						$elm$browser$Browser$Events$onResize($author$project$Message$WindowResize),
 						$elm$browser$Browser$Events$onMouseMove(
 						A3(
 							$elm$json$Json$Decode$map2,
-							$author$project$Main$MouseMove,
+							$author$project$Message$MouseMove,
 							A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 							A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
 						$elm$browser$Browser$Events$onMouseUp(
-						$elm$json$Json$Decode$succeed($author$project$Main$MouseUp)),
-						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Main$Frame)
+						$elm$json$Json$Decode$succeed($author$project$Message$MouseUp)),
+						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Message$Frame)
 					]));
 		default:
 			return $elm$core$Platform$Sub$batch(
 				_List_fromArray(
 					[
-						$elm$browser$Browser$Events$onResize($author$project$Main$WindowResize),
+						$elm$browser$Browser$Events$onResize($author$project$Message$WindowResize),
 						$elm$browser$Browser$Events$onMouseMove(
 						A3(
 							$elm$json$Json$Decode$map2,
-							$author$project$Main$MinimapMouseMove,
+							$author$project$Message$MinimapMouseMove,
 							A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 							A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
 						$elm$browser$Browser$Events$onMouseUp(
-						$elm$json$Json$Decode$succeed($author$project$Main$MouseUp)),
-						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Main$Frame)
+						$elm$json$Json$Decode$succeed($author$project$Message$MouseUp)),
+						$elm$browser$Browser$Events$onAnimationFrameDelta($author$project$Message$Frame)
 					]));
 	}
 };
-var $author$project$Main$BuildingTag = {$: 'BuildingTag'};
-var $author$project$Main$CofferTag = {$: 'CofferTag'};
-var $author$project$Main$DraggingMinimap = function (a) {
+var $author$project$Model$BuildingTag = {$: 'BuildingTag'};
+var $author$project$Model$CofferTag = {$: 'CofferTag'};
+var $author$project$Model$DraggingMinimap = function (a) {
 	return {$: 'DraggingMinimap', a: a};
 };
-var $author$project$Main$DraggingViewport = function (a) {
+var $author$project$Model$DraggingViewport = function (a) {
 	return {$: 'DraggingViewport', a: a};
 };
-var $author$project$Main$GameOver = {$: 'GameOver'};
-var $author$project$Main$GenerateGold = {$: 'GenerateGold'};
-var $author$project$Main$GuildTag = {$: 'GuildTag'};
-var $author$project$Main$Medium = {$: 'Medium'};
-var $author$project$Main$ObjectiveTag = {$: 'ObjectiveTag'};
-var $author$project$Main$Pause = {$: 'Pause'};
-var $author$project$Main$Player = {$: 'Player'};
-var $author$project$Main$Playing = {$: 'Playing'};
-var $author$project$Main$SpawnHouse = {$: 'SpawnHouse'};
-var $author$project$Main$UnderConstruction = {$: 'UnderConstruction'};
-var $author$project$Main$buildingSizeToGridCells = function (size) {
+var $author$project$Model$GameOver = {$: 'GameOver'};
+var $author$project$Model$GenerateGold = {$: 'GenerateGold'};
+var $author$project$Model$GuildTag = {$: 'GuildTag'};
+var $author$project$Model$Medium = {$: 'Medium'};
+var $author$project$Model$ObjectiveTag = {$: 'ObjectiveTag'};
+var $author$project$Model$Pause = {$: 'Pause'};
+var $author$project$Model$Player = {$: 'Player'};
+var $author$project$Model$Playing = {$: 'Playing'};
+var $author$project$Model$SpawnHouse = {$: 'SpawnHouse'};
+var $author$project$Model$UnderConstruction = {$: 'UnderConstruction'};
+var $author$project$Model$buildingSizeToGridCells = function (size) {
 	switch (size.$) {
 		case 'Small':
 			return 1;
@@ -6242,8 +6242,8 @@ var $elm$core$List$concatMap = F2(
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
 	});
-var $author$project$Main$getBuildingGridCells = function (building) {
-	var sizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+var $author$project$Model$getBuildingGridCells = function (building) {
+	var sizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 	var xs = A2($elm$core$List$range, building.gridX, (building.gridX + sizeCells) - 1);
 	var ys = A2($elm$core$List$range, building.gridY, (building.gridY + sizeCells) - 1);
 	return A2(
@@ -6662,7 +6662,7 @@ var $elm$core$Dict$update = F3(
 			return A2($elm$core$Dict$remove, targetKey, dictionary);
 		}
 	});
-var $author$project$Main$addBuildingGridOccupancy = F2(
+var $author$project$Model$addBuildingGridOccupancy = F2(
 	function (building, occupancy) {
 		var incrementCell = F2(
 			function (cell, dict) {
@@ -6679,16 +6679,16 @@ var $author$project$Main$addBuildingGridOccupancy = F2(
 					},
 					dict);
 			});
-		var cells = $author$project$Main$getBuildingGridCells(building);
+		var cells = $author$project$Model$getBuildingGridCells(building);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
-var $author$project$Main$getBuildingPathfindingCells = F2(
+var $author$project$Model$getBuildingPathfindingCells = F2(
 	function (gridConfig, building) {
 		var buildingWorldY = building.gridY * gridConfig.buildGridSize;
 		var startPfY = $elm$core$Basics$floor(buildingWorldY / gridConfig.pathfindingGridSize);
 		var buildingWorldX = building.gridX * gridConfig.buildGridSize;
 		var startPfX = $elm$core$Basics$floor(buildingWorldX / gridConfig.pathfindingGridSize);
-		var buildingSizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+		var buildingSizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 		var buildingWorldHeight = buildingSizeCells * gridConfig.buildGridSize;
 		var endPfY = $elm$core$Basics$floor(((buildingWorldY + buildingWorldHeight) - 1) / gridConfig.pathfindingGridSize);
 		var ys = A2($elm$core$List$range, startPfY, endPfY);
@@ -6707,7 +6707,7 @@ var $author$project$Main$getBuildingPathfindingCells = F2(
 			},
 			xs);
 	});
-var $author$project$Main$addBuildingOccupancy = F3(
+var $author$project$Model$addBuildingOccupancy = F3(
 	function (gridConfig, building, occupancy) {
 		var incrementCell = F2(
 			function (cell, dict) {
@@ -6724,10 +6724,10 @@ var $author$project$Main$addBuildingOccupancy = F3(
 					},
 					dict);
 			});
-		var cells = A2($author$project$Main$getBuildingPathfindingCells, gridConfig, building);
+		var cells = A2($author$project$Model$getBuildingPathfindingCells, gridConfig, building);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
-var $author$project$Main$getUnitPathfindingCells = F3(
+var $author$project$Model$getUnitPathfindingCells = F3(
 	function (gridConfig, worldX, worldY) {
 		var unitRadius = gridConfig.pathfindingGridSize / 4;
 		var minY = worldY - unitRadius;
@@ -6752,7 +6752,7 @@ var $author$project$Main$getUnitPathfindingCells = F3(
 			},
 			xs);
 	});
-var $author$project$Main$addUnitOccupancy = F4(
+var $author$project$Model$addUnitOccupancy = F4(
 	function (gridConfig, worldX, worldY, occupancy) {
 		var incrementCell = F2(
 			function (cell, dict) {
@@ -6769,7 +6769,7 @@ var $author$project$Main$addUnitOccupancy = F4(
 					},
 					dict);
 			});
-		var cells = A3($author$project$Main$getUnitPathfindingCells, gridConfig, worldX, worldY);
+		var cells = A3($author$project$Model$getUnitPathfindingCells, gridConfig, worldX, worldY);
 		return A3($elm$core$List$foldl, incrementCell, occupancy, cells);
 	});
 var $elm$core$List$any = F2(
@@ -6813,7 +6813,7 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $author$project$Main$findNode = F2(
+var $author$project$Model$findNode = F2(
 	function (pos, nodes) {
 		return $elm$core$List$head(
 			A2(
@@ -6825,7 +6825,7 @@ var $author$project$Main$findNode = F2(
 	});
 var $elm$core$Basics$ge = _Utils_ge;
 var $elm$core$List$sortBy = _List_sortBy;
-var $author$project$Main$getLowestFCostNode = function (nodes) {
+var $author$project$Model$getLowestFCostNode = function (nodes) {
 	if (!nodes.b) {
 		return $elm$core$Maybe$Nothing;
 	} else {
@@ -6838,7 +6838,7 @@ var $author$project$Main$getLowestFCostNode = function (nodes) {
 				nodes));
 	}
 };
-var $author$project$Main$getNeighbors = function (_v0) {
+var $author$project$Model$getNeighbors = function (_v0) {
 	var x = _v0.a;
 	var y = _v0.b;
 	return _List_fromArray(
@@ -6869,7 +6869,7 @@ var $author$project$Main$getNeighbors = function (_v0) {
 			1.414)
 		]);
 };
-var $author$project$Main$isPathfindingCellOccupied = F2(
+var $author$project$Model$isPathfindingCellOccupied = F2(
 	function (cell, occupancy) {
 		var _v0 = A2($elm$core$Dict$get, cell, occupancy);
 		if (_v0.$ === 'Just') {
@@ -6893,7 +6893,7 @@ var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
-var $author$project$Main$octileDistance = F2(
+var $author$project$Model$octileDistance = F2(
 	function (_v0, _v1) {
 		var x1 = _v0.a;
 		var y1 = _v0.b;
@@ -6905,7 +6905,7 @@ var $author$project$Main$octileDistance = F2(
 		var minDist = A2($elm$core$Basics$min, dx, dy);
 		return (minDist * 1.414) + (maxDist - minDist);
 	});
-var $author$project$Main$reconstructPath = F2(
+var $author$project$Model$reconstructPath = F2(
 	function (endPos, parentMap) {
 		var buildPath = F2(
 			function (current, acc) {
@@ -6927,7 +6927,7 @@ var $author$project$Main$reconstructPath = F2(
 		return A2(buildPath, endPos, _List_Nil);
 	});
 var $elm$core$Basics$neq = _Utils_notEqual;
-var $author$project$Main$removeNode = F2(
+var $author$project$Model$removeNode = F2(
 	function (pos, nodes) {
 		return A2(
 			$elm$core$List$filter,
@@ -6954,11 +6954,11 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Main$findPath = F5(
+var $author$project$Model$findPath = F5(
 	function (gridConfig, mapConfig, occupancy, start, goal) {
 		var startNode = {
 			gCost: 0,
-			hCost: A2($author$project$Main$octileDistance, start, goal),
+			hCost: A2($author$project$Model$octileDistance, start, goal),
 			parent: $elm$core$Maybe$Nothing,
 			position: start
 		};
@@ -6969,7 +6969,7 @@ var $author$project$Main$findPath = F5(
 			var worldX = x * gridConfig.pathfindingGridSize;
 			var inBounds = (worldX >= 0) && ((_Utils_cmp(worldX, mapConfig.width) < 0) && ((worldY >= 0) && (_Utils_cmp(worldY, mapConfig.height) < 0)));
 			return inBounds && (!A2(
-				$author$project$Main$isPathfindingCellOccupied,
+				$author$project$Model$isPathfindingCellOccupied,
 				_Utils_Tuple2(x, y),
 				occupancy));
 		};
@@ -6977,7 +6977,7 @@ var $author$project$Main$findPath = F5(
 			function (openSet, closedSet, parentMap) {
 				astar:
 				while (true) {
-					var _v0 = $author$project$Main$getLowestFCostNode(openSet);
+					var _v0 = $author$project$Model$getLowestFCostNode(openSet);
 					if (_v0.$ === 'Nothing') {
 						return _List_Nil;
 					} else {
@@ -6987,9 +6987,9 @@ var $author$project$Main$findPath = F5(
 								$elm$core$Maybe$withDefault,
 								_List_Nil,
 								$elm$core$List$tail(
-									A2($author$project$Main$reconstructPath, goal, parentMap)));
+									A2($author$project$Model$reconstructPath, goal, parentMap)));
 						} else {
-							var newOpenSet = A2($author$project$Main$removeNode, currentNode.position, openSet);
+							var newOpenSet = A2($author$project$Model$removeNode, currentNode.position, openSet);
 							var newClosedSet = A2($elm$core$List$cons, currentNode.position, closedSet);
 							var neighbors = A2(
 								$elm$core$List$filter,
@@ -7003,7 +7003,7 @@ var $author$project$Main$findPath = F5(
 										var pos = _v5.a;
 										return isWalkable(pos);
 									},
-									$author$project$Main$getNeighbors(currentNode.position)));
+									$author$project$Model$getNeighbors(currentNode.position)));
 							var _v1 = A3(
 								$elm$core$List$foldl,
 								F2(
@@ -7013,20 +7013,20 @@ var $author$project$Main$findPath = F5(
 										var accOpenSet = _v3.a;
 										var accParentMap = _v3.b;
 										var tentativeGCost = currentNode.gCost + moveCost;
-										var existingNode = A2($author$project$Main$findNode, neighborPos, accOpenSet);
+										var existingNode = A2($author$project$Model$findNode, neighborPos, accOpenSet);
 										if (existingNode.$ === 'Just') {
 											var existing = existingNode.a;
 											if (_Utils_cmp(tentativeGCost, existing.gCost) < 0) {
 												var updatedNode = {
 													gCost: tentativeGCost,
-													hCost: A2($author$project$Main$octileDistance, neighborPos, goal),
+													hCost: A2($author$project$Model$octileDistance, neighborPos, goal),
 													parent: $elm$core$Maybe$Just(currentNode.position),
 													position: neighborPos
 												};
 												var newOpenSet_ = A2(
 													$elm$core$List$cons,
 													updatedNode,
-													A2($author$project$Main$removeNode, neighborPos, accOpenSet));
+													A2($author$project$Model$removeNode, neighborPos, accOpenSet));
 												return _Utils_Tuple2(
 													newOpenSet_,
 													A3($elm$core$Dict$insert, neighborPos, currentNode.position, accParentMap));
@@ -7036,7 +7036,7 @@ var $author$project$Main$findPath = F5(
 										} else {
 											var newNode = {
 												gCost: tentativeGCost,
-												hCost: A2($author$project$Main$octileDistance, neighborPos, goal),
+												hCost: A2($author$project$Model$octileDistance, neighborPos, goal),
 												parent: $elm$core$Maybe$Just(currentNode.position),
 												position: neighborPos
 											};
@@ -7067,35 +7067,25 @@ var $author$project$Main$findPath = F5(
 			_List_Nil,
 			$elm$core$Dict$empty));
 	});
-var $elm$core$Debug$log = _Debug_log;
-var $author$project$Main$calculateUnitPath = F6(
+var $author$project$Model$calculateUnitPath = F6(
 	function (gridConfig, mapConfig, occupancy, unitX, unitY, targetCell) {
 		var currentCell = _Utils_Tuple2(
 			$elm$core$Basics$floor(unitX / gridConfig.pathfindingGridSize),
 			$elm$core$Basics$floor(unitY / gridConfig.pathfindingGridSize));
-		var path = A5($author$project$Main$findPath, gridConfig, mapConfig, occupancy, currentCell, targetCell);
-		var _v0 = A2(
-			$elm$core$Debug$log,
-			'calculateUnitPath details',
-			{
-				currentCell: currentCell,
-				isCurrentOccupied: A2($elm$core$Dict$get, currentCell, occupancy),
-				isTargetOccupied: A2($elm$core$Dict$get, targetCell, occupancy),
-				targetCell: targetCell
-			});
+		var path = A5($author$project$Model$findPath, gridConfig, mapConfig, occupancy, currentCell, targetCell);
 		return path;
 	});
 var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
 	});
-var $author$project$Main$getMinimapScale = F2(
+var $author$project$Update$getMinimapScale = F2(
 	function (minimapConfig, mapConfig) {
 		return A2($elm$core$Basics$min, (minimapConfig.width - (minimapConfig.padding * 2)) / mapConfig.width, (minimapConfig.height - (minimapConfig.padding * 2)) / mapConfig.height);
 	});
-var $author$project$Main$centerCameraOnMinimapClick = F4(
+var $author$project$Update$centerCameraOnMinimapClick = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Main$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
 		var terrainHeight = model.mapConfig.height * scale;
 		var terrainWidth = model.mapConfig.width * scale;
 		var clampedY = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainHeight, clickY);
@@ -7107,7 +7097,7 @@ var $author$project$Main$centerCameraOnMinimapClick = F4(
 		var worldX = ((clampedX - minimapConfig.padding) / scale) - (winWidth / 2);
 		return {x: worldX, y: worldY};
 	});
-var $author$project$Main$constrainCamera = F3(
+var $author$project$Update$constrainCamera = F3(
 	function (config, _v0, camera) {
 		var winWidth = _v0.a;
 		var winHeight = _v0.b;
@@ -7122,13 +7112,13 @@ var $author$project$Main$constrainCamera = F3(
 			y: A3($elm$core$Basics$clamp, minY, maxY, camera.y)
 		};
 	});
-var $author$project$Main$Garrisoned = function (a) {
+var $author$project$Model$Garrisoned = function (a) {
 	return {$: 'Garrisoned', a: a};
 };
-var $author$project$Main$Henchman = {$: 'Henchman'};
-var $author$project$Main$HenchmanTag = {$: 'HenchmanTag'};
-var $author$project$Main$Sleeping = {$: 'Sleeping'};
-var $author$project$Main$createHenchman = F4(
+var $author$project$Model$Henchman = {$: 'Henchman'};
+var $author$project$Model$HenchmanTag = {$: 'HenchmanTag'};
+var $author$project$Model$Sleeping = {$: 'Sleeping'};
+var $author$project$Model$createHenchman = F4(
 	function (unitType, unitId, buildingId, homeBuilding) {
 		var _v0 = function () {
 			switch (unitType) {
@@ -7137,25 +7127,25 @@ var $author$project$Main$createHenchman = F4(
 						50,
 						2.0,
 						_List_fromArray(
-							[$author$project$Main$HenchmanTag]));
+							[$author$project$Model$HenchmanTag]));
 				case 'Tax Collector':
 					return _Utils_Tuple3(
 						50,
 						1.5,
 						_List_fromArray(
-							[$author$project$Main$HenchmanTag]));
+							[$author$project$Model$HenchmanTag]));
 				case 'Castle Guard':
 					return _Utils_Tuple3(
 						100,
 						2.0,
 						_List_fromArray(
-							[$author$project$Main$HenchmanTag]));
+							[$author$project$Model$HenchmanTag]));
 				default:
 					return _Utils_Tuple3(
 						50,
 						2.0,
 						_List_fromArray(
-							[$author$project$Main$HenchmanTag]));
+							[$author$project$Model$HenchmanTag]));
 			}
 		}();
 		var hp = _v0.a;
@@ -7163,7 +7153,7 @@ var $author$project$Main$createHenchman = F4(
 		var tags = _v0.c;
 		return {
 			activeRadius: 192,
-			behavior: $author$project$Main$Sleeping,
+			behavior: $author$project$Model$Sleeping,
 			behaviorDuration: 0,
 			behaviorTimer: 0,
 			carriedGold: 0,
@@ -7171,23 +7161,23 @@ var $author$project$Main$createHenchman = F4(
 			homeBuilding: $elm$core$Maybe$Just(buildingId),
 			hp: hp,
 			id: unitId,
-			location: $author$project$Main$Garrisoned(buildingId),
+			location: $author$project$Model$Garrisoned(buildingId),
 			maxHp: hp,
 			movementSpeed: speed,
-			owner: $author$project$Main$Player,
+			owner: $author$project$Model$Player,
 			path: _List_Nil,
 			searchRadius: 384,
 			tags: tags,
 			targetDestination: $elm$core$Maybe$Nothing,
 			thinkingDuration: 0,
 			thinkingTimer: 0,
-			unitKind: $author$project$Main$Henchman,
+			unitKind: $author$project$Model$Henchman,
 			unitType: unitType
 		};
 	});
-var $author$project$Main$getBuildingAreaCells = F2(
+var $author$project$Model$getBuildingAreaCells = F2(
 	function (building, radiusInCells) {
-		var sizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+		var sizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 		var centerY = building.gridY + ((sizeCells / 2) | 0);
 		var maxY = centerY + radiusInCells;
 		var minY = centerY - radiusInCells;
@@ -7207,7 +7197,7 @@ var $author$project$Main$getBuildingAreaCells = F2(
 			A2($elm$core$List$range, minX, maxX));
 		return allCells;
 	});
-var $author$project$Main$Idle = {$: 'Idle'};
+var $author$project$Model$Idle = {$: 'Idle'};
 var $elm$core$Dict$member = F2(
 	function (key, dict) {
 		var _v0 = A2($elm$core$Dict$get, key, dict);
@@ -7217,7 +7207,7 @@ var $elm$core$Dict$member = F2(
 			return false;
 		}
 	});
-var $author$project$Main$areBuildGridCellsOccupied = F2(
+var $author$project$Model$areBuildGridCellsOccupied = F2(
 	function (cells, occupancy) {
 		return A2(
 			$elm$core$List$any,
@@ -7226,10 +7216,10 @@ var $author$project$Main$areBuildGridCellsOccupied = F2(
 			},
 			cells);
 	});
-var $author$project$Main$getBuildingGridCellsWithSpacing = function (building) {
+var $author$project$Model$getBuildingGridCellsWithSpacing = function (building) {
 	var startY = building.gridY - 1;
 	var startX = building.gridX - 1;
-	var sizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+	var sizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 	var endY = building.gridY + sizeCells;
 	var ys = A2($elm$core$List$range, startY, endY);
 	var endX = building.gridX + sizeCells;
@@ -7246,7 +7236,7 @@ var $author$project$Main$getBuildingGridCellsWithSpacing = function (building) {
 		},
 		xs);
 };
-var $author$project$Main$getCitySearchArea = function (buildings) {
+var $author$project$Model$getCitySearchArea = function (buildings) {
 	return $elm$core$Dict$keys(
 		A3(
 			$elm$core$List$foldl,
@@ -7258,12 +7248,12 @@ var $author$project$Main$getCitySearchArea = function (buildings) {
 			A2(
 				$elm$core$List$concatMap,
 				function (b) {
-					return A2($author$project$Main$getBuildingAreaCells, b, 6);
+					return A2($author$project$Model$getBuildingAreaCells, b, 6);
 				},
 				A2(
 					$elm$core$List$filter,
 					function (b) {
-						return _Utils_eq(b.owner, $author$project$Main$Player);
+						return _Utils_eq(b.owner, $author$project$Model$Player);
 					},
 					buildings))));
 };
@@ -7274,11 +7264,11 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
-var $author$project$Main$isValidBuildingPlacement = F7(
+var $author$project$Model$isValidBuildingPlacement = F7(
 	function (gridX, gridY, size, mapConfig, gridConfig, buildingOccupancy, buildings) {
 		var tempBuilding = {
 			activeRadius: 192,
-			behavior: $author$project$Main$Idle,
+			behavior: $author$project$Model$Idle,
 			behaviorDuration: 0,
 			behaviorTimer: 0,
 			buildingType: '',
@@ -7291,17 +7281,17 @@ var $author$project$Main$isValidBuildingPlacement = F7(
 			hp: 0,
 			id: 0,
 			maxHp: 0,
-			owner: $author$project$Main$Player,
+			owner: $author$project$Model$Player,
 			searchRadius: 384,
 			size: size,
 			tags: _List_fromArray(
-				[$author$project$Main$BuildingTag])
+				[$author$project$Model$BuildingTag])
 		};
-		var sizeCells = $author$project$Main$buildingSizeToGridCells(size);
+		var sizeCells = $author$project$Model$buildingSizeToGridCells(size);
 		var maxGridY = $elm$core$Basics$floor(mapConfig.height / gridConfig.buildGridSize);
 		var maxGridX = $elm$core$Basics$floor(mapConfig.width / gridConfig.buildGridSize);
 		var inBounds = (gridX >= 0) && ((gridY >= 0) && ((_Utils_cmp(gridX + sizeCells, maxGridX) < 1) && (_Utils_cmp(gridY + sizeCells, maxGridY) < 1)));
-		var citySearchArea = $author$project$Main$getCitySearchArea(buildings);
+		var citySearchArea = $author$project$Model$getCitySearchArea(buildings);
 		var searchAreaSet = A3(
 			$elm$core$List$foldl,
 			F2(
@@ -7310,9 +7300,9 @@ var $author$project$Main$isValidBuildingPlacement = F7(
 				}),
 			$elm$core$Dict$empty,
 			citySearchArea);
-		var cellsWithSpacing = $author$project$Main$getBuildingGridCellsWithSpacing(tempBuilding);
-		var notOccupied = !A2($author$project$Main$areBuildGridCellsOccupied, cellsWithSpacing, buildingOccupancy);
-		var buildingCells = $author$project$Main$getBuildingGridCells(tempBuilding);
+		var cellsWithSpacing = $author$project$Model$getBuildingGridCellsWithSpacing(tempBuilding);
+		var notOccupied = !A2($author$project$Model$areBuildGridCellsOccupied, cellsWithSpacing, buildingOccupancy);
+		var buildingCells = $author$project$Model$getBuildingGridCells(tempBuilding);
 		var tilesInSearchArea = $elm$core$List$length(
 			A2(
 				$elm$core$List$filter,
@@ -7450,9 +7440,9 @@ var $elm$core$List$take = F2(
 	function (n, list) {
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
-var $author$project$Main$findAdjacentHouseLocation = F4(
+var $author$project$Model$findAdjacentHouseLocation = F4(
 	function (mapConfig, gridConfig, buildings, buildingOccupancy) {
-		var houseSize = $author$project$Main$Medium;
+		var houseSize = $author$project$Model$Medium;
 		var adjacentCells = A2(
 			$elm$core$List$take,
 			100,
@@ -7461,19 +7451,19 @@ var $author$project$Main$findAdjacentHouseLocation = F4(
 				function (_v0) {
 					var gx = _v0.a;
 					var gy = _v0.b;
-					return A7($author$project$Main$isValidBuildingPlacement, gx, gy, houseSize, mapConfig, gridConfig, buildingOccupancy, buildings);
+					return A7($author$project$Model$isValidBuildingPlacement, gx, gy, houseSize, mapConfig, gridConfig, buildingOccupancy, buildings);
 				},
 				A2(
 					$elm$core$List$concatMap,
 					function (b) {
-						return A2($author$project$Main$getBuildingAreaCells, b, 1);
+						return A2($author$project$Model$getBuildingAreaCells, b, 1);
 					},
 					buildings)));
 		return $elm$core$List$head(adjacentCells);
 	});
-var $author$project$Main$isClickOnViewbox = F4(
+var $author$project$Update$isClickOnViewbox = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Main$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
 		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
 		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
 		var _v0 = model.windowSize;
@@ -7483,26 +7473,26 @@ var $author$project$Main$isClickOnViewbox = F4(
 		var viewboxWidth = winWidth * scale;
 		return (_Utils_cmp(clickX, viewboxLeft) > -1) && ((_Utils_cmp(clickX, viewboxLeft + viewboxWidth) < 1) && ((_Utils_cmp(clickY, viewboxTop) > -1) && (_Utils_cmp(clickY, viewboxTop + viewboxHeight) < 1)));
 	});
-var $author$project$Main$minimapClickOffset = F4(
+var $author$project$Update$minimapClickOffset = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Main$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
 		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
 		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
 		var offsetY = clickY - viewboxTop;
 		var offsetX = clickX - viewboxLeft;
 		return {x: offsetX, y: offsetY};
 	});
-var $author$project$Main$minimapDragToCamera = F4(
+var $author$project$Update$minimapDragToCamera = F4(
 	function (model, offset, clickX, clickY) {
 		var minimapConfig = {height: 150, padding: 10, width: 200};
-		var scale = A2($author$project$Main$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
 		var worldX = ((clickX - minimapConfig.padding) - offset.x) / scale;
 		var worldY = ((clickY - minimapConfig.padding) - offset.y) / scale;
 		return {x: worldX, y: worldY};
 	});
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Main$recalculateAllPaths = F4(
+var $author$project$Model$recalculateAllPaths = F4(
 	function (gridConfig, mapConfig, occupancy, units) {
 		return A2(
 			$elm$core$List$map,
@@ -7518,7 +7508,7 @@ var $author$project$Main$recalculateAllPaths = F4(
 							$elm$core$List$reverse(unit.path));
 						if (_v1.$ === 'Just') {
 							var goalCell = _v1.a;
-							var newPath = A6($author$project$Main$calculateUnitPath, gridConfig, mapConfig, occupancy, x, y, goalCell);
+							var newPath = A6($author$project$Model$calculateUnitPath, gridConfig, mapConfig, occupancy, x, y, goalCell);
 							return _Utils_update(
 								unit,
 								{path: newPath});
@@ -7532,7 +7522,7 @@ var $author$project$Main$recalculateAllPaths = F4(
 			},
 			units);
 	});
-var $author$project$Main$removeUnitOccupancy = F4(
+var $author$project$Model$removeUnitOccupancy = F4(
 	function (gridConfig, worldX, worldY, occupancy) {
 		var decrementCell = F2(
 			function (cell, dict) {
@@ -7549,11 +7539,11 @@ var $author$project$Main$removeUnitOccupancy = F4(
 					},
 					dict);
 			});
-		var cells = A3($author$project$Main$getUnitPathfindingCells, gridConfig, worldX, worldY);
+		var cells = A3($author$project$Model$getUnitPathfindingCells, gridConfig, worldX, worldY);
 		return A3($elm$core$List$foldl, decrementCell, occupancy, cells);
 	});
 var $elm$core$Basics$round = _Basics_round;
-var $author$project$Main$updateBuildingBehavior = F2(
+var $author$project$Model$updateBuildingBehavior = F2(
 	function (deltaSeconds, building) {
 		var _v0 = building.behavior;
 		switch (_v0.$) {
@@ -7611,7 +7601,7 @@ var $author$project$Main$updateBuildingBehavior = F2(
 				return _Utils_Tuple2(building, false);
 		}
 	});
-var $author$project$Main$updateGarrisonSpawning = F2(
+var $author$project$Model$updateGarrisonSpawning = F2(
 	function (deltaSeconds, building) {
 		var _v0 = A3(
 			$elm$core$List$foldl,
@@ -7666,22 +7656,22 @@ var $author$project$Main$updateGarrisonSpawning = F2(
 				}),
 			$elm$core$List$reverse(unitsToSpawn));
 	});
-var $author$project$Main$Dead = {$: 'Dead'};
-var $author$project$Main$DebugError = function (a) {
+var $author$project$Model$Dead = {$: 'Dead'};
+var $author$project$Model$DebugError = function (a) {
 	return {$: 'DebugError', a: a};
 };
-var $author$project$Main$GoingToSleep = {$: 'GoingToSleep'};
-var $author$project$Main$LookForBuildRepairTarget = {$: 'LookForBuildRepairTarget'};
-var $author$project$Main$LookForTaxTarget = {$: 'LookForTaxTarget'};
-var $author$project$Main$LookingForTask = {$: 'LookingForTask'};
-var $author$project$Main$MovingToBuildRepairTarget = {$: 'MovingToBuildRepairTarget'};
-var $author$project$Main$Repairing = {$: 'Repairing'};
-var $author$project$Main$WithoutHome = {$: 'WithoutHome'};
-var $author$project$Main$OnMap = F2(
+var $author$project$Model$GoingToSleep = {$: 'GoingToSleep'};
+var $author$project$Model$LookForBuildRepairTarget = {$: 'LookForBuildRepairTarget'};
+var $author$project$Model$LookForTaxTarget = {$: 'LookForTaxTarget'};
+var $author$project$Model$LookingForTask = {$: 'LookingForTask'};
+var $author$project$Model$MovingToBuildRepairTarget = {$: 'MovingToBuildRepairTarget'};
+var $author$project$Model$Repairing = {$: 'Repairing'};
+var $author$project$Model$WithoutHome = {$: 'WithoutHome'};
+var $author$project$Model$OnMap = F2(
 	function (a, b) {
 		return {$: 'OnMap', a: a, b: b};
 	});
-var $author$project$Main$getBuildingEntrance = function (building) {
+var $author$project$Model$getBuildingEntrance = function (building) {
 	var _v0 = building.size;
 	switch (_v0.$) {
 		case 'Small':
@@ -7694,10 +7684,10 @@ var $author$project$Main$getBuildingEntrance = function (building) {
 			return _Utils_Tuple2(building.gridX + 1, building.gridY + 3);
 	}
 };
-var $author$project$Main$exitGarrison = F2(
+var $author$project$Model$exitGarrison = F2(
 	function (homeBuilding, unit) {
 		var buildGridSize = 64;
-		var _v0 = $author$project$Main$getBuildingEntrance(homeBuilding);
+		var _v0 = $author$project$Model$getBuildingEntrance(homeBuilding);
 		var entranceGridX = _v0.a;
 		var entranceGridY = _v0.b;
 		var exitGridX = entranceGridX;
@@ -7707,7 +7697,7 @@ var $author$project$Main$exitGarrison = F2(
 		return _Utils_update(
 			unit,
 			{
-				location: A2($author$project$Main$OnMap, worldX, worldY)
+				location: A2($author$project$Model$OnMap, worldX, worldY)
 			});
 	});
 var $elm$core$Tuple$second = function (_v0) {
@@ -7715,7 +7705,7 @@ var $elm$core$Tuple$second = function (_v0) {
 	return y;
 };
 var $elm$core$Basics$sqrt = _Basics_sqrt;
-var $author$project$Main$findNearestDamagedBuilding = F3(
+var $author$project$Model$findNearestDamagedBuilding = F3(
 	function (unitX, unitY, buildings) {
 		var damagedBuildings = A2(
 			$elm$core$List$filter,
@@ -7725,9 +7715,9 @@ var $author$project$Main$findNearestDamagedBuilding = F3(
 			buildings);
 		var buildGridSize = 64;
 		var buildingWithDistance = function (b) {
-			var buildingCenterY = (b.gridY * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+			var buildingCenterY = (b.gridY * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
 			var dy = unitY - buildingCenterY;
-			var buildingCenterX = (b.gridX * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+			var buildingCenterX = (b.gridX * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
 			var dx = unitX - buildingCenterX;
 			var distance = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
 			return _Utils_Tuple2(b, distance);
@@ -7741,7 +7731,7 @@ var $author$project$Main$findNearestDamagedBuilding = F3(
 				A2($elm$core$List$map, buildingWithDistance, damagedBuildings)));
 		return $elm$core$List$head(sortedByDistance);
 	});
-var $author$project$Main$updateUnitBehavior = F3(
+var $author$project$Model$updateUnitBehavior = F3(
 	function (deltaSeconds, buildings, unit) {
 		var _v0 = unit.behavior;
 		switch (_v0.$) {
@@ -7755,7 +7745,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 					_Utils_update(
 						unit,
 						{
-							behavior: $author$project$Main$Dead,
+							behavior: $author$project$Model$Dead,
 							behaviorDuration: 45.0 + (A2($elm$core$Basics$modBy, 15000, unit.id) / 1000.0),
 							behaviorTimer: 0
 						}),
@@ -7771,25 +7761,25 @@ var $author$project$Main$updateUnitBehavior = F3(
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$LookForBuildRepairTarget, behaviorTimer: 0}),
+								{behavior: $author$project$Model$LookForBuildRepairTarget, behaviorTimer: 0}),
 							false);
 					case 'Tax Collector':
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$LookForTaxTarget, behaviorTimer: 0}),
+								{behavior: $author$project$Model$LookForTaxTarget, behaviorTimer: 0}),
 							false);
 					case 'Castle Guard':
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$GoingToSleep, behaviorTimer: 0}),
+								{behavior: $author$project$Model$GoingToSleep, behaviorTimer: 0}),
 							false);
 					default:
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$GoingToSleep, behaviorTimer: 0}),
+								{behavior: $author$project$Model$GoingToSleep, behaviorTimer: 0}),
 							false);
 				}
 			case 'GoingToSleep':
@@ -7799,7 +7789,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 						_Utils_update(
 							unit,
 							{
-								behavior: $author$project$Main$WithoutHome,
+								behavior: $author$project$Model$WithoutHome,
 								behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 15000, unit.id) / 1000.0),
 								behaviorTimer: 0
 							}),
@@ -7818,7 +7808,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 							_Utils_update(
 								unit,
 								{
-									behavior: $author$project$Main$WithoutHome,
+									behavior: $author$project$Model$WithoutHome,
 									behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 15000, unit.id) / 1000.0),
 									behaviorTimer: 0,
 									homeBuilding: $elm$core$Maybe$Nothing
@@ -7831,13 +7821,13 @@ var $author$project$Main$updateUnitBehavior = F3(
 							return _Utils_Tuple2(
 								_Utils_update(
 									unit,
-									{behavior: $author$project$Main$Sleeping, behaviorTimer: 0}),
+									{behavior: $author$project$Model$Sleeping, behaviorTimer: 0}),
 								false);
 						} else {
 							var x = _v4.a;
 							var y = _v4.b;
 							var buildGridSize = 64;
-							var _v5 = $author$project$Main$getBuildingEntrance(homeBuilding);
+							var _v5 = $author$project$Model$getBuildingEntrance(homeBuilding);
 							var entranceGridX = _v5.a;
 							var entranceGridY = _v5.b;
 							var exitGridX = entranceGridX;
@@ -7853,9 +7843,9 @@ var $author$project$Main$updateUnitBehavior = F3(
 									_Utils_update(
 										unit,
 										{
-											behavior: $author$project$Main$Sleeping,
+											behavior: $author$project$Model$Sleeping,
 											behaviorTimer: 0,
-											location: $author$project$Main$Garrisoned(homeBuildingId)
+											location: $author$project$Model$Garrisoned(homeBuildingId)
 										}),
 									false);
 							} else {
@@ -7884,7 +7874,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 				return shouldLookForTask ? _Utils_Tuple2(
 					_Utils_update(
 						unit,
-						{behavior: $author$project$Main$LookingForTask, behaviorTimer: 0, hp: newHp}),
+						{behavior: $author$project$Model$LookingForTask, behaviorTimer: 0, hp: newHp}),
 					false) : _Utils_Tuple2(
 					_Utils_update(
 						unit,
@@ -7903,7 +7893,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 							buildings));
 					if (_v7.$ === 'Just') {
 						var homeBuilding = _v7.a;
-						var exitedUnit = A2($author$project$Main$exitGarrison, homeBuilding, unit);
+						var exitedUnit = A2($author$project$Model$exitGarrison, homeBuilding, unit);
 						var _v8 = function () {
 							var _v9 = exitedUnit.location;
 							if (_v9.$ === 'OnMap') {
@@ -7916,28 +7906,19 @@ var $author$project$Main$updateUnitBehavior = F3(
 						}();
 						var finalX = _v8.a;
 						var finalY = _v8.b;
-						var _v10 = A3($author$project$Main$findNearestDamagedBuilding, finalX, finalY, buildings);
+						var _v10 = A3($author$project$Model$findNearestDamagedBuilding, finalX, finalY, buildings);
 						if (_v10.$ === 'Just') {
 							var targetBuilding = _v10.a;
 							var buildGridSize = 64;
-							var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
+							var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 							var targetCellX = $elm$core$Basics$floor(targetX / 32);
-							var targetY = (targetBuilding.gridY * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
+							var targetY = (targetBuilding.gridY * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 							var targetCellY = $elm$core$Basics$floor(targetY / 32);
-							var _v11 = A2(
-								$elm$core$Debug$log,
-								'Peasant exiting garrison',
-								{
-									position: _Utils_Tuple2(finalX, finalY),
-									targetBuilding: targetBuilding.buildingType,
-									targetCell: _Utils_Tuple2(targetCellX, targetCellY),
-									unitId: exitedUnit.id
-								});
 							return _Utils_Tuple2(
 								_Utils_update(
 									exitedUnit,
 									{
-										behavior: $author$project$Main$MovingToBuildRepairTarget,
+										behavior: $author$project$Model$MovingToBuildRepairTarget,
 										behaviorTimer: 0,
 										targetDestination: $elm$core$Maybe$Just(
 											_Utils_Tuple2(targetCellX, targetCellY))
@@ -7947,7 +7928,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 							return _Utils_Tuple2(
 								_Utils_update(
 									exitedUnit,
-									{behavior: $author$project$Main$GoingToSleep, behaviorTimer: 0}),
+									{behavior: $author$project$Model$GoingToSleep, behaviorTimer: 0}),
 								false);
 						}
 					} else {
@@ -7955,26 +7936,26 @@ var $author$project$Main$updateUnitBehavior = F3(
 							_Utils_update(
 								unit,
 								{
-									behavior: $author$project$Main$DebugError('Home building not found')
+									behavior: $author$project$Model$DebugError('Home building not found')
 								}),
 							false);
 					}
 				} else {
 					var x = _v6.a;
 					var y = _v6.b;
-					var _v12 = A3($author$project$Main$findNearestDamagedBuilding, x, y, buildings);
-					if (_v12.$ === 'Just') {
-						var targetBuilding = _v12.a;
+					var _v11 = A3($author$project$Model$findNearestDamagedBuilding, x, y, buildings);
+					if (_v11.$ === 'Just') {
+						var targetBuilding = _v11.a;
 						var buildGridSize = 64;
-						var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
+						var targetX = (targetBuilding.gridX * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 						var targetCellX = $elm$core$Basics$floor(targetX / 32);
-						var targetY = (targetBuilding.gridY * buildGridSize) + (($author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
+						var targetY = (targetBuilding.gridY * buildGridSize) + (($author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize) / 2);
 						var targetCellY = $elm$core$Basics$floor(targetY / 32);
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
 								{
-									behavior: $author$project$Main$MovingToBuildRepairTarget,
+									behavior: $author$project$Model$MovingToBuildRepairTarget,
 									behaviorTimer: 0,
 									targetDestination: $elm$core$Maybe$Just(
 										_Utils_Tuple2(targetCellX, targetCellY))
@@ -7984,44 +7965,35 @@ var $author$project$Main$updateUnitBehavior = F3(
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$GoingToSleep, behaviorTimer: 0}),
+								{behavior: $author$project$Model$GoingToSleep, behaviorTimer: 0}),
 							false);
 					}
 				}
 			case 'MovingToBuildRepairTarget':
-				var _v13 = unit.location;
-				if (_v13.$ === 'OnMap') {
-					var x = _v13.a;
-					var y = _v13.b;
-					var _v14 = A2(
-						$elm$core$Debug$log,
-						'MovingToBuildRepairTarget',
-						{
-							path: unit.path,
-							position: _Utils_Tuple2(x, y),
-							targetDestination: unit.targetDestination,
-							unitId: unit.id
-						});
-					var _v15 = A3($author$project$Main$findNearestDamagedBuilding, x, y, buildings);
-					if (_v15.$ === 'Just') {
-						var targetBuilding = _v15.a;
+				var _v12 = unit.location;
+				if (_v12.$ === 'OnMap') {
+					var x = _v12.a;
+					var y = _v12.b;
+					var _v13 = A3($author$project$Model$findNearestDamagedBuilding, x, y, buildings);
+					if (_v13.$ === 'Just') {
+						var targetBuilding = _v13.a;
 						var buildGridSize = 64;
 						var buildingMinX = targetBuilding.gridX * buildGridSize;
 						var buildingMinY = targetBuilding.gridY * buildGridSize;
-						var buildingSize = $author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize;
+						var buildingSize = $author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize;
 						var buildingMaxX = buildingMinX + buildingSize;
 						var buildingMaxY = buildingMinY + buildingSize;
 						var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
 						return isNear ? _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$Repairing, behaviorTimer: 0}),
+								{behavior: $author$project$Model$Repairing, behaviorTimer: 0}),
 							false) : _Utils_Tuple2(unit, false);
 					} else {
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$LookForBuildRepairTarget, behaviorTimer: 0}),
+								{behavior: $author$project$Model$LookForBuildRepairTarget, behaviorTimer: 0}),
 							false);
 					}
 				} else {
@@ -8029,31 +8001,31 @@ var $author$project$Main$updateUnitBehavior = F3(
 						_Utils_update(
 							unit,
 							{
-								behavior: $author$project$Main$DebugError('Moving while garrisoned')
+								behavior: $author$project$Model$DebugError('Moving while garrisoned')
 							}),
 						false);
 				}
 			case 'Repairing':
-				var _v16 = unit.location;
-				if (_v16.$ === 'OnMap') {
-					var x = _v16.a;
-					var y = _v16.b;
-					var _v17 = A3($author$project$Main$findNearestDamagedBuilding, x, y, buildings);
-					if (_v17.$ === 'Just') {
-						var targetBuilding = _v17.a;
+				var _v14 = unit.location;
+				if (_v14.$ === 'OnMap') {
+					var x = _v14.a;
+					var y = _v14.b;
+					var _v15 = A3($author$project$Model$findNearestDamagedBuilding, x, y, buildings);
+					if (_v15.$ === 'Just') {
+						var targetBuilding = _v15.a;
 						var newTimer = unit.behaviorTimer + deltaSeconds;
 						var canBuild = newTimer >= 0.15;
 						var buildGridSize = 64;
 						var buildingMinX = targetBuilding.gridX * buildGridSize;
 						var buildingMinY = targetBuilding.gridY * buildGridSize;
-						var buildingSize = $author$project$Main$buildingSizeToGridCells(targetBuilding.size) * buildGridSize;
+						var buildingSize = $author$project$Model$buildingSizeToGridCells(targetBuilding.size) * buildGridSize;
 						var buildingMaxX = buildingMinX + buildingSize;
 						var buildingMaxY = buildingMinY + buildingSize;
 						var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
 						return (isNear && canBuild) ? ((_Utils_cmp(targetBuilding.hp + 5, targetBuilding.maxHp) > -1) ? _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$LookForBuildRepairTarget, behaviorTimer: 0}),
+								{behavior: $author$project$Model$LookForBuildRepairTarget, behaviorTimer: 0}),
 							false) : _Utils_Tuple2(
 							_Utils_update(
 								unit,
@@ -8067,7 +8039,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 						return _Utils_Tuple2(
 							_Utils_update(
 								unit,
-								{behavior: $author$project$Main$LookForBuildRepairTarget, behaviorTimer: 0}),
+								{behavior: $author$project$Model$LookForBuildRepairTarget, behaviorTimer: 0}),
 							false);
 					}
 				} else {
@@ -8075,7 +8047,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 						_Utils_update(
 							unit,
 							{
-								behavior: $author$project$Main$DebugError('Repairing while garrisoned')
+								behavior: $author$project$Model$DebugError('Repairing while garrisoned')
 							}),
 						false);
 				}
@@ -8089,7 +8061,7 @@ var $author$project$Main$updateUnitBehavior = F3(
 				return _Utils_Tuple2(unit, false);
 		}
 	});
-var $author$project$Main$updateUnitMovement = F5(
+var $author$project$Model$updateUnitMovement = F5(
 	function (gridConfig, mapConfig, occupancy, deltaSeconds, unit) {
 		var _v0 = unit.location;
 		if (_v0.$ === 'OnMap') {
@@ -8107,33 +8079,23 @@ var $author$project$Main$updateUnitMovement = F5(
 				var dy = targetY - y;
 				var dx = targetX - x;
 				var distance = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
-				var _v2 = A2(
-					$elm$core$Debug$log,
-					'updateUnitMovement',
-					{
-						nextCell: nextCell,
-						pathLength: $elm$core$List$length(unit.path),
-						position: _Utils_Tuple2(x, y),
-						unitId: unit.id,
-						unitType: unit.unitType
-					});
 				if (_Utils_cmp(distance, moveDistance) < 1) {
-					var _v3 = _Utils_Tuple2(unit.targetDestination, restOfPath);
-					if ((_v3.a.$ === 'Just') && _v3.b.b) {
-						var targetCell = _v3.a.a;
-						var _v4 = _v3.b;
-						var newPath = A6($author$project$Main$calculateUnitPath, gridConfig, mapConfig, occupancy, targetX, targetY, targetCell);
+					var _v2 = _Utils_Tuple2(unit.targetDestination, restOfPath);
+					if ((_v2.a.$ === 'Just') && _v2.b.b) {
+						var targetCell = _v2.a.a;
+						var _v3 = _v2.b;
+						var newPath = A6($author$project$Model$calculateUnitPath, gridConfig, mapConfig, occupancy, targetX, targetY, targetCell);
 						return _Utils_update(
 							unit,
 							{
-								location: A2($author$project$Main$OnMap, targetX, targetY),
+								location: A2($author$project$Model$OnMap, targetX, targetY),
 								path: newPath
 							});
 					} else {
 						return _Utils_update(
 							unit,
 							{
-								location: A2($author$project$Main$OnMap, targetX, targetY),
+								location: A2($author$project$Model$OnMap, targetX, targetY),
 								path: restOfPath
 							});
 					}
@@ -8145,7 +8107,7 @@ var $author$project$Main$updateUnitMovement = F5(
 					return _Utils_update(
 						unit,
 						{
-							location: A2($author$project$Main$OnMap, newX, newY)
+							location: A2($author$project$Model$OnMap, newX, newY)
 						});
 				}
 			}
@@ -8153,7 +8115,7 @@ var $author$project$Main$updateUnitMovement = F5(
 			return unit;
 		}
 	});
-var $author$project$Main$update = F2(
+var $author$project$Update$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'WindowResize':
@@ -8173,7 +8135,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							dragState: $author$project$Main$DraggingViewport(
+							dragState: $author$project$Model$DraggingViewport(
 								{x: x, y: y})
 						}),
 					$elm$core$Platform$Cmd$none);
@@ -8186,7 +8148,7 @@ var $author$project$Main$update = F2(
 					var dy = startPos.y - y;
 					var dx = startPos.x - x;
 					var newCamera = A3(
-						$author$project$Main$constrainCamera,
+						$author$project$Update$constrainCamera,
 						model.mapConfig,
 						model.windowSize,
 						{x: model.camera.x + dx, y: model.camera.y + dy});
@@ -8195,7 +8157,7 @@ var $author$project$Main$update = F2(
 							model,
 							{
 								camera: newCamera,
-								dragState: $author$project$Main$DraggingViewport(
+								dragState: $author$project$Model$DraggingViewport(
 									{x: x, y: y})
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -8206,7 +8168,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{dragState: $author$project$Main$NotDragging}),
+						{dragState: $author$project$Model$NotDragging}),
 					$elm$core$Platform$Cmd$none);
 			case 'MinimapMouseDown':
 				var clientX = msg.a;
@@ -8221,19 +8183,19 @@ var $author$project$Main$update = F2(
 				var offsetY = A3($elm$core$Basics$clamp, 0, minimapHeight, clientY - minimapTop);
 				var minimapLeft = ((winWidth - 20) - 204) + 2;
 				var offsetX = A3($elm$core$Basics$clamp, 0, minimapWidth, clientX - minimapLeft);
-				var clickedOnViewbox = A4($author$project$Main$isClickOnViewbox, model, minimapConfig, offsetX, offsetY);
+				var clickedOnViewbox = A4($author$project$Update$isClickOnViewbox, model, minimapConfig, offsetX, offsetY);
 				var _v3 = function () {
 					if (clickedOnViewbox) {
 						return _Utils_Tuple2(
 							model.camera,
-							A4($author$project$Main$minimapClickOffset, model, minimapConfig, offsetX, offsetY));
+							A4($author$project$Update$minimapClickOffset, model, minimapConfig, offsetX, offsetY));
 					} else {
-						var scale = A2($author$project$Main$getMinimapScale, minimapConfig, model.mapConfig);
+						var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
 						var centered = A3(
-							$author$project$Main$constrainCamera,
+							$author$project$Update$constrainCamera,
 							model.mapConfig,
 							model.windowSize,
-							A4($author$project$Main$centerCameraOnMinimapClick, model, minimapConfig, offsetX, offsetY));
+							A4($author$project$Update$centerCameraOnMinimapClick, model, minimapConfig, offsetX, offsetY));
 						var centerOffset = {x: (winWidth * scale) / 2, y: (winHeight * scale) / 2};
 						return _Utils_Tuple2(centered, centerOffset);
 					}
@@ -8245,7 +8207,7 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							camera: newCamera,
-							dragState: $author$project$Main$DraggingMinimap(dragOffset)
+							dragState: $author$project$Model$DraggingMinimap(dragOffset)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'MinimapMouseMove':
@@ -8264,10 +8226,10 @@ var $author$project$Main$update = F2(
 					var minimapLeft = ((winWidth - 20) - 204) + 2;
 					var offsetX = A3($elm$core$Basics$clamp, 0, minimapWidth, clientX - minimapLeft);
 					var newCamera = A3(
-						$author$project$Main$constrainCamera,
+						$author$project$Update$constrainCamera,
 						model.mapConfig,
 						model.windowSize,
-						A4($author$project$Main$minimapDragToCamera, model, offset, offsetX, offsetY));
+						A4($author$project$Update$minimapDragToCamera, model, offset, offsetX, offsetY));
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8381,15 +8343,15 @@ var $author$project$Main$update = F2(
 					var _v9 = _v8.b.a;
 					var worldX = _v9.a;
 					var worldY = _v9.b;
-					var sizeCells = $author$project$Main$buildingSizeToGridCells(template.size);
+					var sizeCells = $author$project$Model$buildingSizeToGridCells(template.size);
 					var gridY = $elm$core$Basics$floor(worldY / model.gridConfig.buildGridSize);
 					var gridX = $elm$core$Basics$floor(worldX / model.gridConfig.buildGridSize);
 					var centeredGridY = gridY - ((sizeCells / 2) | 0);
 					var centeredGridX = gridX - ((sizeCells / 2) | 0);
-					var isValid = A7($author$project$Main$isValidBuildingPlacement, centeredGridX, centeredGridY, template.size, model.mapConfig, model.gridConfig, model.buildingOccupancy, model.buildings);
+					var isValid = A7($author$project$Model$isValidBuildingPlacement, centeredGridX, centeredGridY, template.size, model.mapConfig, model.gridConfig, model.buildingOccupancy, model.buildings);
 					var canAfford = _Utils_cmp(model.gold, template.cost) > -1;
 					if (isValid && canAfford) {
-						var newGameState = (_Utils_eq(model.gameState, $author$project$Main$PreGame) && (template.name === 'Castle')) ? $author$project$Main$Playing : model.gameState;
+						var newGameState = (_Utils_eq(model.gameState, $author$project$Model$PreGame) && (template.name === 'Castle')) ? $author$project$Model$Playing : model.gameState;
 						var isCastle = template.name === 'Castle';
 						var initialHp = isCastle ? template.maxHp : A2($elm$core$Basics$max, 1, (template.maxHp / 10) | 0);
 						var initialGarrisonConfig = isCastle ? _List_fromArray(
@@ -8407,12 +8369,12 @@ var $author$project$Main$update = F2(
 							0,
 							initialGarrisonConfig);
 						var _v10 = isCastle ? _Utils_Tuple2(
-							$author$project$Main$SpawnHouse,
+							$author$project$Model$SpawnHouse,
 							_List_fromArray(
-								[$author$project$Main$BuildingTag, $author$project$Main$ObjectiveTag])) : _Utils_Tuple2(
-							$author$project$Main$UnderConstruction,
+								[$author$project$Model$BuildingTag, $author$project$Model$ObjectiveTag])) : _Utils_Tuple2(
+							$author$project$Model$UnderConstruction,
 							_List_fromArray(
-								[$author$project$Main$BuildingTag]));
+								[$author$project$Model$BuildingTag]));
 						var buildingBehavior = _v10.a;
 						var buildingTags = _v10.b;
 						var initialDuration = function () {
@@ -8425,7 +8387,7 @@ var $author$project$Main$update = F2(
 									return 0;
 							}
 						}();
-						var newBuilding = {activeRadius: 192, behavior: buildingBehavior, behaviorDuration: initialDuration, behaviorTimer: 0, buildingType: template.name, coffer: 0, garrisonConfig: initialGarrisonConfig, garrisonOccupied: initialGarrisonOccupied, garrisonSlots: template.garrisonSlots, gridX: centeredGridX, gridY: centeredGridY, hp: initialHp, id: model.nextBuildingId, maxHp: template.maxHp, owner: $author$project$Main$Player, searchRadius: 384, size: template.size, tags: buildingTags};
+						var newBuilding = {activeRadius: 192, behavior: buildingBehavior, behaviorDuration: initialDuration, behaviorTimer: 0, buildingType: template.name, coffer: 0, garrisonConfig: initialGarrisonConfig, garrisonOccupied: initialGarrisonOccupied, garrisonSlots: template.garrisonSlots, gridX: centeredGridX, gridY: centeredGridY, hp: initialHp, id: model.nextBuildingId, maxHp: template.maxHp, owner: $author$project$Model$Player, searchRadius: 384, size: template.size, tags: buildingTags};
 						var _v11 = function () {
 							if (isCastle) {
 								var unitsToCreate = _List_fromArray(
@@ -8440,7 +8402,7 @@ var $author$project$Main$update = F2(
 										function (_v12) {
 											var unitType = _v12.a;
 											var unitId = _v12.b;
-											return A4($author$project$Main$createHenchman, unitType, unitId, model.nextBuildingId, newBuilding);
+											return A4($author$project$Model$createHenchman, unitType, unitId, model.nextBuildingId, newBuilding);
 										},
 										unitsToCreate),
 									model.nextUnitId + 3);
@@ -8450,10 +8412,10 @@ var $author$project$Main$update = F2(
 						}();
 						var initialUnits = _v11.a;
 						var nextUnitIdAfterInitial = _v11.b;
-						var newBuildingOccupancy = A2($author$project$Main$addBuildingGridOccupancy, newBuilding, model.buildingOccupancy);
-						var newPathfindingOccupancy = A3($author$project$Main$addBuildingOccupancy, model.gridConfig, newBuilding, model.pathfindingOccupancy);
+						var newBuildingOccupancy = A2($author$project$Model$addBuildingGridOccupancy, newBuilding, model.buildingOccupancy);
+						var newPathfindingOccupancy = A3($author$project$Model$addBuildingOccupancy, model.gridConfig, newBuilding, model.pathfindingOccupancy);
 						var updatedUnits = A4(
-							$author$project$Main$recalculateAllPaths,
+							$author$project$Model$recalculateAllPaths,
 							model.gridConfig,
 							model.mapConfig,
 							newPathfindingOccupancy,
@@ -8539,9 +8501,9 @@ var $author$project$Main$update = F2(
 			default:
 				var delta = msg.a;
 				var updatedTooltipHover = function () {
-					var _v45 = model.tooltipHover;
-					if (_v45.$ === 'Just') {
-						var tooltipState = _v45.a;
+					var _v44 = model.tooltipHover;
+					if (_v44.$ === 'Just') {
+						var tooltipState = _v44.a;
 						return $elm$core$Maybe$Just(
 							_Utils_update(
 								tooltipState,
@@ -8551,8 +8513,8 @@ var $author$project$Main$update = F2(
 					}
 				}();
 				var speedMultiplier = function () {
-					var _v44 = model.simulationSpeed;
-					switch (_v44.$) {
+					var _v43 = model.simulationSpeed;
+					switch (_v43.$) {
 						case 'Pause':
 							return 0;
 						case 'Speed1x':
@@ -8566,7 +8528,7 @@ var $author$project$Main$update = F2(
 					}
 				}();
 				var simulationTimestep = 50.0;
-				var isPaused = (delta > 1000) || _Utils_eq(model.simulationSpeed, $author$project$Main$Pause);
+				var isPaused = (delta > 1000) || _Utils_eq(model.simulationSpeed, $author$project$Model$Pause);
 				var newAccumulatedTime = isPaused ? model.accumulatedTime : (model.accumulatedTime + (delta * speedMultiplier));
 				var shouldSimulate = (_Utils_cmp(newAccumulatedTime, simulationTimestep) > -1) && (!isPaused);
 				if (shouldSimulate) {
@@ -8587,17 +8549,17 @@ var $author$project$Main$update = F2(
 								if (_v16.$ === 'OnMap') {
 									var oldX = _v16.a;
 									var oldY = _v16.b;
-									var occupancyWithoutUnit = A4($author$project$Main$removeUnitOccupancy, model.gridConfig, oldX, oldY, accOccupancy);
-									var _v17 = A3($author$project$Main$updateUnitBehavior, deltaSeconds, model.buildings, unit);
+									var occupancyWithoutUnit = A4($author$project$Model$removeUnitOccupancy, model.gridConfig, oldX, oldY, accOccupancy);
+									var _v17 = A3($author$project$Model$updateUnitBehavior, deltaSeconds, model.buildings, unit);
 									var behaviorUpdatedUnit = _v17.a;
 									var shouldGeneratePath = _v17.b;
-									var movedUnit = A5($author$project$Main$updateUnitMovement, model.gridConfig, model.mapConfig, occupancyWithoutUnit, deltaSeconds, behaviorUpdatedUnit);
+									var movedUnit = A5($author$project$Model$updateUnitMovement, model.gridConfig, model.mapConfig, occupancyWithoutUnit, deltaSeconds, behaviorUpdatedUnit);
 									var newOccupancyForUnit = function () {
 										var _v18 = movedUnit.location;
 										if (_v18.$ === 'OnMap') {
 											var newX = _v18.a;
 											var newY = _v18.b;
-											return A4($author$project$Main$addUnitOccupancy, model.gridConfig, newX, newY, occupancyWithoutUnit);
+											return A4($author$project$Model$addUnitOccupancy, model.gridConfig, newX, newY, occupancyWithoutUnit);
 										} else {
 											return occupancyWithoutUnit;
 										}
@@ -8608,7 +8570,7 @@ var $author$project$Main$update = F2(
 										newOccupancyForUnit,
 										needsPath);
 								} else {
-									var _v19 = A3($author$project$Main$updateUnitBehavior, deltaSeconds, model.buildings, unit);
+									var _v19 = A3($author$project$Model$updateUnitBehavior, deltaSeconds, model.buildings, unit);
 									var behaviorUpdatedUnit = _v19.a;
 									var shouldGeneratePath = _v19.b;
 									var needsPath = shouldGeneratePath ? A2($elm$core$List$cons, behaviorUpdatedUnit, accNeedingPaths) : accNeedingPaths;
@@ -8630,10 +8592,10 @@ var $author$project$Main$update = F2(
 								var accBuildings = _v21.a;
 								var accNeedingHouseSpawn = _v21.b;
 								var accHenchmenSpawn = _v21.c;
-								var _v22 = A2($author$project$Main$updateBuildingBehavior, deltaSeconds, building);
+								var _v22 = A2($author$project$Model$updateBuildingBehavior, deltaSeconds, building);
 								var behaviorUpdatedBuilding = _v22.a;
 								var shouldSpawnHouse = _v22.b;
-								var _v23 = A2($author$project$Main$updateGarrisonSpawning, deltaSeconds, behaviorUpdatedBuilding);
+								var _v23 = A2($author$project$Model$updateGarrisonSpawning, deltaSeconds, behaviorUpdatedBuilding);
 								var garrisonUpdatedBuilding = _v23.a;
 								var unitsToSpawn = _v23.b;
 								var needsHouseSpawn = shouldSpawnHouse ? A2($elm$core$List$cons, garrisonUpdatedBuilding, accNeedingHouseSpawn) : accNeedingHouseSpawn;
@@ -8657,14 +8619,14 @@ var $author$project$Main$update = F2(
 								var _v29 = _v27.b;
 								var accPfOcc = _v29.a;
 								var currentBuildingId = _v29.b;
-								var _v30 = A4($author$project$Main$findAdjacentHouseLocation, model.mapConfig, model.gridConfig, accBuildings, accBuildOcc);
+								var _v30 = A4($author$project$Model$findAdjacentHouseLocation, model.mapConfig, model.gridConfig, accBuildings, accBuildOcc);
 								if (_v30.$ === 'Just') {
 									var _v31 = _v30.a;
 									var gridX = _v31.a;
 									var gridY = _v31.b;
 									var newHouse = {
 										activeRadius: 192,
-										behavior: $author$project$Main$GenerateGold,
+										behavior: $author$project$Model$GenerateGold,
 										behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 30000, currentBuildingId * 1000) / 1000.0),
 										behaviorTimer: 0,
 										buildingType: 'House',
@@ -8677,14 +8639,14 @@ var $author$project$Main$update = F2(
 										hp: 500,
 										id: currentBuildingId,
 										maxHp: 500,
-										owner: $author$project$Main$Player,
+										owner: $author$project$Model$Player,
 										searchRadius: 384,
-										size: $author$project$Main$Medium,
+										size: $author$project$Model$Medium,
 										tags: _List_fromArray(
-											[$author$project$Main$BuildingTag, $author$project$Main$CofferTag])
+											[$author$project$Model$BuildingTag, $author$project$Model$CofferTag])
 									};
-									var newPfOcc = A3($author$project$Main$addBuildingOccupancy, model.gridConfig, newHouse, accPfOcc);
-									var newBuildOcc = A2($author$project$Main$addBuildingGridOccupancy, newHouse, accBuildOcc);
+									var newPfOcc = A3($author$project$Model$addBuildingOccupancy, model.gridConfig, newHouse, accPfOcc);
+									var newBuildOcc = A2($author$project$Model$addBuildingGridOccupancy, newHouse, accBuildOcc);
 									return _Utils_Tuple2(
 										_Utils_Tuple2(
 											A2($elm$core$List$cons, newHouse, accBuildings),
@@ -8723,7 +8685,7 @@ var $author$project$Main$update = F2(
 										updatedBuildings));
 								if (_v35.$ === 'Just') {
 									var homeBuilding = _v35.a;
-									var newUnit = A4($author$project$Main$createHenchman, unitType, currentUnitId, buildingId, homeBuilding);
+									var newUnit = A4($author$project$Model$createHenchman, unitType, currentUnitId, buildingId, homeBuilding);
 									return _Utils_Tuple2(
 										A2($elm$core$List$cons, newUnit, accUnits),
 										currentUnitId + 1);
@@ -8736,24 +8698,24 @@ var $author$project$Main$update = F2(
 					var newHenchmen = _v32.a;
 					var nextUnitIdAfterSpawning = _v32.b;
 					var allUnits = _Utils_ap(updatedUnits, newHenchmen);
-					var unitsAfterHouseSpawn = $elm$core$List$isEmpty(buildingsNeedingHouseSpawn) ? allUnits : A4($author$project$Main$recalculateAllPaths, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, allUnits);
+					var unitsAfterHouseSpawn = $elm$core$List$isEmpty(buildingsNeedingHouseSpawn) ? allUnits : A4($author$project$Model$recalculateAllPaths, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, allUnits);
 					var buildingsAfterRepairs = A2(
 						$elm$core$List$map,
 						function (building) {
 							var repairingPeasants = A2(
 								$elm$core$List$filter,
 								function (unit) {
-									var _v41 = _Utils_Tuple2(unit.behavior, unit.location);
-									if ((_v41.a.$ === 'Repairing') && (_v41.b.$ === 'OnMap')) {
-										var _v42 = _v41.a;
-										var _v43 = _v41.b;
-										var x = _v43.a;
-										var y = _v43.b;
+									var _v40 = _Utils_Tuple2(unit.behavior, unit.location);
+									if ((_v40.a.$ === 'Repairing') && (_v40.b.$ === 'OnMap')) {
+										var _v41 = _v40.a;
+										var _v42 = _v40.b;
+										var x = _v42.a;
+										var y = _v42.b;
 										var canBuild = unit.behaviorTimer >= 0.15;
 										var buildGridSize = 64;
 										var buildingMinX = building.gridX * buildGridSize;
 										var buildingMinY = building.gridY * buildGridSize;
-										var buildingSize = $author$project$Main$buildingSizeToGridCells(building.size) * buildGridSize;
+										var buildingSize = $author$project$Model$buildingSizeToGridCells(building.size) * buildGridSize;
 										var buildingMaxX = buildingMinX + buildingSize;
 										var buildingMaxY = buildingMinY + buildingSize;
 										var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
@@ -8765,22 +8727,22 @@ var $author$project$Main$update = F2(
 								unitsAfterHouseSpawn);
 							var hpGain = $elm$core$List$length(repairingPeasants) * 5;
 							var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
-							var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Main$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
-							var _v39 = function () {
+							var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Model$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
+							var _v38 = function () {
 								if (isConstructionComplete) {
-									var _v40 = building.buildingType;
-									switch (_v40) {
+									var _v39 = building.buildingType;
+									switch (_v39) {
 										case 'Warrior\'s Guild':
 											return _Utils_Tuple3(
-												$author$project$Main$GenerateGold,
+												$author$project$Model$GenerateGold,
 												_List_fromArray(
-													[$author$project$Main$BuildingTag, $author$project$Main$GuildTag, $author$project$Main$CofferTag]),
+													[$author$project$Model$BuildingTag, $author$project$Model$GuildTag, $author$project$Model$CofferTag]),
 												15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
 										case 'House':
 											return _Utils_Tuple3(
-												$author$project$Main$GenerateGold,
+												$author$project$Model$GenerateGold,
 												_List_fromArray(
-													[$author$project$Main$BuildingTag, $author$project$Main$CofferTag]),
+													[$author$project$Model$BuildingTag, $author$project$Model$CofferTag]),
 												15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0));
 										default:
 											return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
@@ -8789,9 +8751,9 @@ var $author$project$Main$update = F2(
 									return _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
 								}
 							}();
-							var completedBehavior = _v39.a;
-							var completedTags = _v39.b;
-							var completedDuration = _v39.c;
+							var completedBehavior = _v38.a;
+							var completedTags = _v38.b;
+							var completedDuration = _v38.c;
 							return _Utils_update(
 								building,
 								{behavior: completedBehavior, behaviorDuration: completedDuration, behaviorTimer: 0, hp: newHp, tags: completedTags});
@@ -8800,9 +8762,9 @@ var $author$project$Main$update = F2(
 					var newGameState = A2(
 						$elm$core$List$any,
 						function (b) {
-							return A2($elm$core$List$member, $author$project$Main$ObjectiveTag, b.tags) && (b.hp <= 0);
+							return A2($elm$core$List$member, $author$project$Model$ObjectiveTag, b.tags) && (b.hp <= 0);
 						},
-						buildingsAfterRepairs) ? $author$project$Main$GameOver : model.gameState;
+						buildingsAfterRepairs) ? $author$project$Model$GameOver : model.gameState;
 					var unitsWithPaths = A2(
 						$elm$core$List$map,
 						function (unit) {
@@ -8812,17 +8774,7 @@ var $author$project$Main$update = F2(
 								var x = _v37.a;
 								var y = _v37.b;
 								var targetCell = _v36.b.a;
-								var newPath = A6($author$project$Main$calculateUnitPath, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, x, y, targetCell);
-								var _v38 = A2(
-									$elm$core$Debug$log,
-									'Path calculated',
-									{
-										from: _Utils_Tuple2(x, y),
-										pathLength: $elm$core$List$length(newPath),
-										to: targetCell,
-										unitId: unit.id,
-										unitType: unit.unitType
-									});
+								var newPath = A6($author$project$Model$calculateUnitPath, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, x, y, targetCell);
 								return _Utils_update(
 									unit,
 									{path: newPath});
@@ -8857,7 +8809,7 @@ var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$viewGameOverOverlay = function (model) {
+var $author$project$View$viewGameOverOverlay = function (model) {
 	var _v0 = model.gameState;
 	if (_v0.$ === 'GameOver') {
 		return A2(
@@ -8883,9 +8835,9 @@ var $author$project$Main$viewGameOverOverlay = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $author$project$Main$GlobalButtonBuild = {$: 'GlobalButtonBuild'};
-var $author$project$Main$GlobalButtonDebug = {$: 'GlobalButtonDebug'};
-var $author$project$Main$SelectThing = function (a) {
+var $author$project$Model$GlobalButtonBuild = {$: 'GlobalButtonBuild'};
+var $author$project$Model$GlobalButtonDebug = {$: 'GlobalButtonDebug'};
+var $author$project$Message$SelectThing = function (a) {
 	return {$: 'SelectThing', a: a};
 };
 var $elm$core$String$fromFloat = _String_fromNumber;
@@ -8908,7 +8860,7 @@ var $elm$html$Html$Events$onClick = function (msg) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $author$project$Main$viewGlobalButtonsPanel = F2(
+var $author$project$View$viewGlobalButtonsPanel = F2(
 	function (model, leftPosition) {
 		var panelSize = 120;
 		var button = F3(
@@ -8921,7 +8873,7 @@ var $author$project$Main$viewGlobalButtonsPanel = F2(
 							'button text-12 font-bold' + (isSelected ? ' button--selected' : '')),
 							$elm$html$Html$Attributes$class('w-full h-36'),
 							$elm$html$Html$Events$onClick(
-							$author$project$Main$SelectThing(selectable))
+							$author$project$Message$SelectThing(selectable))
 						]),
 					_List_fromArray(
 						[
@@ -8951,21 +8903,21 @@ var $author$project$Main$viewGlobalButtonsPanel = F2(
 					A3(
 					button,
 					'Debug',
-					$author$project$Main$GlobalButtonDebug,
+					$author$project$Model$GlobalButtonDebug,
 					_Utils_eq(
 						model.selected,
-						$elm$core$Maybe$Just($author$project$Main$GlobalButtonDebug))),
+						$elm$core$Maybe$Just($author$project$Model$GlobalButtonDebug))),
 					A3(
 					button,
 					'Build',
-					$author$project$Main$GlobalButtonBuild,
+					$author$project$Model$GlobalButtonBuild,
 					_Utils_eq(
 						model.selected,
-						$elm$core$Maybe$Just($author$project$Main$GlobalButtonBuild)))
+						$elm$core$Maybe$Just($author$project$Model$GlobalButtonBuild)))
 				]));
 	});
-var $author$project$Main$viewGoldCounter = function (model) {
-	var isPaused = _Utils_eq(model.simulationSpeed, $author$project$Main$Pause);
+var $author$project$View$viewGoldCounter = function (model) {
+	var isPaused = _Utils_eq(model.simulationSpeed, $author$project$Model$Pause);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -9004,16 +8956,16 @@ var $author$project$Main$viewGoldCounter = function (model) {
 					])) : $elm$html$Html$text('')
 			]));
 };
-var $author$project$Main$MouseDown = F2(
+var $author$project$Message$MouseDown = F2(
 	function (a, b) {
 		return {$: 'MouseDown', a: a, b: b};
 	});
-var $author$project$Main$PlaceBuilding = {$: 'PlaceBuilding'};
-var $author$project$Main$WorldMouseMove = F2(
+var $author$project$Message$PlaceBuilding = {$: 'PlaceBuilding'};
+var $author$project$Message$WorldMouseMove = F2(
 	function (a, b) {
 		return {$: 'WorldMouseMove', a: a, b: b};
 	});
-var $author$project$Main$viewBuildingOccupancy = F3(
+var $author$project$View$viewBuildingOccupancy = F3(
 	function (model, viewportWidth, viewportHeight) {
 		if (!model.showBuildingOccupancy) {
 			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
@@ -9092,21 +9044,21 @@ var $author$project$Main$viewBuildingOccupancy = F3(
 				A2($elm$core$List$map, renderCell, occupiedCells));
 		}
 	});
-var $author$project$Main$viewBuildingPreview = function (model) {
+var $author$project$View$viewBuildingPreview = function (model) {
 	var _v0 = _Utils_Tuple2(model.buildMode, model.mouseWorldPos);
 	if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
 		var template = _v0.a.a;
 		var _v1 = _v0.b.a;
 		var worldX = _v1.a;
 		var worldY = _v1.b;
-		var sizeCells = $author$project$Main$buildingSizeToGridCells(template.size);
+		var sizeCells = $author$project$Model$buildingSizeToGridCells(template.size);
 		var gridY = $elm$core$Basics$floor(worldY / model.gridConfig.buildGridSize);
 		var gridX = $elm$core$Basics$floor(worldX / model.gridConfig.buildGridSize);
 		var centeredGridY = gridY - ((sizeCells / 2) | 0);
 		var worldPosY = centeredGridY * model.gridConfig.buildGridSize;
 		var screenY = worldPosY - model.camera.y;
 		var centeredGridX = gridX - ((sizeCells / 2) | 0);
-		var isValid = A7($author$project$Main$isValidBuildingPlacement, centeredGridX, centeredGridY, template.size, model.mapConfig, model.gridConfig, model.buildingOccupancy, model.buildings) && (_Utils_cmp(model.gold, template.cost) > -1);
+		var isValid = A7($author$project$Model$isValidBuildingPlacement, centeredGridX, centeredGridY, template.size, model.mapConfig, model.gridConfig, model.buildingOccupancy, model.buildings) && (_Utils_cmp(model.gold, template.cost) > -1);
 		var previewColor = isValid ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
 		var worldPosX = centeredGridX * model.gridConfig.buildGridSize;
 		var screenX = worldPosX - model.camera.x;
@@ -9143,14 +9095,14 @@ var $author$project$Main$viewBuildingPreview = function (model) {
 		return A2($elm$html$Html$div, _List_Nil, _List_Nil);
 	}
 };
-var $author$project$Main$BuildingSelected = function (a) {
+var $author$project$Model$BuildingSelected = function (a) {
 	return {$: 'BuildingSelected', a: a};
 };
-var $author$project$Main$viewBuilding = F2(
+var $author$project$View$viewBuilding = F2(
 	function (model, building) {
 		var worldY = building.gridY * model.gridConfig.buildGridSize;
 		var worldX = building.gridX * model.gridConfig.buildGridSize;
-		var sizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+		var sizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 		var screenY = worldY - model.camera.y;
 		var screenX = worldX - model.camera.x;
 		var isSelected = function () {
@@ -9172,7 +9124,7 @@ var $author$project$Main$viewBuilding = F2(
 				return '#666';
 			}
 		}();
-		var _v0 = $author$project$Main$getBuildingEntrance(building);
+		var _v0 = $author$project$Model$getBuildingEntrance(building);
 		var entranceGridX = _v0.a;
 		var entranceGridY = _v0.b;
 		var entranceOffsetX = (entranceGridX - building.gridX) * model.gridConfig.buildGridSize;
@@ -9201,15 +9153,15 @@ var $author$project$Main$viewBuilding = F2(
 					A2($elm$html$Html$Attributes$style, 'background-color', buildingColor),
 					$elm$html$Html$Attributes$class('border-333'),
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$SelectThing(
-						$author$project$Main$BuildingSelected(building.id)))
+					$author$project$Message$SelectThing(
+						$author$project$Model$BuildingSelected(building.id)))
 				]),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
 					_Utils_ap(
 						building.buildingType,
-						_Utils_eq(building.behavior, $author$project$Main$UnderConstruction) ? ' (under construction)' : '')),
+						_Utils_eq(building.behavior, $author$project$Model$UnderConstruction) ? ' (under construction)' : '')),
 					A2(
 					$elm$html$Html$div,
 					_List_fromArray(
@@ -9269,16 +9221,16 @@ var $author$project$Main$viewBuilding = F2(
 				}()
 				]));
 	});
-var $author$project$Main$viewBuildings = function (model) {
+var $author$project$View$viewBuildings = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		A2(
 			$elm$core$List$map,
-			$author$project$Main$viewBuilding(model),
+			$author$project$View$viewBuilding(model),
 			model.buildings));
 };
-var $author$project$Main$getCityActiveArea = function (buildings) {
+var $author$project$Model$getCityActiveArea = function (buildings) {
 	return $elm$core$Dict$keys(
 		A3(
 			$elm$core$List$foldl,
@@ -9290,16 +9242,16 @@ var $author$project$Main$getCityActiveArea = function (buildings) {
 			A2(
 				$elm$core$List$concatMap,
 				function (b) {
-					return A2($author$project$Main$getBuildingAreaCells, b, 3);
+					return A2($author$project$Model$getBuildingAreaCells, b, 3);
 				},
 				A2(
 					$elm$core$List$filter,
 					function (b) {
-						return _Utils_eq(b.owner, $author$project$Main$Player);
+						return _Utils_eq(b.owner, $author$project$Model$Player);
 					},
 					buildings))));
 };
-var $author$project$Main$viewCityActiveArea = F3(
+var $author$project$View$viewCityActiveArea = F3(
 	function (model, viewportWidth, viewportHeight) {
 		if (!model.showCityActiveArea) {
 			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
@@ -9353,7 +9305,7 @@ var $author$project$Main$viewCityActiveArea = F3(
 				$elm$core$Basics$min,
 				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
 				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cityCells = $author$project$Main$getCityActiveArea(model.buildings);
+			var cityCells = $author$project$Model$getCityActiveArea(model.buildings);
 			var cityDict = A3(
 				$elm$core$List$foldl,
 				F2(
@@ -9387,7 +9339,7 @@ var $author$project$Main$viewCityActiveArea = F3(
 				A2($elm$core$List$map, renderCell, visibleCityCells));
 		}
 	});
-var $author$project$Main$viewCitySearchArea = F3(
+var $author$project$View$viewCitySearchArea = F3(
 	function (model, viewportWidth, viewportHeight) {
 		if (!model.showCitySearchArea) {
 			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
@@ -9441,7 +9393,7 @@ var $author$project$Main$viewCitySearchArea = F3(
 				$elm$core$Basics$min,
 				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
 				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cityCells = $author$project$Main$getCitySearchArea(model.buildings);
+			var cityCells = $author$project$Model$getCitySearchArea(model.buildings);
 			var cityDict = A3(
 				$elm$core$List$foldl,
 				F2(
@@ -9475,7 +9427,7 @@ var $author$project$Main$viewCitySearchArea = F3(
 				A2($elm$core$List$map, renderCell, visibleCityCells));
 		}
 	});
-var $author$project$Main$viewShape = F2(
+var $author$project$View$viewShape = F2(
 	function (model, shape) {
 		var screenY = shape.y - model.camera.y;
 		var screenX = shape.x - model.camera.x;
@@ -9521,17 +9473,17 @@ var $author$project$Main$viewShape = F2(
 				shapeStyle),
 			_List_Nil);
 	});
-var $author$project$Main$viewDecorativeShapes = F3(
+var $author$project$View$viewDecorativeShapes = F3(
 	function (model, viewportWidth, viewportHeight) {
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
 			A2(
 				$elm$core$List$map,
-				$author$project$Main$viewShape(model),
+				$author$project$View$viewShape(model),
 				model.decorativeShapes));
 	});
-var $author$project$Main$viewGrid = F5(
+var $author$project$View$viewGrid = F5(
 	function (model, gridSize, color, viewportWidth, viewportHeight) {
 		var terrainTop = 0 - model.camera.y;
 		var terrainLeft = 0 - model.camera.x;
@@ -9613,16 +9565,16 @@ var $author$project$Main$viewGrid = F5(
 					($elm$core$Basics$round(endX) / $elm$core$Basics$round(gridSize)) | 0)));
 		return _Utils_ap(verticalLines, horizontalLines);
 	});
-var $author$project$Main$viewGrids = F3(
+var $author$project$View$viewGrids = F3(
 	function (model, viewportWidth, viewportHeight) {
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
 			_Utils_ap(
-				model.showBuildGrid ? A5($author$project$Main$viewGrid, model, model.gridConfig.buildGridSize, 'rgba(255, 255, 0, 0.3)', viewportWidth, viewportHeight) : _List_Nil,
-				model.showPathfindingGrid ? A5($author$project$Main$viewGrid, model, model.gridConfig.pathfindingGridSize, 'rgba(0, 255, 255, 0.3)', viewportWidth, viewportHeight) : _List_Nil));
+				model.showBuildGrid ? A5($author$project$View$viewGrid, model, model.gridConfig.buildGridSize, 'rgba(255, 255, 0, 0.3)', viewportWidth, viewportHeight) : _List_Nil,
+				model.showPathfindingGrid ? A5($author$project$View$viewGrid, model, model.gridConfig.pathfindingGridSize, 'rgba(0, 255, 255, 0.3)', viewportWidth, viewportHeight) : _List_Nil));
 	});
-var $author$project$Main$viewPathfindingOccupancy = F3(
+var $author$project$View$viewPathfindingOccupancy = F3(
 	function (model, viewportWidth, viewportHeight) {
 		if (!model.showPathfindingOccupancy) {
 			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
@@ -9692,7 +9644,7 @@ var $author$project$Main$viewPathfindingOccupancy = F3(
 			var occupiedCells = A2(
 				$elm$core$List$filter,
 				function (cell) {
-					return A2($author$project$Main$isPathfindingCellOccupied, cell, model.pathfindingOccupancy);
+					return A2($author$project$Model$isPathfindingCellOccupied, cell, model.pathfindingOccupancy);
 				},
 				allCells);
 			return A2(
@@ -9701,7 +9653,7 @@ var $author$project$Main$viewPathfindingOccupancy = F3(
 				A2($elm$core$List$map, renderCell, occupiedCells));
 		}
 	});
-var $author$project$Main$viewSelectedUnitPath = function (model) {
+var $author$project$View$viewSelectedUnitPath = function (model) {
 	var _v0 = model.selected;
 	if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
 		var unitId = _v0.a.a;
@@ -9759,7 +9711,7 @@ var $author$project$Main$viewSelectedUnitPath = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $author$project$Main$viewTerrain = F3(
+var $author$project$View$viewTerrain = F3(
 	function (model, viewportWidth, viewportHeight) {
 		var terrainWidth = model.mapConfig.width;
 		var terrainTop = 0 - model.camera.y;
@@ -9790,7 +9742,7 @@ var $author$project$Main$viewTerrain = F3(
 				]),
 			_List_Nil);
 	});
-var $author$project$Main$viewUnitRadii = function (model) {
+var $author$project$View$viewUnitRadii = function (model) {
 	var _v0 = model.selected;
 	if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
 		var unitId = _v0.a.a;
@@ -9872,10 +9824,10 @@ var $author$project$Main$viewUnitRadii = function (model) {
 		return A2($elm$html$Html$div, _List_Nil, _List_Nil);
 	}
 };
-var $author$project$Main$UnitSelected = function (a) {
+var $author$project$Model$UnitSelected = function (a) {
 	return {$: 'UnitSelected', a: a};
 };
-var $author$project$Main$viewUnit = F4(
+var $author$project$View$viewUnit = F4(
 	function (model, unit, worldX, worldY) {
 		var visualDiameter = model.gridConfig.pathfindingGridSize / 2;
 		var visualRadius = visualDiameter / 2;
@@ -9914,8 +9866,8 @@ var $author$project$Main$viewUnit = F4(
 					'height',
 					$elm$core$String$fromFloat(selectionDiameter) + 'px'),
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$SelectThing(
-						$author$project$Main$UnitSelected(unit.id)))
+					$author$project$Message$SelectThing(
+						$author$project$Model$UnitSelected(unit.id)))
 				]),
 			_List_fromArray(
 				[
@@ -9997,7 +9949,7 @@ var $author$project$Main$viewUnit = F4(
 				}()
 				]));
 	});
-var $author$project$Main$viewUnits = function (model) {
+var $author$project$View$viewUnits = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -10009,14 +9961,14 @@ var $author$project$Main$viewUnits = function (model) {
 					var x = _v0.a;
 					var y = _v0.b;
 					return $elm$core$Maybe$Just(
-						A4($author$project$Main$viewUnit, model, unit, x, y));
+						A4($author$project$View$viewUnit, model, unit, x, y));
 				} else {
 					return $elm$core$Maybe$Nothing;
 				}
 			},
 			model.units));
 };
-var $author$project$Main$viewMainViewport = F4(
+var $author$project$View$viewMainViewport = F4(
 	function (model, cursor, viewportWidth, viewportHeight) {
 		var handleMouseMove = function () {
 			var _v1 = model.buildMode;
@@ -10030,7 +9982,7 @@ var $author$project$Main$viewMainViewport = F4(
 							function (clientX, clientY) {
 								var worldY = model.camera.y + clientY;
 								var worldX = model.camera.x + clientX;
-								return A2($author$project$Main$WorldMouseMove, worldX, worldY);
+								return A2($author$project$Message$WorldMouseMove, worldX, worldY);
 							}),
 						A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 						A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float)));
@@ -10044,14 +9996,14 @@ var $author$project$Main$viewMainViewport = F4(
 				return A2(
 					$elm$html$Html$Events$on,
 					'mousedown',
-					$elm$json$Json$Decode$succeed($author$project$Main$PlaceBuilding));
+					$elm$json$Json$Decode$succeed($author$project$Message$PlaceBuilding));
 			} else {
 				return A2(
 					$elm$html$Html$Events$on,
 					'mousedown',
 					A3(
 						$elm$json$Json$Decode$map2,
-						$author$project$Main$MouseDown,
+						$author$project$Message$MouseDown,
 						A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 						A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float)));
 			}
@@ -10067,25 +10019,25 @@ var $author$project$Main$viewMainViewport = F4(
 				]),
 			_List_fromArray(
 				[
-					A3($author$project$Main$viewTerrain, model, viewportWidth, viewportHeight),
-					A3($author$project$Main$viewDecorativeShapes, model, viewportWidth, viewportHeight),
-					$author$project$Main$viewBuildings(model),
-					$author$project$Main$viewUnits(model),
-					$author$project$Main$viewSelectedUnitPath(model),
-					A3($author$project$Main$viewGrids, model, viewportWidth, viewportHeight),
-					A3($author$project$Main$viewPathfindingOccupancy, model, viewportWidth, viewportHeight),
-					A3($author$project$Main$viewBuildingOccupancy, model, viewportWidth, viewportHeight),
-					A3($author$project$Main$viewCitySearchArea, model, viewportWidth, viewportHeight),
-					A3($author$project$Main$viewCityActiveArea, model, viewportWidth, viewportHeight),
-					$author$project$Main$viewBuildingPreview(model),
-					$author$project$Main$viewUnitRadii(model)
+					A3($author$project$View$viewTerrain, model, viewportWidth, viewportHeight),
+					A3($author$project$View$viewDecorativeShapes, model, viewportWidth, viewportHeight),
+					$author$project$View$viewBuildings(model),
+					$author$project$View$viewUnits(model),
+					$author$project$View$viewSelectedUnitPath(model),
+					A3($author$project$View$viewGrids, model, viewportWidth, viewportHeight),
+					A3($author$project$View$viewPathfindingOccupancy, model, viewportWidth, viewportHeight),
+					A3($author$project$View$viewBuildingOccupancy, model, viewportWidth, viewportHeight),
+					A3($author$project$View$viewCitySearchArea, model, viewportWidth, viewportHeight),
+					A3($author$project$View$viewCityActiveArea, model, viewportWidth, viewportHeight),
+					$author$project$View$viewBuildingPreview(model),
+					$author$project$View$viewUnitRadii(model)
 				]));
 	});
-var $author$project$Main$MinimapMouseDown = F2(
+var $author$project$Message$MinimapMouseDown = F2(
 	function (a, b) {
 		return {$: 'MinimapMouseDown', a: a, b: b};
 	});
-var $author$project$Main$decodeMinimapMouseEvent = function (msg) {
+var $author$project$View$decodeMinimapMouseEvent = function (msg) {
 	return A3(
 		$elm$json$Json$Decode$map2,
 		F2(
@@ -10107,13 +10059,13 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $author$project$Main$viewMinimapBuilding = F3(
+var $author$project$View$viewMinimapBuilding = F3(
 	function (scale, buildGridSize, building) {
 		var worldY = building.gridY * buildGridSize;
 		var worldX = building.gridX * buildGridSize;
 		var minimapY = worldY * scale;
 		var minimapX = worldX * scale;
-		var buildingSizeCells = $author$project$Main$buildingSizeToGridCells(building.size);
+		var buildingSizeCells = $author$project$Model$buildingSizeToGridCells(building.size);
 		var worldHeight = buildingSizeCells * buildGridSize;
 		var minimapHeight = worldHeight * scale;
 		var worldWidth = buildingSizeCells * buildGridSize;
@@ -10152,7 +10104,7 @@ var $author$project$Main$viewMinimapBuilding = F3(
 				]),
 			_List_Nil);
 	});
-var $author$project$Main$viewMinimapUnit = F2(
+var $author$project$View$viewMinimapUnit = F2(
 	function (scale, unit) {
 		var _v0 = unit.location;
 		if (_v0.$ === 'OnMap') {
@@ -10198,7 +10150,7 @@ var $author$project$Main$viewMinimapUnit = F2(
 			return $elm$html$Html$text('');
 		}
 	});
-var $author$project$Main$viewMinimap = function (model) {
+var $author$project$View$viewMinimap = function (model) {
 	var padding = 10;
 	var minimapWidth = 200;
 	var minimapHeight = 150;
@@ -10238,7 +10190,7 @@ var $author$project$Main$viewMinimap = function (model) {
 				A2(
 				$elm$html$Html$Events$stopPropagationOn,
 				'mousedown',
-				$author$project$Main$decodeMinimapMouseEvent($author$project$Main$MinimapMouseDown))
+				$author$project$View$decodeMinimapMouseEvent($author$project$Message$MinimapMouseDown))
 			]),
 		_List_fromArray(
 			[
@@ -10267,12 +10219,12 @@ var $author$project$Main$viewMinimap = function (model) {
 				_Utils_ap(
 					A2(
 						$elm$core$List$map,
-						A2($author$project$Main$viewMinimapBuilding, scale, model.gridConfig.buildGridSize),
+						A2($author$project$View$viewMinimapBuilding, scale, model.gridConfig.buildGridSize),
 						model.buildings),
 					_Utils_ap(
 						A2(
 							$elm$core$List$map,
-							$author$project$Main$viewMinimapUnit(scale),
+							$author$project$View$viewMinimapUnit(scale),
 							model.units),
 						_List_fromArray(
 							[
@@ -10302,7 +10254,7 @@ var $author$project$Main$viewMinimap = function (model) {
 							]))))
 			]));
 };
-var $author$project$Main$viewPreGameOverlay = function (model) {
+var $author$project$View$viewPreGameOverlay = function (model) {
 	var _v0 = model.gameState;
 	if (_v0.$ === 'PreGame') {
 		return A2(
@@ -10321,42 +10273,42 @@ var $author$project$Main$viewPreGameOverlay = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $author$project$Main$ControlsTab = {$: 'ControlsTab'};
-var $author$project$Main$EnterBuildMode = function (a) {
+var $author$project$Model$ControlsTab = {$: 'ControlsTab'};
+var $author$project$Message$EnterBuildMode = function (a) {
 	return {$: 'EnterBuildMode', a: a};
 };
-var $author$project$Main$ExitBuildMode = {$: 'ExitBuildMode'};
-var $author$project$Main$GoldInputChanged = function (a) {
+var $author$project$Message$ExitBuildMode = {$: 'ExitBuildMode'};
+var $author$project$Message$GoldInputChanged = function (a) {
 	return {$: 'GoldInputChanged', a: a};
 };
-var $author$project$Main$InfoTab = {$: 'InfoTab'};
-var $author$project$Main$SetBuildingTab = function (a) {
+var $author$project$Model$InfoTab = {$: 'InfoTab'};
+var $author$project$Message$SetBuildingTab = function (a) {
 	return {$: 'SetBuildingTab', a: a};
 };
-var $author$project$Main$SetDebugTab = function (a) {
+var $author$project$Message$SetDebugTab = function (a) {
 	return {$: 'SetDebugTab', a: a};
 };
-var $author$project$Main$SetGoldFromInput = {$: 'SetGoldFromInput'};
-var $author$project$Main$SetSimulationSpeed = function (a) {
+var $author$project$Message$SetGoldFromInput = {$: 'SetGoldFromInput'};
+var $author$project$Message$SetSimulationSpeed = function (a) {
 	return {$: 'SetSimulationSpeed', a: a};
 };
-var $author$project$Main$Speed100x = {$: 'Speed100x'};
-var $author$project$Main$Speed10x = {$: 'Speed10x'};
-var $author$project$Main$Speed2x = {$: 'Speed2x'};
-var $author$project$Main$ToggleBuildGrid = {$: 'ToggleBuildGrid'};
-var $author$project$Main$ToggleBuildingOccupancy = {$: 'ToggleBuildingOccupancy'};
-var $author$project$Main$ToggleCityActiveArea = {$: 'ToggleCityActiveArea'};
-var $author$project$Main$ToggleCitySearchArea = {$: 'ToggleCitySearchArea'};
-var $author$project$Main$TogglePathfindingGrid = {$: 'TogglePathfindingGrid'};
-var $author$project$Main$TogglePathfindingOccupancy = {$: 'TogglePathfindingOccupancy'};
-var $author$project$Main$TooltipEnter = F3(
+var $author$project$Model$Speed100x = {$: 'Speed100x'};
+var $author$project$Model$Speed10x = {$: 'Speed10x'};
+var $author$project$Model$Speed2x = {$: 'Speed2x'};
+var $author$project$Message$ToggleBuildGrid = {$: 'ToggleBuildGrid'};
+var $author$project$Message$ToggleBuildingOccupancy = {$: 'ToggleBuildingOccupancy'};
+var $author$project$Message$ToggleCityActiveArea = {$: 'ToggleCityActiveArea'};
+var $author$project$Message$ToggleCitySearchArea = {$: 'ToggleCitySearchArea'};
+var $author$project$Message$TogglePathfindingGrid = {$: 'TogglePathfindingGrid'};
+var $author$project$Message$TogglePathfindingOccupancy = {$: 'TogglePathfindingOccupancy'};
+var $author$project$Message$TooltipEnter = F3(
 	function (a, b, c) {
 		return {$: 'TooltipEnter', a: a, b: b, c: c};
 	});
-var $author$project$Main$TooltipLeave = {$: 'TooltipLeave'};
-var $author$project$Main$VisualizationTab = {$: 'VisualizationTab'};
-var $author$project$Main$Huge = {$: 'Huge'};
-var $author$project$Main$castleTemplate = {cost: 10000, garrisonSlots: 6, maxHp: 5000, name: 'Castle', size: $author$project$Main$Huge};
+var $author$project$Message$TooltipLeave = {$: 'TooltipLeave'};
+var $author$project$Model$VisualizationTab = {$: 'VisualizationTab'};
+var $author$project$Model$Huge = {$: 'Huge'};
+var $author$project$Model$castleTemplate = {cost: 10000, garrisonSlots: 6, maxHp: 5000, name: 'Castle', size: $author$project$Model$Huge};
 var $elm$html$Html$Attributes$classList = function (classes) {
 	return $elm$html$Html$Attributes$class(
 		A2(
@@ -10415,12 +10367,12 @@ var $elm$html$Html$Events$onMouseLeave = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $author$project$Main$testBuildingTemplate = {cost: 500, garrisonSlots: 5, maxHp: 500, name: 'Test Building', size: $author$project$Main$Medium};
+var $author$project$Model$testBuildingTemplate = {cost: 500, garrisonSlots: 5, maxHp: 500, name: 'Test Building', size: $author$project$Model$Medium};
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
-var $author$project$Main$Large = {$: 'Large'};
-var $author$project$Main$warriorsGuildTemplate = {cost: 1500, garrisonSlots: 0, maxHp: 1000, name: 'Warrior\'s Guild', size: $author$project$Main$Large};
-var $author$project$Main$viewSelectionPanel = F2(
+var $author$project$Model$Large = {$: 'Large'};
+var $author$project$Model$warriorsGuildTemplate = {cost: 1500, garrisonSlots: 0, maxHp: 1000, name: 'Warrior\'s Guild', size: $author$project$Model$Large};
+var $author$project$View$viewSelectionPanel = F2(
 	function (model, panelWidth) {
 		var unitSelectedContent = function (unitId) {
 			var maybeUnit = $elm$core$List$head(
@@ -10505,14 +10457,14 @@ var $author$project$Main$viewSelectionPanel = F2(
 																		F2(
 																			function (x, y) {
 																				return A3(
-																					$author$project$Main$TooltipEnter,
+																					$author$project$Message$TooltipEnter,
 																					'tag-' + tagToString(tag),
 																					x,
 																					y);
 																			}),
 																		A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 																		A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-																	$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+																	$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 																]),
 															_List_fromArray(
 																[
@@ -10598,7 +10550,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 												F2(
 													function (x, y) {
 														return A3(
-															$author$project$Main$TooltipEnter,
+															$author$project$Message$TooltipEnter,
 															'behavior-' + function () {
 																var _v16 = unit.behavior;
 																switch (_v16.$) {
@@ -10636,7 +10588,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 													}),
 												A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 												A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-											$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+											$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 										]),
 									_List_fromArray(
 										[
@@ -10744,8 +10696,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								A3(checkbox, model.showBuildGrid, 'Build Grid', $author$project$Main$ToggleBuildGrid),
-								A3(checkbox, model.showPathfindingGrid, 'Pathfinding Grid', $author$project$Main$TogglePathfindingGrid)
+								A3(checkbox, model.showBuildGrid, 'Build Grid', $author$project$Message$ToggleBuildGrid),
+								A3(checkbox, model.showPathfindingGrid, 'Pathfinding Grid', $author$project$Message$TogglePathfindingGrid)
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -10755,8 +10707,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								A3(checkbox, model.showPathfindingOccupancy, 'PF Occupancy', $author$project$Main$TogglePathfindingOccupancy),
-								A3(checkbox, model.showBuildingOccupancy, 'Build Occupancy', $author$project$Main$ToggleBuildingOccupancy)
+								A3(checkbox, model.showPathfindingOccupancy, 'PF Occupancy', $author$project$Message$TogglePathfindingOccupancy),
+								A3(checkbox, model.showBuildingOccupancy, 'Build Occupancy', $author$project$Message$ToggleBuildingOccupancy)
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -10766,8 +10718,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								A3(checkbox, model.showCityActiveArea, 'City Active', $author$project$Main$ToggleCityActiveArea),
-								A3(checkbox, model.showCitySearchArea, 'City Search', $author$project$Main$ToggleCitySearchArea)
+								A3(checkbox, model.showCityActiveArea, 'City Active', $author$project$Message$ToggleCityActiveArea),
+								A3(checkbox, model.showCitySearchArea, 'City Search', $author$project$Message$ToggleCitySearchArea)
 							]))
 					]));
 		}();
@@ -10892,7 +10844,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Attributes$class('flex items-center gap-8 cursor-pointer'),
-							$elm$html$Html$Events$onClick($author$project$Main$ToggleBuildGrid)
+							$elm$html$Html$Events$onClick($author$project$Message$ToggleBuildGrid)
 						]),
 					_List_fromArray(
 						[
@@ -10915,7 +10867,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Attributes$class('flex items-center gap-8 cursor-pointer'),
-							$elm$html$Html$Events$onClick($author$project$Main$TogglePathfindingGrid)
+							$elm$html$Html$Events$onClick($author$project$Message$TogglePathfindingGrid)
 						]),
 					_List_fromArray(
 						[
@@ -10938,7 +10890,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Attributes$class('flex items-center gap-8 cursor-pointer'),
-							$elm$html$Html$Events$onClick($author$project$Main$TogglePathfindingOccupancy)
+							$elm$html$Html$Events$onClick($author$project$Message$TogglePathfindingOccupancy)
 						]),
 					_List_fromArray(
 						[
@@ -10961,7 +10913,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Attributes$class('flex items-center gap-8 cursor-pointer'),
-							$elm$html$Html$Events$onClick($author$project$Main$ToggleBuildingOccupancy)
+							$elm$html$Html$Events$onClick($author$project$Message$ToggleBuildingOccupancy)
 						]),
 					_List_fromArray(
 						[
@@ -10990,7 +10942,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 							[
 								$elm$html$Html$Attributes$class('flex items-center gap-6 cursor-pointer'),
 								$elm$html$Html$Events$onClick(
-								$author$project$Main$SetSimulationSpeed(speed))
+								$author$project$Message$SetSimulationSpeed(speed))
 							]),
 						_List_fromArray(
 							[
@@ -11036,11 +10988,11 @@ var $author$project$Main$viewSelectionPanel = F2(
 									[
 										$elm$html$Html$text('Speed:')
 									])),
-								A2(speedRadio, $author$project$Main$Pause, '0x'),
-								A2(speedRadio, $author$project$Main$Speed1x, '1x'),
-								A2(speedRadio, $author$project$Main$Speed2x, '2x'),
-								A2(speedRadio, $author$project$Main$Speed10x, '10x'),
-								A2(speedRadio, $author$project$Main$Speed100x, '100x')
+								A2(speedRadio, $author$project$Model$Pause, '0x'),
+								A2(speedRadio, $author$project$Model$Speed1x, '1x'),
+								A2(speedRadio, $author$project$Model$Speed2x, '2x'),
+								A2(speedRadio, $author$project$Model$Speed10x, '10x'),
+								A2(speedRadio, $author$project$Model$Speed100x, '100x')
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -11080,7 +11032,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 														$elm$html$Html$Attributes$type_('text'),
 														$elm$html$Html$Attributes$value(model.goldInputValue),
 														$elm$html$Html$Attributes$placeholder('Amount'),
-														$elm$html$Html$Events$onInput($author$project$Main$GoldInputChanged),
+														$elm$html$Html$Events$onInput($author$project$Message$GoldInputChanged),
 														$elm$html$Html$Attributes$class('w-80 p-4 bg-222 text-neon-green border-neon-1 rounded-sm'),
 														$elm$html$Html$Attributes$class('font-mono text-11')
 													]),
@@ -11090,7 +11042,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 												_List_fromArray(
 													[
 														$elm$html$Html$Attributes$class('py-4 px-8 bg-neon-green text-000 rounded-sm cursor-pointer font-bold text-10'),
-														$elm$html$Html$Events$onClick($author$project$Main$SetGoldFromInput)
+														$elm$html$Html$Events$onClick($author$project$Message$SetGoldFromInput)
 													]),
 												_List_fromArray(
 													[
@@ -11131,7 +11083,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 								isActive ? '#000' : '#0f0'),
 								$elm$html$Html$Attributes$class('rounded-3'),
 								$elm$html$Html$Events$onClick(
-								$author$project$Main$SetDebugTab(tab))
+								$author$project$Message$SetDebugTab(tab))
 							]),
 						_List_fromArray(
 							[
@@ -11148,9 +11100,9 @@ var $author$project$Main$viewSelectionPanel = F2(
 					]),
 				_List_fromArray(
 					[
-						A2(tabButton, $author$project$Main$StatsTab, 'STATS'),
-						A2(tabButton, $author$project$Main$VisualizationTab, 'VISUAL'),
-						A2(tabButton, $author$project$Main$ControlsTab, 'CONTROLS')
+						A2(tabButton, $author$project$Model$StatsTab, 'STATS'),
+						A2(tabButton, $author$project$Model$VisualizationTab, 'VISUAL'),
+						A2(tabButton, $author$project$Model$ControlsTab, 'CONTROLS')
 					]));
 			return A2(
 				$elm$html$Html$div,
@@ -11217,7 +11169,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 													$elm$html$Html$text(
 													_Utils_ap(
 														building.buildingType,
-														_Utils_eq(building.behavior, $author$project$Main$UnderConstruction) ? ' (under construction)' : ''))
+														_Utils_eq(building.behavior, $author$project$Model$UnderConstruction) ? ' (under construction)' : ''))
 												])),
 											A2(
 											$elm$html$Html$div,
@@ -11250,14 +11202,14 @@ var $author$project$Main$viewSelectionPanel = F2(
 																				F2(
 																					function (x, y) {
 																						return A3(
-																							$author$project$Main$TooltipEnter,
+																							$author$project$Message$TooltipEnter,
 																							'tag-' + tagToString(tag),
 																							x,
 																							y);
 																					}),
 																				A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 																				A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-																			$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+																			$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 																		]),
 																	_List_fromArray(
 																		[
@@ -11315,14 +11267,14 @@ var $author$project$Main$viewSelectionPanel = F2(
 														F2(
 															function (x, y) {
 																return A3(
-																	$author$project$Main$TooltipEnter,
+																	$author$project$Message$TooltipEnter,
 																	'garrison-' + $elm$core$String$fromInt(building.id),
 																	x,
 																	y);
 															}),
 														A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 														A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-													$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+													$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 												]),
 											_List_fromArray(
 												[
@@ -11389,7 +11341,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 															F2(
 																function (x, y) {
 																	return A3(
-																		$author$project$Main$TooltipEnter,
+																		$author$project$Message$TooltipEnter,
 																		'behavior-' + function () {
 																			var _v9 = building.behavior;
 																			switch (_v9.$) {
@@ -11413,7 +11365,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 																}),
 															A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 															A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-														$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+														$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 													]),
 												_List_fromArray(
 													[
@@ -11457,7 +11409,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 																$elm$core$Basics$round(building.behaviorDuration * 10))) + 's'))))
 													]))
 											]),
-										A2($elm$core$List$member, $author$project$Main$CofferTag, building.tags) ? _List_fromArray(
+										A2($elm$core$List$member, $author$project$Model$CofferTag, building.tags) ? _List_fromArray(
 											[
 												A2(
 												$elm$html$Html$div,
@@ -11521,7 +11473,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 									'background-color',
 									_Utils_eq(model.buildingTab, tab) ? '#555' : '#333'),
 									$elm$html$Html$Events$onClick(
-									$author$project$Main$SetBuildingTab(tab))
+									$author$project$Message$SetBuildingTab(tab))
 								]),
 							_List_fromArray(
 								[
@@ -11544,8 +11496,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 								]),
 							_List_fromArray(
 								[
-									A2(tabButton, 'Main', $author$project$Main$MainTab),
-									A2(tabButton, 'Info', $author$project$Main$InfoTab)
+									A2(tabButton, 'Main', $author$project$Model$MainTab),
+									A2(tabButton, 'Info', $author$project$Model$InfoTab)
 								])),
 							A2(
 							$elm$html$Html$div,
@@ -11594,8 +11546,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 				}
 			}();
 			var canAfford = _Utils_cmp(model.gold, template.cost) > -1;
-			var clickHandler = canAfford ? (isActive ? $elm$html$Html$Events$onClick($author$project$Main$ExitBuildMode) : $elm$html$Html$Events$onClick(
-				$author$project$Main$EnterBuildMode(template))) : $elm$html$Html$Attributes$class('');
+			var clickHandler = canAfford ? (isActive ? $elm$html$Html$Events$onClick($author$project$Message$ExitBuildMode) : $elm$html$Html$Events$onClick(
+				$author$project$Message$EnterBuildMode(template))) : $elm$html$Html$Attributes$class('');
 			return A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -11619,11 +11571,11 @@ var $author$project$Main$viewSelectionPanel = F2(
 							$elm$json$Json$Decode$map2,
 							F2(
 								function (x, y) {
-									return A3($author$project$Main$TooltipEnter, 'building-' + template.name, x, y);
+									return A3($author$project$Message$TooltipEnter, 'building-' + template.name, x, y);
 								}),
 							A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
 							A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))),
-						$elm$html$Html$Events$onMouseLeave($author$project$Main$TooltipLeave)
+						$elm$html$Html$Events$onMouseLeave($author$project$Message$TooltipLeave)
 					]),
 				_List_fromArray(
 					[
@@ -11681,7 +11633,7 @@ var $author$project$Main$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								buildingOption($author$project$Main$castleTemplate)
+								buildingOption($author$project$Model$castleTemplate)
 							]));
 				case 'Playing':
 					return A2(
@@ -11692,8 +11644,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 							]),
 						_List_fromArray(
 							[
-								buildingOption($author$project$Main$testBuildingTemplate),
-								buildingOption($author$project$Main$warriorsGuildTemplate)
+								buildingOption($author$project$Model$testBuildingTemplate),
+								buildingOption($author$project$Model$warriorsGuildTemplate)
 							]));
 				default:
 					return A2(
@@ -11771,8 +11723,8 @@ var $author$project$Main$viewSelectionPanel = F2(
 					content)
 				]));
 	});
-var $author$project$Main$houseTemplate = {cost: 0, garrisonSlots: 0, maxHp: 500, name: 'House', size: $author$project$Main$Medium};
-var $author$project$Main$viewTooltip = function (model) {
+var $author$project$Model$houseTemplate = {cost: 0, garrisonSlots: 0, maxHp: 500, name: 'House', size: $author$project$Model$Medium};
+var $author$project$View$viewTooltip = function (model) {
 	var _v0 = model.tooltipHover;
 	if (_v0.$ === 'Just') {
 		var tooltipState = _v0.a;
@@ -11816,7 +11768,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'HP: ' + $elm$core$String$fromInt($author$project$Main$testBuildingTemplate.maxHp))
+										'HP: ' + $elm$core$String$fromInt($author$project$Model$testBuildingTemplate.maxHp))
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11837,7 +11789,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'Garrison: ' + $elm$core$String$fromInt($author$project$Main$testBuildingTemplate.garrisonSlots))
+										'Garrison: ' + $elm$core$String$fromInt($author$project$Model$testBuildingTemplate.garrisonSlots))
 									]))
 							]));
 				case 'building-Castle':
@@ -11877,7 +11829,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'HP: ' + $elm$core$String$fromInt($author$project$Main$castleTemplate.maxHp))
+										'HP: ' + $elm$core$String$fromInt($author$project$Model$castleTemplate.maxHp))
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11898,7 +11850,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'Garrison: ' + ($elm$core$String$fromInt($author$project$Main$castleTemplate.garrisonSlots) + ' henchmen'))
+										'Garrison: ' + ($elm$core$String$fromInt($author$project$Model$castleTemplate.garrisonSlots) + ' henchmen'))
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -11949,7 +11901,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'HP: ' + $elm$core$String$fromInt($author$project$Main$houseTemplate.maxHp))
+										'HP: ' + $elm$core$String$fromInt($author$project$Model$houseTemplate.maxHp))
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -12010,7 +11962,7 @@ var $author$project$Main$viewTooltip = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										'HP: ' + $elm$core$String$fromInt($author$project$Main$warriorsGuildTemplate.maxHp))
+										'HP: ' + $elm$core$String$fromInt($author$project$Model$warriorsGuildTemplate.maxHp))
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -12375,7 +12327,7 @@ var $author$project$Main$viewTooltip = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $author$project$Main$view = function (model) {
+var $author$project$View$view = function (model) {
 	var selectionPanelMinWidth = 100;
 	var selectionPanelMaxWidth = 700;
 	var selectionPanelBorder = 4;
@@ -12423,17 +12375,17 @@ var $author$project$Main$view = function (model) {
 			]),
 		_List_fromArray(
 			[
-				A4($author$project$Main$viewMainViewport, model, cursor, viewportWidth, viewportHeight),
-				$author$project$Main$viewGoldCounter(model),
-				A2($author$project$Main$viewGlobalButtonsPanel, model, globalButtonsLeft),
-				A2($author$project$Main$viewSelectionPanel, model, selectionPanelWidth),
-				$author$project$Main$viewMinimap(model),
-				$author$project$Main$viewTooltip(model),
-				$author$project$Main$viewPreGameOverlay(model),
-				$author$project$Main$viewGameOverOverlay(model)
+				A4($author$project$View$viewMainViewport, model, cursor, viewportWidth, viewportHeight),
+				$author$project$View$viewGoldCounter(model),
+				A2($author$project$View$viewGlobalButtonsPanel, model, globalButtonsLeft),
+				A2($author$project$View$viewSelectionPanel, model, selectionPanelWidth),
+				$author$project$View$viewMinimap(model),
+				$author$project$View$viewTooltip(model),
+				$author$project$View$viewPreGameOverlay(model),
+				$author$project$View$viewGameOverOverlay(model)
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
-	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
+	{init: $author$project$Update$init, subscriptions: $author$project$Update$subscriptions, update: $author$project$Update$update, view: $author$project$View$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
