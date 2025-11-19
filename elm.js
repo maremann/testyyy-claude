@@ -6729,13 +6729,13 @@ var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
-var $author$project$Update$getMinimapScale = F2(
+var $author$project$Camera$getMinimapScale = F2(
 	function (minimapConfig, mapConfig) {
 		return A2($elm$core$Basics$min, (minimapConfig.width - (minimapConfig.padding * 2)) / mapConfig.width, (minimapConfig.height - (minimapConfig.padding * 2)) / mapConfig.height);
 	});
-var $author$project$Update$centerCameraOnMinimapClick = F4(
+var $author$project$Camera$centerCameraOnMinimapClick = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Camera$getMinimapScale, minimapConfig, model.mapConfig);
 		var terrainHeight = model.mapConfig.height * scale;
 		var terrainWidth = model.mapConfig.width * scale;
 		var clampedY = A3($elm$core$Basics$clamp, minimapConfig.padding, minimapConfig.padding + terrainHeight, clickY);
@@ -6747,7 +6747,7 @@ var $author$project$Update$centerCameraOnMinimapClick = F4(
 		var worldX = ((clampedX - minimapConfig.padding) / scale) - (winWidth / 2);
 		return {x: worldX, y: worldY};
 	});
-var $author$project$Update$constrainCamera = F3(
+var $author$project$Camera$constrainCamera = F3(
 	function (config, _v0, camera) {
 		var winWidth = _v0.a;
 		var winHeight = _v0.b;
@@ -6826,9 +6826,9 @@ var $author$project$GameHelpers$createHenchman = F4(
 		};
 	});
 var $elm$core$Basics$ge = _Utils_ge;
-var $author$project$Update$isClickOnViewbox = F4(
+var $author$project$Camera$isClickOnViewbox = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Camera$getMinimapScale, minimapConfig, model.mapConfig);
 		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
 		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
 		var _v0 = model.windowSize;
@@ -7010,19 +7010,19 @@ var $author$project$Grid$isValidBuildingPlacement = F7(
 		var atLeastHalfInSearchArea = $elm$core$List$isEmpty(buildings) ? true : (_Utils_cmp(tilesInSearchArea, totalTiles / 2) > -1);
 		return inBounds && (notOccupied && atLeastHalfInSearchArea);
 	});
-var $author$project$Update$minimapClickOffset = F4(
+var $author$project$Camera$minimapClickOffset = F4(
 	function (model, minimapConfig, clickX, clickY) {
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Camera$getMinimapScale, minimapConfig, model.mapConfig);
 		var viewboxLeft = minimapConfig.padding + (model.camera.x * scale);
 		var viewboxTop = minimapConfig.padding + (model.camera.y * scale);
 		var offsetY = clickY - viewboxTop;
 		var offsetX = clickX - viewboxLeft;
 		return {x: offsetX, y: offsetY};
 	});
-var $author$project$Update$minimapDragToCamera = F4(
+var $author$project$Camera$minimapDragToCamera = F4(
 	function (model, offset, clickX, clickY) {
 		var minimapConfig = {height: 150, padding: 10, width: 200};
-		var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+		var scale = A2($author$project$Camera$getMinimapScale, minimapConfig, model.mapConfig);
 		var worldX = ((clickX - minimapConfig.padding) - offset.x) / scale;
 		var worldY = ((clickY - minimapConfig.padding) - offset.y) / scale;
 		return {x: worldX, y: worldY};
@@ -8442,7 +8442,7 @@ var $author$project$Update$update = F2(
 					var dy = startPos.y - y;
 					var dx = startPos.x - x;
 					var newCamera = A3(
-						$author$project$Update$constrainCamera,
+						$author$project$Camera$constrainCamera,
 						model.mapConfig,
 						model.windowSize,
 						{x: model.camera.x + dx, y: model.camera.y + dy});
@@ -8477,19 +8477,19 @@ var $author$project$Update$update = F2(
 				var offsetY = A3($elm$core$Basics$clamp, 0, minimapHeight, clientY - minimapTop);
 				var minimapLeft = ((winWidth - 20) - 204) + 2;
 				var offsetX = A3($elm$core$Basics$clamp, 0, minimapWidth, clientX - minimapLeft);
-				var clickedOnViewbox = A4($author$project$Update$isClickOnViewbox, model, minimapConfig, offsetX, offsetY);
+				var clickedOnViewbox = A4($author$project$Camera$isClickOnViewbox, model, minimapConfig, offsetX, offsetY);
 				var _v3 = function () {
 					if (clickedOnViewbox) {
 						return _Utils_Tuple2(
 							model.camera,
-							A4($author$project$Update$minimapClickOffset, model, minimapConfig, offsetX, offsetY));
+							A4($author$project$Camera$minimapClickOffset, model, minimapConfig, offsetX, offsetY));
 					} else {
-						var scale = A2($author$project$Update$getMinimapScale, minimapConfig, model.mapConfig);
+						var scale = A2($author$project$Camera$getMinimapScale, minimapConfig, model.mapConfig);
 						var centered = A3(
-							$author$project$Update$constrainCamera,
+							$author$project$Camera$constrainCamera,
 							model.mapConfig,
 							model.windowSize,
-							A4($author$project$Update$centerCameraOnMinimapClick, model, minimapConfig, offsetX, offsetY));
+							A4($author$project$Camera$centerCameraOnMinimapClick, model, minimapConfig, offsetX, offsetY));
 						var centerOffset = {x: (winWidth * scale) / 2, y: (winHeight * scale) / 2};
 						return _Utils_Tuple2(centered, centerOffset);
 					}
@@ -8520,10 +8520,10 @@ var $author$project$Update$update = F2(
 					var minimapLeft = ((winWidth - 20) - 204) + 2;
 					var offsetX = A3($elm$core$Basics$clamp, 0, minimapWidth, clientX - minimapLeft);
 					var newCamera = A3(
-						$author$project$Update$constrainCamera,
+						$author$project$Camera$constrainCamera,
 						model.mapConfig,
 						model.windowSize,
-						A4($author$project$Update$minimapDragToCamera, model, offset, offsetX, offsetY));
+						A4($author$project$Camera$minimapDragToCamera, model, offset, offsetX, offsetY));
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8809,6 +8809,285 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$View$Debug$viewBuildingOccupancy = F3(
+	function (model, viewportWidth, viewportHeight) {
+		if (!model.showBuildingOccupancy) {
+			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+		} else {
+			var gridSize = model.gridConfig.buildGridSize;
+			var renderCell = function (_v0) {
+				var x = _v0.a;
+				var y = _v0.b;
+				var worldY = y * gridSize;
+				var worldX = x * gridSize;
+				var screenY = worldY - model.camera.y;
+				var screenX = worldX - model.camera.x;
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							$elm$html$Html$Attributes$class('bg-orange-alpha')
+						]),
+					_List_Nil);
+			};
+			var startGridX = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.x / gridSize));
+			var startGridY = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.y / gridSize));
+			var endGridY = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
+				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
+			var endGridX = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
+				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
+			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
+			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
+			var allCells = A2(
+				$elm$core$List$concatMap,
+				function (x) {
+					return A2(
+						$elm$core$List$map,
+						function (y) {
+							return _Utils_Tuple2(x, y);
+						},
+						cellsY);
+				},
+				cellsX);
+			var occupiedCells = A2(
+				$elm$core$List$filter,
+				function (cell) {
+					return A2($elm$core$Dict$member, cell, model.buildingOccupancy);
+				},
+				allCells);
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, renderCell, occupiedCells));
+		}
+	});
+var $author$project$Grid$getCityActiveArea = function (buildings) {
+	return $elm$core$Dict$keys(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (cell, acc) {
+					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
+				}),
+			$elm$core$Dict$empty,
+			A2(
+				$elm$core$List$concatMap,
+				function (b) {
+					return A2($author$project$Grid$getBuildingAreaCells, b, 3);
+				},
+				A2(
+					$elm$core$List$filter,
+					function (b) {
+						return _Utils_eq(b.owner, $author$project$Types$Player);
+					},
+					buildings))));
+};
+var $author$project$View$Debug$viewCityActiveArea = F3(
+	function (model, viewportWidth, viewportHeight) {
+		if (!model.showCityActiveArea) {
+			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+		} else {
+			var gridSize = model.gridConfig.buildGridSize;
+			var renderCell = function (_v0) {
+				var x = _v0.a;
+				var y = _v0.b;
+				var worldY = y * gridSize;
+				var worldX = x * gridSize;
+				var screenY = worldY - model.camera.y;
+				var screenX = worldX - model.camera.x;
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							$elm$html$Html$Attributes$class('bg-green-alpha-2')
+						]),
+					_List_Nil);
+			};
+			var startGridX = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.x / gridSize));
+			var startGridY = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.y / gridSize));
+			var endGridY = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
+				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
+			var endGridX = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
+				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
+			var cityCells = $author$project$Grid$getCityActiveArea(model.buildings);
+			var cityDict = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (cell, acc) {
+						return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
+					}),
+				$elm$core$Dict$empty,
+				cityCells);
+			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
+			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
+			var allVisibleCells = A2(
+				$elm$core$List$concatMap,
+				function (x) {
+					return A2(
+						$elm$core$List$map,
+						function (y) {
+							return _Utils_Tuple2(x, y);
+						},
+						cellsY);
+				},
+				cellsX);
+			var visibleCityCells = A2(
+				$elm$core$List$filter,
+				function (cell) {
+					return A2($elm$core$Dict$member, cell, cityDict);
+				},
+				allVisibleCells);
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, renderCell, visibleCityCells));
+		}
+	});
+var $author$project$View$Debug$viewCitySearchArea = F3(
+	function (model, viewportWidth, viewportHeight) {
+		if (!model.showCitySearchArea) {
+			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+		} else {
+			var gridSize = model.gridConfig.buildGridSize;
+			var renderCell = function (_v0) {
+				var x = _v0.a;
+				var y = _v0.b;
+				var worldY = y * gridSize;
+				var worldX = x * gridSize;
+				var screenY = worldY - model.camera.y;
+				var screenX = worldX - model.camera.x;
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							$elm$html$Html$Attributes$class('bg-green-alpha-1')
+						]),
+					_List_Nil);
+			};
+			var startGridX = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.x / gridSize));
+			var startGridY = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.y / gridSize));
+			var endGridY = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
+				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
+			var endGridX = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
+				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
+			var cityCells = $author$project$Grid$getCitySearchArea(model.buildings);
+			var cityDict = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (cell, acc) {
+						return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
+					}),
+				$elm$core$Dict$empty,
+				cityCells);
+			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
+			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
+			var allVisibleCells = A2(
+				$elm$core$List$concatMap,
+				function (x) {
+					return A2(
+						$elm$core$List$map,
+						function (y) {
+							return _Utils_Tuple2(x, y);
+						},
+						cellsY);
+				},
+				cellsX);
+			var visibleCityCells = A2(
+				$elm$core$List$filter,
+				function (cell) {
+					return A2($elm$core$Dict$member, cell, cityDict);
+				},
+				allVisibleCells);
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, renderCell, visibleCityCells));
+		}
+	});
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$View$viewGameOverOverlay = function (model) {
@@ -8842,7 +9121,6 @@ var $author$project$Types$GlobalButtonDebug = {$: 'GlobalButtonDebug'};
 var $author$project$Message$SelectThing = function (a) {
 	return {$: 'SelectThing', a: a};
 };
-var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -8860,8 +9138,6 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$View$viewGlobalButtonsPanel = F2(
 	function (model, leftPosition) {
 		var panelSize = 120;
@@ -8958,6 +9234,97 @@ var $author$project$View$viewGoldCounter = function (model) {
 					])) : $elm$html$Html$text('')
 			]));
 };
+var $author$project$View$Debug$viewGrid = F5(
+	function (model, gridSize, color, viewportWidth, viewportHeight) {
+		var terrainTop = 0 - model.camera.y;
+		var terrainLeft = 0 - model.camera.x;
+		var startY = A2(
+			$elm$core$Basics$max,
+			0,
+			$elm$core$Basics$floor(model.camera.y / gridSize)) * $elm$core$Basics$round(gridSize);
+		var startX = A2(
+			$elm$core$Basics$max,
+			0,
+			$elm$core$Basics$floor(model.camera.x / gridSize)) * $elm$core$Basics$round(gridSize);
+		var endY = A2($elm$core$Basics$min, model.mapConfig.height, model.camera.y + viewportHeight);
+		var horizontalLines = A2(
+			$elm$core$List$map,
+			function (y) {
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none h-1'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(terrainLeft) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(y - model.camera.y) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(model.mapConfig.width) + 'px'),
+							A2($elm$html$Html$Attributes$style, 'background-color', color)
+						]),
+					_List_Nil);
+			},
+			A2(
+				$elm$core$List$map,
+				function (i) {
+					return i * $elm$core$Basics$round(gridSize);
+				},
+				A2(
+					$elm$core$List$range,
+					(startY / $elm$core$Basics$round(gridSize)) | 0,
+					($elm$core$Basics$round(endY) / $elm$core$Basics$round(gridSize)) | 0)));
+		var endX = A2($elm$core$Basics$min, model.mapConfig.width, model.camera.x + viewportWidth);
+		var verticalLines = A2(
+			$elm$core$List$map,
+			function (x) {
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none w-1'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(x - model.camera.x) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(terrainTop) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(model.mapConfig.height) + 'px'),
+							A2($elm$html$Html$Attributes$style, 'background-color', color)
+						]),
+					_List_Nil);
+			},
+			A2(
+				$elm$core$List$map,
+				function (i) {
+					return i * $elm$core$Basics$round(gridSize);
+				},
+				A2(
+					$elm$core$List$range,
+					(startX / $elm$core$Basics$round(gridSize)) | 0,
+					($elm$core$Basics$round(endX) / $elm$core$Basics$round(gridSize)) | 0)));
+		return _Utils_ap(verticalLines, horizontalLines);
+	});
+var $author$project$View$Debug$viewGrids = F3(
+	function (model, viewportWidth, viewportHeight) {
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_Utils_ap(
+				model.showBuildGrid ? A5($author$project$View$Debug$viewGrid, model, model.gridConfig.buildGridSize, 'rgba(255, 255, 0, 0.3)', viewportWidth, viewportHeight) : _List_Nil,
+				model.showPathfindingGrid ? A5($author$project$View$Debug$viewGrid, model, model.gridConfig.pathfindingGridSize, 'rgba(0, 255, 255, 0.3)', viewportWidth, viewportHeight) : _List_Nil));
+	});
 var $author$project$Message$MouseDown = F2(
 	function (a, b) {
 		return {$: 'MouseDown', a: a, b: b};
@@ -8967,86 +9334,7 @@ var $author$project$Message$WorldMouseMove = F2(
 	function (a, b) {
 		return {$: 'WorldMouseMove', a: a, b: b};
 	});
-var $author$project$View$viewBuildingOccupancy = F3(
-	function (model, viewportWidth, viewportHeight) {
-		if (!model.showBuildingOccupancy) {
-			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-		} else {
-			var gridSize = model.gridConfig.buildGridSize;
-			var renderCell = function (_v0) {
-				var x = _v0.a;
-				var y = _v0.b;
-				var worldY = y * gridSize;
-				var worldX = x * gridSize;
-				var screenY = worldY - model.camera.y;
-				var screenX = worldX - model.camera.x;
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							$elm$html$Html$Attributes$class('bg-orange-alpha')
-						]),
-					_List_Nil);
-			};
-			var startGridX = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.x / gridSize));
-			var startGridY = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.y / gridSize));
-			var endGridY = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
-				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
-			var endGridX = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
-				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
-			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
-			var allCells = A2(
-				$elm$core$List$concatMap,
-				function (x) {
-					return A2(
-						$elm$core$List$map,
-						function (y) {
-							return _Utils_Tuple2(x, y);
-						},
-						cellsY);
-				},
-				cellsX);
-			var occupiedCells = A2(
-				$elm$core$List$filter,
-				function (cell) {
-					return A2($elm$core$Dict$member, cell, model.buildingOccupancy);
-				},
-				allCells);
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, renderCell, occupiedCells));
-		}
-	});
-var $author$project$View$viewBuildingPreview = function (model) {
+var $author$project$View$Viewport$viewBuildingPreview = function (model) {
 	var _v0 = _Utils_Tuple2(model.buildMode, model.mouseWorldPos);
 	if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
 		var template = _v0.a.a;
@@ -9100,7 +9388,7 @@ var $author$project$View$viewBuildingPreview = function (model) {
 var $author$project$Types$BuildingSelected = function (a) {
 	return {$: 'BuildingSelected', a: a};
 };
-var $author$project$View$viewBuilding = F2(
+var $author$project$View$Viewport$viewBuilding = F2(
 	function (model, building) {
 		var worldY = building.gridY * model.gridConfig.buildGridSize;
 		var worldX = building.gridX * model.gridConfig.buildGridSize;
@@ -9223,213 +9511,16 @@ var $author$project$View$viewBuilding = F2(
 				}()
 				]));
 	});
-var $author$project$View$viewBuildings = function (model) {
+var $author$project$View$Viewport$viewBuildings = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		A2(
 			$elm$core$List$map,
-			$author$project$View$viewBuilding(model),
+			$author$project$View$Viewport$viewBuilding(model),
 			model.buildings));
 };
-var $author$project$Grid$getCityActiveArea = function (buildings) {
-	return $elm$core$Dict$keys(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (cell, acc) {
-					return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
-				}),
-			$elm$core$Dict$empty,
-			A2(
-				$elm$core$List$concatMap,
-				function (b) {
-					return A2($author$project$Grid$getBuildingAreaCells, b, 3);
-				},
-				A2(
-					$elm$core$List$filter,
-					function (b) {
-						return _Utils_eq(b.owner, $author$project$Types$Player);
-					},
-					buildings))));
-};
-var $author$project$View$viewCityActiveArea = F3(
-	function (model, viewportWidth, viewportHeight) {
-		if (!model.showCityActiveArea) {
-			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-		} else {
-			var gridSize = model.gridConfig.buildGridSize;
-			var renderCell = function (_v0) {
-				var x = _v0.a;
-				var y = _v0.b;
-				var worldY = y * gridSize;
-				var worldX = x * gridSize;
-				var screenY = worldY - model.camera.y;
-				var screenX = worldX - model.camera.x;
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							$elm$html$Html$Attributes$class('bg-green-alpha-2')
-						]),
-					_List_Nil);
-			};
-			var startGridX = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.x / gridSize));
-			var startGridY = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.y / gridSize));
-			var endGridY = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
-				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
-			var endGridX = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
-				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cityCells = $author$project$Grid$getCityActiveArea(model.buildings);
-			var cityDict = A3(
-				$elm$core$List$foldl,
-				F2(
-					function (cell, acc) {
-						return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
-					}),
-				$elm$core$Dict$empty,
-				cityCells);
-			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
-			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
-			var allVisibleCells = A2(
-				$elm$core$List$concatMap,
-				function (x) {
-					return A2(
-						$elm$core$List$map,
-						function (y) {
-							return _Utils_Tuple2(x, y);
-						},
-						cellsY);
-				},
-				cellsX);
-			var visibleCityCells = A2(
-				$elm$core$List$filter,
-				function (cell) {
-					return A2($elm$core$Dict$member, cell, cityDict);
-				},
-				allVisibleCells);
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, renderCell, visibleCityCells));
-		}
-	});
-var $author$project$View$viewCitySearchArea = F3(
-	function (model, viewportWidth, viewportHeight) {
-		if (!model.showCitySearchArea) {
-			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-		} else {
-			var gridSize = model.gridConfig.buildGridSize;
-			var renderCell = function (_v0) {
-				var x = _v0.a;
-				var y = _v0.b;
-				var worldY = y * gridSize;
-				var worldX = x * gridSize;
-				var screenY = worldY - model.camera.y;
-				var screenX = worldX - model.camera.x;
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							$elm$html$Html$Attributes$class('bg-green-alpha-1')
-						]),
-					_List_Nil);
-			};
-			var startGridX = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.x / gridSize));
-			var startGridY = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.y / gridSize));
-			var endGridY = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
-				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
-			var endGridX = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
-				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cityCells = $author$project$Grid$getCitySearchArea(model.buildings);
-			var cityDict = A3(
-				$elm$core$List$foldl,
-				F2(
-					function (cell, acc) {
-						return A3($elm$core$Dict$insert, cell, _Utils_Tuple0, acc);
-					}),
-				$elm$core$Dict$empty,
-				cityCells);
-			var cellsY = A2($elm$core$List$range, startGridY, endGridY);
-			var cellsX = A2($elm$core$List$range, startGridX, endGridX);
-			var allVisibleCells = A2(
-				$elm$core$List$concatMap,
-				function (x) {
-					return A2(
-						$elm$core$List$map,
-						function (y) {
-							return _Utils_Tuple2(x, y);
-						},
-						cellsY);
-				},
-				cellsX);
-			var visibleCityCells = A2(
-				$elm$core$List$filter,
-				function (cell) {
-					return A2($elm$core$Dict$member, cell, cityDict);
-				},
-				allVisibleCells);
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, renderCell, visibleCityCells));
-		}
-	});
-var $author$project$View$viewShape = F2(
+var $author$project$View$Viewport$viewShape = F2(
 	function (model, shape) {
 		var screenY = shape.y - model.camera.y;
 		var screenX = shape.x - model.camera.x;
@@ -9475,187 +9566,17 @@ var $author$project$View$viewShape = F2(
 				shapeStyle),
 			_List_Nil);
 	});
-var $author$project$View$viewDecorativeShapes = F3(
+var $author$project$View$Viewport$viewDecorativeShapes = F3(
 	function (model, viewportWidth, viewportHeight) {
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
 			A2(
 				$elm$core$List$map,
-				$author$project$View$viewShape(model),
+				$author$project$View$Viewport$viewShape(model),
 				model.decorativeShapes));
 	});
-var $author$project$View$viewGrid = F5(
-	function (model, gridSize, color, viewportWidth, viewportHeight) {
-		var terrainTop = 0 - model.camera.y;
-		var terrainLeft = 0 - model.camera.x;
-		var startY = A2(
-			$elm$core$Basics$max,
-			0,
-			$elm$core$Basics$floor(model.camera.y / gridSize)) * $elm$core$Basics$round(gridSize);
-		var startX = A2(
-			$elm$core$Basics$max,
-			0,
-			$elm$core$Basics$floor(model.camera.x / gridSize)) * $elm$core$Basics$round(gridSize);
-		var endY = A2($elm$core$Basics$min, model.mapConfig.height, model.camera.y + viewportHeight);
-		var horizontalLines = A2(
-			$elm$core$List$map,
-			function (y) {
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none h-1'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(terrainLeft) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(y - model.camera.y) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(model.mapConfig.width) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', color)
-						]),
-					_List_Nil);
-			},
-			A2(
-				$elm$core$List$map,
-				function (i) {
-					return i * $elm$core$Basics$round(gridSize);
-				},
-				A2(
-					$elm$core$List$range,
-					(startY / $elm$core$Basics$round(gridSize)) | 0,
-					($elm$core$Basics$round(endY) / $elm$core$Basics$round(gridSize)) | 0)));
-		var endX = A2($elm$core$Basics$min, model.mapConfig.width, model.camera.x + viewportWidth);
-		var verticalLines = A2(
-			$elm$core$List$map,
-			function (x) {
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none w-1'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(x - model.camera.x) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(terrainTop) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(model.mapConfig.height) + 'px'),
-							A2($elm$html$Html$Attributes$style, 'background-color', color)
-						]),
-					_List_Nil);
-			},
-			A2(
-				$elm$core$List$map,
-				function (i) {
-					return i * $elm$core$Basics$round(gridSize);
-				},
-				A2(
-					$elm$core$List$range,
-					(startX / $elm$core$Basics$round(gridSize)) | 0,
-					($elm$core$Basics$round(endX) / $elm$core$Basics$round(gridSize)) | 0)));
-		return _Utils_ap(verticalLines, horizontalLines);
-	});
-var $author$project$View$viewGrids = F3(
-	function (model, viewportWidth, viewportHeight) {
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_Utils_ap(
-				model.showBuildGrid ? A5($author$project$View$viewGrid, model, model.gridConfig.buildGridSize, 'rgba(255, 255, 0, 0.3)', viewportWidth, viewportHeight) : _List_Nil,
-				model.showPathfindingGrid ? A5($author$project$View$viewGrid, model, model.gridConfig.pathfindingGridSize, 'rgba(0, 255, 255, 0.3)', viewportWidth, viewportHeight) : _List_Nil));
-	});
-var $author$project$View$viewPathfindingOccupancy = F3(
-	function (model, viewportWidth, viewportHeight) {
-		if (!model.showPathfindingOccupancy) {
-			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-		} else {
-			var gridSize = model.gridConfig.pathfindingGridSize;
-			var renderCell = function (_v0) {
-				var x = _v0.a;
-				var y = _v0.b;
-				var worldY = y * gridSize;
-				var worldX = x * gridSize;
-				var screenY = worldY - model.camera.y;
-				var screenX = worldX - model.camera.x;
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(gridSize) + 'px'),
-							$elm$html$Html$Attributes$class('bg-dark-blue')
-						]),
-					_List_Nil);
-			};
-			var startPfX = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.x / gridSize));
-			var startPfY = A2(
-				$elm$core$Basics$max,
-				0,
-				$elm$core$Basics$floor(model.camera.y / gridSize));
-			var endPfY = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
-				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
-			var endPfX = A2(
-				$elm$core$Basics$min,
-				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
-				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
-			var cellsY = A2($elm$core$List$range, startPfY, endPfY);
-			var cellsX = A2($elm$core$List$range, startPfX, endPfX);
-			var allCells = A2(
-				$elm$core$List$concatMap,
-				function (x) {
-					return A2(
-						$elm$core$List$map,
-						function (y) {
-							return _Utils_Tuple2(x, y);
-						},
-						cellsY);
-				},
-				cellsX);
-			var occupiedCells = A2(
-				$elm$core$List$filter,
-				function (cell) {
-					return A2($author$project$Grid$isPathfindingCellOccupied, cell, model.pathfindingOccupancy);
-				},
-				allCells);
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				A2($elm$core$List$map, renderCell, occupiedCells));
-		}
-	});
-var $author$project$View$viewSelectedUnitPath = function (model) {
+var $author$project$View$Viewport$viewSelectedUnitPath = function (model) {
 	var _v0 = model.selected;
 	if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
 		var unitId = _v0.a.a;
@@ -9713,7 +9634,7 @@ var $author$project$View$viewSelectedUnitPath = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $author$project$View$viewTerrain = F3(
+var $author$project$View$Viewport$viewTerrain = F3(
 	function (model, viewportWidth, viewportHeight) {
 		var terrainWidth = model.mapConfig.width;
 		var terrainTop = 0 - model.camera.y;
@@ -9744,92 +9665,10 @@ var $author$project$View$viewTerrain = F3(
 				]),
 			_List_Nil);
 	});
-var $author$project$View$viewUnitRadii = function (model) {
-	var _v0 = model.selected;
-	if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
-		var unitId = _v0.a.a;
-		var maybeUnit = $elm$core$List$head(
-			A2(
-				$elm$core$List$filter,
-				function (u) {
-					return _Utils_eq(u.id, unitId);
-				},
-				model.units));
-		if (maybeUnit.$ === 'Just') {
-			var unit = maybeUnit.a;
-			var _v2 = unit.location;
-			if (_v2.$ === 'OnMap') {
-				var x = _v2.a;
-				var y = _v2.b;
-				var screenY = y - model.camera.y;
-				var screenX = x - model.camera.x;
-				var searchCircle = A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none rounded-full'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX - unit.searchRadius) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY - unit.searchRadius) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(unit.searchRadius * 2) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(unit.searchRadius * 2) + 'px'),
-							$elm$html$Html$Attributes$class('border-yellow-alpha-3')
-						]),
-					_List_Nil);
-				var activeCircle = A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('abs pe-none rounded-full'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'left',
-							$elm$core$String$fromFloat(screenX - unit.activeRadius) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'top',
-							$elm$core$String$fromFloat(screenY - unit.activeRadius) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'width',
-							$elm$core$String$fromFloat(unit.activeRadius * 2) + 'px'),
-							A2(
-							$elm$html$Html$Attributes$style,
-							'height',
-							$elm$core$String$fromFloat(unit.activeRadius * 2) + 'px'),
-							$elm$html$Html$Attributes$class('border-yellow-alpha-6')
-						]),
-					_List_Nil);
-				return A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[searchCircle, activeCircle]));
-			} else {
-				return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-			}
-		} else {
-			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-		}
-	} else {
-		return A2($elm$html$Html$div, _List_Nil, _List_Nil);
-	}
-};
 var $author$project$Types$UnitSelected = function (a) {
 	return {$: 'UnitSelected', a: a};
 };
-var $author$project$View$viewUnit = F4(
+var $author$project$View$Viewport$viewUnit = F4(
 	function (model, unit, worldX, worldY) {
 		var visualDiameter = model.gridConfig.pathfindingGridSize / 2;
 		var visualRadius = visualDiameter / 2;
@@ -9951,7 +9790,7 @@ var $author$project$View$viewUnit = F4(
 				}()
 				]));
 	});
-var $author$project$View$viewUnits = function (model) {
+var $author$project$View$Viewport$viewUnits = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -9963,14 +9802,14 @@ var $author$project$View$viewUnits = function (model) {
 					var x = _v0.a;
 					var y = _v0.b;
 					return $elm$core$Maybe$Just(
-						A4($author$project$View$viewUnit, model, unit, x, y));
+						A4($author$project$View$Viewport$viewUnit, model, unit, x, y));
 				} else {
 					return $elm$core$Maybe$Nothing;
 				}
 			},
 			model.units));
 };
-var $author$project$View$viewMainViewport = F4(
+var $author$project$View$Viewport$viewMainViewport = F4(
 	function (model, cursor, viewportWidth, viewportHeight) {
 		var handleMouseMove = function () {
 			var _v1 = model.buildMode;
@@ -10021,18 +9860,12 @@ var $author$project$View$viewMainViewport = F4(
 				]),
 			_List_fromArray(
 				[
-					A3($author$project$View$viewTerrain, model, viewportWidth, viewportHeight),
-					A3($author$project$View$viewDecorativeShapes, model, viewportWidth, viewportHeight),
-					$author$project$View$viewBuildings(model),
-					$author$project$View$viewUnits(model),
-					$author$project$View$viewSelectedUnitPath(model),
-					A3($author$project$View$viewGrids, model, viewportWidth, viewportHeight),
-					A3($author$project$View$viewPathfindingOccupancy, model, viewportWidth, viewportHeight),
-					A3($author$project$View$viewBuildingOccupancy, model, viewportWidth, viewportHeight),
-					A3($author$project$View$viewCitySearchArea, model, viewportWidth, viewportHeight),
-					A3($author$project$View$viewCityActiveArea, model, viewportWidth, viewportHeight),
-					$author$project$View$viewBuildingPreview(model),
-					$author$project$View$viewUnitRadii(model)
+					A3($author$project$View$Viewport$viewTerrain, model, viewportWidth, viewportHeight),
+					A3($author$project$View$Viewport$viewDecorativeShapes, model, viewportWidth, viewportHeight),
+					$author$project$View$Viewport$viewBuildings(model),
+					$author$project$View$Viewport$viewUnits(model),
+					$author$project$View$Viewport$viewSelectedUnitPath(model),
+					$author$project$View$Viewport$viewBuildingPreview(model)
 				]));
 	});
 var $author$project$Message$MinimapMouseDown = F2(
@@ -10256,6 +10089,85 @@ var $author$project$View$viewMinimap = function (model) {
 							]))))
 			]));
 };
+var $author$project$View$Debug$viewPathfindingOccupancy = F3(
+	function (model, viewportWidth, viewportHeight) {
+		if (!model.showPathfindingOccupancy) {
+			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+		} else {
+			var gridSize = model.gridConfig.pathfindingGridSize;
+			var renderCell = function (_v0) {
+				var x = _v0.a;
+				var y = _v0.b;
+				var worldY = y * gridSize;
+				var worldX = x * gridSize;
+				var screenY = worldY - model.camera.y;
+				var screenX = worldX - model.camera.x;
+				return A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(gridSize) + 'px'),
+							$elm$html$Html$Attributes$class('bg-dark-blue')
+						]),
+					_List_Nil);
+			};
+			var startPfX = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.x / gridSize));
+			var startPfY = A2(
+				$elm$core$Basics$max,
+				0,
+				$elm$core$Basics$floor(model.camera.y / gridSize));
+			var endPfY = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.height / gridSize),
+				$elm$core$Basics$ceiling((model.camera.y + viewportHeight) / gridSize));
+			var endPfX = A2(
+				$elm$core$Basics$min,
+				$elm$core$Basics$floor(model.mapConfig.width / gridSize),
+				$elm$core$Basics$ceiling((model.camera.x + viewportWidth) / gridSize));
+			var cellsY = A2($elm$core$List$range, startPfY, endPfY);
+			var cellsX = A2($elm$core$List$range, startPfX, endPfX);
+			var allCells = A2(
+				$elm$core$List$concatMap,
+				function (x) {
+					return A2(
+						$elm$core$List$map,
+						function (y) {
+							return _Utils_Tuple2(x, y);
+						},
+						cellsY);
+				},
+				cellsX);
+			var occupiedCells = A2(
+				$elm$core$List$filter,
+				function (cell) {
+					return A2($author$project$Grid$isPathfindingCellOccupied, cell, model.pathfindingOccupancy);
+				},
+				allCells);
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, renderCell, occupiedCells));
+		}
+	});
 var $author$project$View$viewPreGameOverlay = function (model) {
 	var _v0 = model.gameState;
 	if (_v0.$ === 'PreGame') {
@@ -12329,6 +12241,88 @@ var $author$project$View$viewTooltip = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
+var $author$project$View$Debug$viewUnitRadii = function (model) {
+	var _v0 = model.selected;
+	if ((_v0.$ === 'Just') && (_v0.a.$ === 'UnitSelected')) {
+		var unitId = _v0.a.a;
+		var maybeUnit = $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (u) {
+					return _Utils_eq(u.id, unitId);
+				},
+				model.units));
+		if (maybeUnit.$ === 'Just') {
+			var unit = maybeUnit.a;
+			var _v2 = unit.location;
+			if (_v2.$ === 'OnMap') {
+				var x = _v2.a;
+				var y = _v2.b;
+				var screenY = y - model.camera.y;
+				var screenX = x - model.camera.x;
+				var searchCircle = A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none rounded-full'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX - unit.searchRadius) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY - unit.searchRadius) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(unit.searchRadius * 2) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(unit.searchRadius * 2) + 'px'),
+							$elm$html$Html$Attributes$class('border-yellow-alpha-3')
+						]),
+					_List_Nil);
+				var activeCircle = A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('abs pe-none rounded-full'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							$elm$core$String$fromFloat(screenX - unit.activeRadius) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							$elm$core$String$fromFloat(screenY - unit.activeRadius) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'width',
+							$elm$core$String$fromFloat(unit.activeRadius * 2) + 'px'),
+							A2(
+							$elm$html$Html$Attributes$style,
+							'height',
+							$elm$core$String$fromFloat(unit.activeRadius * 2) + 'px'),
+							$elm$html$Html$Attributes$class('border-yellow-alpha-6')
+						]),
+					_List_Nil);
+				return A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[searchCircle, activeCircle]));
+			} else {
+				return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+			}
+		} else {
+			return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+		}
+	} else {
+		return A2($elm$html$Html$div, _List_Nil, _List_Nil);
+	}
+};
 var $author$project$View$view = function (model) {
 	var selectionPanelMinWidth = 100;
 	var selectionPanelMaxWidth = 700;
@@ -12377,7 +12371,13 @@ var $author$project$View$view = function (model) {
 			]),
 		_List_fromArray(
 			[
-				A4($author$project$View$viewMainViewport, model, cursor, viewportWidth, viewportHeight),
+				A4($author$project$View$Viewport$viewMainViewport, model, cursor, viewportWidth, viewportHeight),
+				A3($author$project$View$Debug$viewGrids, model, viewportWidth, viewportHeight),
+				A3($author$project$View$Debug$viewPathfindingOccupancy, model, viewportWidth, viewportHeight),
+				A3($author$project$View$Debug$viewBuildingOccupancy, model, viewportWidth, viewportHeight),
+				A3($author$project$View$Debug$viewCitySearchArea, model, viewportWidth, viewportHeight),
+				A3($author$project$View$Debug$viewCityActiveArea, model, viewportWidth, viewportHeight),
+				$author$project$View$Debug$viewUnitRadii(model),
 				$author$project$View$viewGoldCounter(model),
 				A2($author$project$View$viewGlobalButtonsPanel, model, globalButtonsLeft),
 				A2($author$project$View$SelectionPanel$viewSelectionPanel, model, selectionPanelWidth),

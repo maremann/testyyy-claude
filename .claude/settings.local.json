@@ -15,7 +15,11 @@
       "Bash(/tmp/frame_handler.txt)",
       "Bash(awk:*)",
       "Bash(/tmp/selection_panel_content.txt)",
-      "Bash(/tmp/view_new.elm:*)"
+      "Bash(/tmp/view_new.elm:*)",
+      "Bash(/tmp/update_no_camera.elm)",
+      "Bash(/tmp/view_trimmed.elm)",
+      "Bash(/tmp/view_correct.elm)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
