@@ -3,14 +3,15 @@ module UnitBehavior exposing
     , updateUnitBehavior
     )
 
+import BehaviorEngine.Interpreter as Interpreter
 import Types exposing (..)
 
--- Dummy implementation: No autonomous behavior
+
+-- Main behavior update function - delegates to BehaviorEngine
 -- Returns (unit, needsPath)
 updateUnitBehavior : Float -> List Building -> Unit -> ( Unit, Bool )
 updateUnitBehavior deltaSeconds buildings unit =
-    -- No behavior processing - units just exist
-    ( unit, False )
+    Interpreter.updateUnitBehavior deltaSeconds buildings unit
 
 -- Garrison spawning logic (kept - this is about spawning mechanics, not AI)
 updateGarrisonSpawning : Float -> Building -> ( Building, List ( String, Int ) )

@@ -7597,19 +7597,837 @@ var $author$project$UnitBehavior$updateGarrisonSpawning = F2(
 				}),
 			$elm$core$List$reverse(unitsToSpawn));
 	});
-var $author$project$UnitBehavior$updateUnitBehavior = F3(
-	function (deltaSeconds, buildings, unit) {
-		return _Utils_Tuple2(unit, false);
+var $author$project$BehaviorEngine$Types$CheckHomeBuildingExists = {$: 'CheckHomeBuildingExists'};
+var $author$project$BehaviorEngine$Types$Critical = {$: 'Critical'};
+var $author$project$BehaviorEngine$Types$FleeToSafety = {$: 'FleeToSafety'};
+var $author$project$BehaviorEngine$Types$MonitorCriticalHealth = {$: 'MonitorCriticalHealth'};
+var $author$project$BehaviorEngine$Types$TacticalNoAction = {$: 'TacticalNoAction'};
+var $author$project$BehaviorEngine$Actions$checkActiveAwareness = function (context) {
+	var unit = context.unit;
+	var homeDestroyedTrigger = function () {
+		var _v1 = unit.homeBuilding;
+		if (_v1.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var homeBuildingId = _v1.a;
+			var homeExists = A2(
+				$elm$core$List$any,
+				function (b) {
+					return _Utils_eq(b.id, homeBuildingId);
+				},
+				context.buildings);
+			return (!homeExists) ? $elm$core$Maybe$Just(
+				{forcedBehavior: $author$project$BehaviorEngine$Types$TacticalNoAction, priority: $author$project$BehaviorEngine$Types$Critical, triggerType: $author$project$BehaviorEngine$Types$CheckHomeBuildingExists}) : $elm$core$Maybe$Nothing;
+		}
+	}();
+	var criticalHealthTrigger = (_Utils_cmp(unit.hp, unit.maxHp * 0.2) < 0) ? $elm$core$Maybe$Just(
+		{forcedBehavior: $author$project$BehaviorEngine$Types$FleeToSafety, priority: $author$project$BehaviorEngine$Types$Critical, triggerType: $author$project$BehaviorEngine$Types$MonitorCriticalHealth}) : $elm$core$Maybe$Nothing;
+	if (criticalHealthTrigger.$ === 'Just') {
+		var trigger = criticalHealthTrigger.a;
+		return $elm$core$Maybe$Just(trigger);
+	} else {
+		return homeDestroyedTrigger;
+	}
+};
+var $author$project$BehaviorEngine$Types$NoThreat = {$: 'NoThreat'};
+var $author$project$BehaviorEngine$Types$emptyAwarenessState = {
+	activeTriggered: $elm$core$Maybe$Nothing,
+	passiveData: {buildingsWithGold: _List_Nil, damagedBuildings: _List_Nil, enemyDistance: $elm$core$Maybe$Nothing, nearbyAllies: _List_Nil, nearestEnemy: $elm$core$Maybe$Nothing, nearestLoot: $elm$core$Maybe$Nothing, threatLevel: $author$project$BehaviorEngine$Types$NoThreat}
+};
+var $author$project$BehaviorEngine$Types$CheckArrival = {$: 'CheckArrival'};
+var $author$project$Types$Dead = {$: 'Dead'};
+var $author$project$BehaviorEngine$Types$EnterGarrison = {$: 'EnterGarrison'};
+var $author$project$BehaviorEngine$Types$FindNearestDamagedBuilding = {$: 'FindNearestDamagedBuilding'};
+var $author$project$Types$GoingToSleep = {$: 'GoingToSleep'};
+var $author$project$Types$LookForBuildRepairTarget = {$: 'LookForBuildRepairTarget'};
+var $author$project$Types$LookForTaxTarget = {$: 'LookForTaxTarget'};
+var $author$project$Types$LookingForTask = {$: 'LookingForTask'};
+var $author$project$Types$MovingToBuildRepairTarget = {$: 'MovingToBuildRepairTarget'};
+var $author$project$Types$Repairing = {$: 'Repairing'};
+var $author$project$BehaviorEngine$Types$Sleep = {$: 'Sleep'};
+var $author$project$Types$WithoutHome = {$: 'WithoutHome'};
+var $author$project$BehaviorEngine$Types$NoResult = {$: 'NoResult'};
+var $author$project$BehaviorEngine$Types$TimerExpired = {$: 'TimerExpired'};
+var $author$project$BehaviorEngine$Actions$executeAttackUnit = F2(
+	function (context, targetId) {
+		return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoResult, false);
 	});
+var $author$project$BehaviorEngine$Types$Arrived = {$: 'Arrived'};
+var $author$project$BehaviorEngine$Types$NotArrived = {$: 'NotArrived'};
+var $elm$core$Basics$sqrt = _Basics_sqrt;
+var $author$project$BehaviorEngine$Actions$executeCheckArrival = function (context) {
+	var _v0 = context.unit.location;
+	if (_v0.$ === 'OnMap') {
+		var x = _v0.a;
+		var y = _v0.b;
+		var _v1 = context.unit.targetDestination;
+		if (_v1.$ === 'Nothing') {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$Arrived, false);
+		} else {
+			var _v2 = _v1.a;
+			var targetX = _v2.a;
+			var targetY = _v2.b;
+			var unit = context.unit;
+			var targetWorldY = (targetY * 32) + 16;
+			var targetWorldX = (targetX * 32) + 16;
+			var dy = y - targetWorldY;
+			var dx = x - targetWorldX;
+			var distance = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
+			return (distance < 32) ? _Utils_Tuple3(
+				_Utils_update(
+					unit,
+					{path: _List_Nil, targetDestination: $elm$core$Maybe$Nothing}),
+				$author$project$BehaviorEngine$Types$Arrived,
+				false) : _Utils_Tuple3(unit, $author$project$BehaviorEngine$Types$NotArrived, false);
+		}
+	} else {
+		return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$Arrived, false);
+	}
+};
+var $author$project$BehaviorEngine$Actions$executeCollectGold = F2(
+	function (context, buildingId) {
+		return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoResult, false);
+	});
+var $author$project$BehaviorEngine$Actions$executeDepositGold = function (context) {
+	return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoResult, false);
+};
+var $author$project$BehaviorEngine$Types$Failure = function (a) {
+	return {$: 'Failure', a: a};
+};
+var $author$project$BehaviorEngine$Types$HomeDestroyed = {$: 'HomeDestroyed'};
+var $author$project$BehaviorEngine$Types$Success = {$: 'Success'};
+var $author$project$Grid$getBuildingEntrance = function (building) {
+	var _v0 = building.size;
+	switch (_v0.$) {
+		case 'Small':
+			return _Utils_Tuple2(building.gridX, building.gridY);
+		case 'Medium':
+			return _Utils_Tuple2(building.gridX, building.gridY + 1);
+		case 'Large':
+			return _Utils_Tuple2(building.gridX + 1, building.gridY + 2);
+		default:
+			return _Utils_Tuple2(building.gridX + 1, building.gridY + 3);
+	}
+};
+var $author$project$BehaviorEngine$Actions$executeEnterGarrison = function (context) {
+	var _v0 = context.unit.homeBuilding;
+	if (_v0.$ === 'Nothing') {
+		return _Utils_Tuple3(
+			context.unit,
+			$author$project$BehaviorEngine$Types$Failure('No home building'),
+			false);
+	} else {
+		var homeBuildingId = _v0.a;
+		var _v1 = $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (b) {
+					return _Utils_eq(b.id, homeBuildingId);
+				},
+				context.buildings));
+		if (_v1.$ === 'Nothing') {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$HomeDestroyed, false);
+		} else {
+			var homeBuilding = _v1.a;
+			var _v2 = context.unit.location;
+			if (_v2.$ === 'OnMap') {
+				var x = _v2.a;
+				var y = _v2.b;
+				var buildGridSize = 64;
+				var _v3 = $author$project$Grid$getBuildingEntrance(homeBuilding);
+				var entranceGridX = _v3.a;
+				var entranceGridY = _v3.b;
+				var exitGridX = entranceGridX;
+				var exitX = (exitGridX * buildGridSize) + (buildGridSize / 2);
+				var dx = x - exitX;
+				var exitGridY = entranceGridY + 1;
+				var exitY = (exitGridY * buildGridSize) + (buildGridSize / 2);
+				var dy = y - exitY;
+				var distance = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
+				var isAtEntrance = distance < 32;
+				if (isAtEntrance) {
+					var unit = context.unit;
+					return _Utils_Tuple3(
+						_Utils_update(
+							unit,
+							{
+								location: $author$project$Types$Garrisoned(homeBuildingId)
+							}),
+						$author$project$BehaviorEngine$Types$Success,
+						false);
+				} else {
+					var unit = context.unit;
+					var targetCellY = $elm$core$Basics$floor(exitY / 32);
+					var targetCellX = $elm$core$Basics$floor(exitX / 32);
+					return _Utils_Tuple3(
+						_Utils_update(
+							unit,
+							{
+								targetDestination: $elm$core$Maybe$Just(
+									_Utils_Tuple2(targetCellX, targetCellY))
+							}),
+						$author$project$BehaviorEngine$Types$NotArrived,
+						true);
+				}
+			} else {
+				return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$Success, false);
+			}
+		}
+	}
+};
 var $author$project$Types$OnMap = F2(
 	function (a, b) {
 		return {$: 'OnMap', a: a, b: b};
 	});
+var $author$project$GameHelpers$exitGarrison = F2(
+	function (homeBuilding, unit) {
+		var buildGridSize = 64;
+		var _v0 = $author$project$Grid$getBuildingEntrance(homeBuilding);
+		var entranceGridX = _v0.a;
+		var entranceGridY = _v0.b;
+		var exitGridX = entranceGridX;
+		var worldX = (exitGridX * buildGridSize) + (buildGridSize / 2);
+		var exitGridY = entranceGridY + 1;
+		var worldY = (exitGridY * buildGridSize) + (buildGridSize / 2);
+		return _Utils_update(
+			unit,
+			{
+				location: A2($author$project$Types$OnMap, worldX, worldY)
+			});
+	});
+var $author$project$BehaviorEngine$Actions$executeExitGarrison = function (context) {
+	var _v0 = context.unit.homeBuilding;
+	if (_v0.$ === 'Nothing') {
+		return _Utils_Tuple3(
+			context.unit,
+			$author$project$BehaviorEngine$Types$Failure('No home building'),
+			false);
+	} else {
+		var homeBuildingId = _v0.a;
+		var _v1 = $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (b) {
+					return _Utils_eq(b.id, homeBuildingId);
+				},
+				context.buildings));
+		if (_v1.$ === 'Nothing') {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$HomeDestroyed, false);
+		} else {
+			var homeBuilding = _v1.a;
+			var exitedUnit = A2($author$project$GameHelpers$exitGarrison, homeBuilding, context.unit);
+			return _Utils_Tuple3(exitedUnit, $author$project$BehaviorEngine$Types$Success, false);
+		}
+	}
+};
+var $author$project$BehaviorEngine$Types$BuildingFound = function (a) {
+	return {$: 'BuildingFound', a: a};
+};
+var $author$project$BehaviorEngine$Types$NoBuildingFound = {$: 'NoBuildingFound'};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Basics$pow = _Basics_pow;
 var $elm$core$Tuple$second = function (_v0) {
 	var y = _v0.b;
 	return y;
 };
-var $elm$core$Basics$sqrt = _Basics_sqrt;
+var $author$project$BehaviorEngine$Actions$executeFindBuildingWithGold = function (context) {
+	var _v0 = context.unit.location;
+	if (_v0.$ === 'OnMap') {
+		var x = _v0.a;
+		var y = _v0.b;
+		var buildingsWithGold = A2(
+			$elm$core$List$filter,
+			function (b) {
+				return b.coffer > 0;
+			},
+			context.buildings);
+		var findNearest = A2(
+			$elm$core$Maybe$map,
+			$elm$core$Tuple$first,
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$sortBy,
+					$elm$core$Tuple$second,
+					A2(
+						$elm$core$List$map,
+						function (b) {
+							var buildGridSize = 64;
+							var bx = (b.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+							var by = (b.gridY * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+							var dist = $elm$core$Basics$sqrt(
+								A2($elm$core$Basics$pow, x - bx, 2) + A2($elm$core$Basics$pow, y - by, 2));
+							return _Utils_Tuple2(b, dist);
+						},
+						buildingsWithGold))));
+		if (findNearest.$ === 'Just') {
+			var building = findNearest.a;
+			var unit = context.unit;
+			var buildGridSize = 64;
+			var targetX = (building.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellX = $elm$core$Basics$floor(targetX / 32);
+			var targetY = (building.gridY * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellY = $elm$core$Basics$floor(targetY / 32);
+			return _Utils_Tuple3(
+				_Utils_update(
+					unit,
+					{
+						targetDestination: $elm$core$Maybe$Just(
+							_Utils_Tuple2(targetCellX, targetCellY))
+					}),
+				$author$project$BehaviorEngine$Types$BuildingFound(building.id),
+				true);
+		} else {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoBuildingFound, false);
+		}
+	} else {
+		return _Utils_Tuple3(
+			context.unit,
+			$author$project$BehaviorEngine$Types$Failure('Cannot search while garrisoned'),
+			false);
+	}
+};
+var $author$project$BehaviorEngine$Actions$executeFindCastle = function (context) {
+	var _v0 = context.unit.location;
+	if (_v0.$ === 'OnMap') {
+		var x = _v0.a;
+		var y = _v0.b;
+		var castle = $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (b) {
+					return _Utils_eq(b.buildingType, $author$project$GameStrings$buildingTypeCastle) && _Utils_eq(b.owner, $author$project$Types$Player);
+				},
+				context.buildings));
+		if (castle.$ === 'Just') {
+			var building = castle.a;
+			var unit = context.unit;
+			var buildGridSize = 64;
+			var targetX = (building.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellX = $elm$core$Basics$floor(targetX / 32);
+			var targetY = (building.gridY * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellY = $elm$core$Basics$floor(targetY / 32);
+			return _Utils_Tuple3(
+				_Utils_update(
+					unit,
+					{
+						targetDestination: $elm$core$Maybe$Just(
+							_Utils_Tuple2(targetCellX, targetCellY))
+					}),
+				$author$project$BehaviorEngine$Types$BuildingFound(building.id),
+				true);
+		} else {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoBuildingFound, false);
+		}
+	} else {
+		return _Utils_Tuple3(
+			context.unit,
+			$author$project$BehaviorEngine$Types$Failure('Cannot search while garrisoned'),
+			false);
+	}
+};
+var $author$project$BehaviorEngine$Types$HomeExists = {$: 'HomeExists'};
+var $author$project$BehaviorEngine$Actions$executeFindHomeBuilding = function (context) {
+	var _v0 = context.unit.homeBuilding;
+	if (_v0.$ === 'Nothing') {
+		return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$HomeDestroyed, false);
+	} else {
+		var homeBuildingId = _v0.a;
+		var _v1 = $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (b) {
+					return _Utils_eq(b.id, homeBuildingId);
+				},
+				context.buildings));
+		if (_v1.$ === 'Nothing') {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$HomeDestroyed, false);
+		} else {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$HomeExists, false);
+		}
+	}
+};
+var $author$project$GameHelpers$findNearestDamagedBuilding = F3(
+	function (unitX, unitY, buildings) {
+		var damagedBuildings = A2(
+			$elm$core$List$filter,
+			function (b) {
+				return _Utils_cmp(b.hp, b.maxHp) < 0;
+			},
+			buildings);
+		var buildGridSize = 64;
+		var buildingWithDistance = function (b) {
+			var buildingCenterY = (b.gridY * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+			var dy = unitY - buildingCenterY;
+			var buildingCenterX = (b.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(b.size) * buildGridSize) / 2);
+			var dx = unitX - buildingCenterX;
+			var distance = $elm$core$Basics$sqrt((dx * dx) + (dy * dy));
+			return _Utils_Tuple2(b, distance);
+		};
+		var sortedByDistance = A2(
+			$elm$core$List$map,
+			$elm$core$Tuple$first,
+			A2(
+				$elm$core$List$sortBy,
+				$elm$core$Tuple$second,
+				A2($elm$core$List$map, buildingWithDistance, damagedBuildings)));
+		return $elm$core$List$head(sortedByDistance);
+	});
+var $author$project$BehaviorEngine$Actions$executeFindNearestDamagedBuilding = function (context) {
+	var _v0 = context.unit.location;
+	if (_v0.$ === 'OnMap') {
+		var x = _v0.a;
+		var y = _v0.b;
+		var _v1 = A3($author$project$GameHelpers$findNearestDamagedBuilding, x, y, context.buildings);
+		if (_v1.$ === 'Just') {
+			var building = _v1.a;
+			var unit = context.unit;
+			var buildGridSize = 64;
+			var targetX = (building.gridX * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellX = $elm$core$Basics$floor(targetX / 32);
+			var targetY = (building.gridY * buildGridSize) + (($author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize) / 2);
+			var targetCellY = $elm$core$Basics$floor(targetY / 32);
+			return _Utils_Tuple3(
+				_Utils_update(
+					unit,
+					{
+						targetDestination: $elm$core$Maybe$Just(
+							_Utils_Tuple2(targetCellX, targetCellY))
+					}),
+				$author$project$BehaviorEngine$Types$BuildingFound(building.id),
+				true);
+		} else {
+			return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoBuildingFound, false);
+		}
+	} else {
+		return _Utils_Tuple3(
+			context.unit,
+			$author$project$BehaviorEngine$Types$Failure('Cannot search while garrisoned'),
+			false);
+	}
+};
+var $author$project$BehaviorEngine$Types$PathComplete = {$: 'PathComplete'};
+var $author$project$BehaviorEngine$Actions$executeFollowPath = function (context) {
+	var unit = context.unit;
+	var _v0 = unit.targetDestination;
+	if (_v0.$ === 'Nothing') {
+		return _Utils_Tuple3(unit, $author$project$BehaviorEngine$Types$PathComplete, false);
+	} else {
+		return $elm$core$List$isEmpty(unit.path) ? _Utils_Tuple3(
+			_Utils_update(
+				unit,
+				{targetDestination: $elm$core$Maybe$Nothing}),
+			$author$project$BehaviorEngine$Types$PathComplete,
+			false) : _Utils_Tuple3(unit, $author$project$BehaviorEngine$Types$NoResult, false);
+	}
+};
+var $author$project$BehaviorEngine$Actions$executePatrolArea = function (context) {
+	return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoResult, false);
+};
+var $author$project$BehaviorEngine$Types$RepairInProgress = {$: 'RepairInProgress'};
+var $author$project$BehaviorEngine$Actions$executeRepairBuilding = F2(
+	function (context, buildingId) {
+		return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$RepairInProgress, false);
+	});
+var $author$project$BehaviorEngine$Actions$executeSleep = function (context) {
+	var unit = context.unit;
+	var healAmount = (unit.maxHp * 0.1) * context.deltaSeconds;
+	var newHp = A2(
+		$elm$core$Basics$min,
+		unit.maxHp,
+		unit.hp + $elm$core$Basics$round(healAmount));
+	var isFullyHealed = _Utils_cmp(newHp, unit.maxHp) > -1;
+	var updatedUnit = _Utils_update(
+		unit,
+		{hp: newHp});
+	return _Utils_Tuple3(
+		updatedUnit,
+		isFullyHealed ? $author$project$BehaviorEngine$Types$Success : $author$project$BehaviorEngine$Types$NoResult,
+		false);
+};
+var $author$project$BehaviorEngine$Actions$executeOperationalAction = F2(
+	function (context, action) {
+		switch (action.$) {
+			case 'NoAction':
+				return _Utils_Tuple3(context.unit, $author$project$BehaviorEngine$Types$NoResult, false);
+			case 'Sleep':
+				return $author$project$BehaviorEngine$Actions$executeSleep(context);
+			case 'WaitFor':
+				var duration = action.a;
+				return _Utils_Tuple3(
+					context.unit,
+					(_Utils_cmp(context.unit.behaviorTimer, duration) > -1) ? $author$project$BehaviorEngine$Types$TimerExpired : $author$project$BehaviorEngine$Types$NoResult,
+					false);
+			case 'ExitGarrison':
+				return $author$project$BehaviorEngine$Actions$executeExitGarrison(context);
+			case 'EnterGarrison':
+				return $author$project$BehaviorEngine$Actions$executeEnterGarrison(context);
+			case 'FollowPath':
+				return $author$project$BehaviorEngine$Actions$executeFollowPath(context);
+			case 'FindNearestDamagedBuilding':
+				return $author$project$BehaviorEngine$Actions$executeFindNearestDamagedBuilding(context);
+			case 'FindBuildingWithGold':
+				return $author$project$BehaviorEngine$Actions$executeFindBuildingWithGold(context);
+			case 'FindHomeBuilding':
+				return $author$project$BehaviorEngine$Actions$executeFindHomeBuilding(context);
+			case 'FindCastle':
+				return $author$project$BehaviorEngine$Actions$executeFindCastle(context);
+			case 'CheckArrival':
+				return $author$project$BehaviorEngine$Actions$executeCheckArrival(context);
+			case 'RepairBuilding':
+				var buildingId = action.a;
+				return A2($author$project$BehaviorEngine$Actions$executeRepairBuilding, context, buildingId);
+			case 'CollectGoldFrom':
+				var buildingId = action.a;
+				return A2($author$project$BehaviorEngine$Actions$executeCollectGold, context, buildingId);
+			case 'DepositGold':
+				return $author$project$BehaviorEngine$Actions$executeDepositGold(context);
+			case 'AttackUnit':
+				var unitId = action.a;
+				return A2($author$project$BehaviorEngine$Actions$executeAttackUnit, context, unitId);
+			default:
+				return $author$project$BehaviorEngine$Actions$executePatrolArea(context);
+		}
+	});
+var $author$project$BehaviorEngine$Interpreter$executeNormalBehavior = function (context) {
+	var _v0 = context.unit.behavior;
+	switch (_v0.$) {
+		case 'Dead':
+			return _Utils_Tuple2(context.unit, false);
+		case 'DebugError':
+			return _Utils_Tuple2(context.unit, false);
+		case 'WithoutHome':
+			var unit = context.unit;
+			var newTimer = unit.behaviorTimer + context.deltaSeconds;
+			return (_Utils_cmp(newTimer, unit.behaviorDuration) > -1) ? _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$Dead, behaviorTimer: 0}),
+				false) : _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behaviorTimer: newTimer}),
+				false);
+		case 'Sleeping':
+			var _v1 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, context, $author$project$BehaviorEngine$Types$Sleep);
+			var updatedUnit = _v1.a;
+			var result = _v1.b;
+			var needsPath = _v1.c;
+			var newTimer = updatedUnit.behaviorTimer + context.deltaSeconds;
+			return (newTimer >= 1.0) ? _Utils_Tuple2(
+				_Utils_update(
+					updatedUnit,
+					{behavior: $author$project$Types$LookingForTask, behaviorTimer: 0}),
+				false) : _Utils_Tuple2(
+				_Utils_update(
+					updatedUnit,
+					{behaviorTimer: newTimer}),
+				false);
+		case 'LookingForTask':
+			var unit = context.unit;
+			return (unit.unitType === 'Peasant') ? _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$LookForBuildRepairTarget, behaviorTimer: 0}),
+				false) : ((unit.unitType === 'Tax Collector') ? _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$LookForTaxTarget, behaviorTimer: 0}),
+				false) : ((unit.unitType === 'Castle Guard') ? _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+				false) : _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+				false)));
+		case 'GoingToSleep':
+			var unit = context.unit;
+			var _v2 = unit.location;
+			if (_v2.$ === 'Garrisoned') {
+				return _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behavior: $author$project$Types$Sleeping, behaviorTimer: 0}),
+					false);
+			} else {
+				var _v3 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, context, $author$project$BehaviorEngine$Types$EnterGarrison);
+				var updatedUnit = _v3.a;
+				var result = _v3.b;
+				var needsPath = _v3.c;
+				switch (result.$) {
+					case 'Success':
+						return _Utils_Tuple2(
+							_Utils_update(
+								updatedUnit,
+								{behavior: $author$project$Types$Sleeping, behaviorTimer: 0}),
+							false);
+					case 'HomeDestroyed':
+						return _Utils_Tuple2(
+							_Utils_update(
+								updatedUnit,
+								{behavior: $author$project$Types$WithoutHome, behaviorDuration: 15.0, behaviorTimer: 0, homeBuilding: $elm$core$Maybe$Nothing}),
+							false);
+					case 'NotArrived':
+						return _Utils_Tuple2(updatedUnit, needsPath);
+					default:
+						return _Utils_Tuple2(updatedUnit, needsPath);
+				}
+			}
+		case 'LookForBuildRepairTarget':
+			var _v5 = context.unit.location;
+			if (_v5.$ === 'Garrisoned') {
+				var buildingId = _v5.a;
+				var _v6 = $elm$core$List$head(
+					A2(
+						$elm$core$List$filter,
+						function (b) {
+							return _Utils_eq(b.id, buildingId);
+						},
+						context.buildings));
+				if (_v6.$ === 'Just') {
+					var homeBuilding = _v6.a;
+					var exitedUnit = A2($author$project$GameHelpers$exitGarrison, homeBuilding, context.unit);
+					var contextWithExited = _Utils_update(
+						context,
+						{unit: exitedUnit});
+					var _v7 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, contextWithExited, $author$project$BehaviorEngine$Types$FindNearestDamagedBuilding);
+					var searchedUnit = _v7.a;
+					var result = _v7.b;
+					var needsPath = _v7.c;
+					switch (result.$) {
+						case 'BuildingFound':
+							return _Utils_Tuple2(
+								_Utils_update(
+									searchedUnit,
+									{behavior: $author$project$Types$MovingToBuildRepairTarget, behaviorTimer: 0}),
+								needsPath);
+						case 'NoBuildingFound':
+							return _Utils_Tuple2(
+								_Utils_update(
+									searchedUnit,
+									{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+								false);
+						default:
+							return _Utils_Tuple2(searchedUnit, needsPath);
+					}
+				} else {
+					var unit = context.unit;
+					return _Utils_Tuple2(
+						_Utils_update(
+							unit,
+							{behavior: $author$project$Types$WithoutHome}),
+						false);
+				}
+			} else {
+				var _v9 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, context, $author$project$BehaviorEngine$Types$FindNearestDamagedBuilding);
+				var searchedUnit = _v9.a;
+				var result = _v9.b;
+				var needsPath = _v9.c;
+				switch (result.$) {
+					case 'BuildingFound':
+						return _Utils_Tuple2(
+							_Utils_update(
+								searchedUnit,
+								{behavior: $author$project$Types$MovingToBuildRepairTarget, behaviorTimer: 0}),
+							needsPath);
+					case 'NoBuildingFound':
+						return _Utils_Tuple2(
+							_Utils_update(
+								searchedUnit,
+								{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+							false);
+					default:
+						return _Utils_Tuple2(searchedUnit, needsPath);
+				}
+			}
+		case 'MovingToBuildRepairTarget':
+			var _v11 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, context, $author$project$BehaviorEngine$Types$CheckArrival);
+			var checkedUnit = _v11.a;
+			var result = _v11.b;
+			var needsPath = _v11.c;
+			if (result.$ === 'Arrived') {
+				return _Utils_Tuple2(
+					_Utils_update(
+						checkedUnit,
+						{behavior: $author$project$Types$Repairing, behaviorTimer: 0}),
+					false);
+			} else {
+				return _Utils_Tuple2(checkedUnit, false);
+			}
+		case 'Repairing':
+			var unit = context.unit;
+			var newTimer = unit.behaviorTimer + context.deltaSeconds;
+			if (newTimer >= 0.15) {
+				var _v13 = context.awareness.passiveData.damagedBuildings;
+				if (!_v13.b) {
+					return _Utils_Tuple2(
+						_Utils_update(
+							unit,
+							{behavior: $author$project$Types$LookForBuildRepairTarget, behaviorTimer: 0}),
+						false);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							unit,
+							{behaviorTimer: 0}),
+						false);
+				}
+			} else {
+				return _Utils_Tuple2(
+					_Utils_update(
+						unit,
+						{behaviorTimer: newTimer}),
+					false);
+			}
+		case 'LookForTaxTarget':
+			var unit = context.unit;
+			return _Utils_Tuple2(
+				_Utils_update(
+					unit,
+					{behavior: $author$project$Types$GoingToSleep, behaviorTimer: 0}),
+				false);
+		case 'CollectingTaxes':
+			return _Utils_Tuple2(context.unit, false);
+		case 'ReturnToCastle':
+			return _Utils_Tuple2(context.unit, false);
+		default:
+			return _Utils_Tuple2(context.unit, false);
+	}
+};
+var $author$project$BehaviorEngine$Interpreter$handleActiveTrigger = F2(
+	function (context, trigger) {
+		var _v0 = trigger.triggerType;
+		switch (_v0.$) {
+			case 'MonitorCriticalHealth':
+				var _v1 = context.unit.homeBuilding;
+				if (_v1.$ === 'Just') {
+					var homeBuildingId = _v1.a;
+					var _v2 = $elm$core$List$head(
+						A2(
+							$elm$core$List$filter,
+							function (b) {
+								return _Utils_eq(b.id, homeBuildingId);
+							},
+							context.buildings));
+					if (_v2.$ === 'Just') {
+						var homeBuilding = _v2.a;
+						var unit = context.unit;
+						var buildGridSize = 64;
+						var entranceX = (homeBuilding.gridX * buildGridSize) + (buildGridSize / 2);
+						var targetCellX = $elm$core$Basics$floor(entranceX / 32);
+						var entranceY = (homeBuilding.gridY * buildGridSize) + (buildGridSize / 2);
+						var targetCellY = $elm$core$Basics$floor(entranceY / 32);
+						var updatedUnit = _Utils_update(
+							unit,
+							{
+								targetDestination: $elm$core$Maybe$Just(
+									_Utils_Tuple2(targetCellX, targetCellY))
+							});
+						return _Utils_Tuple2(updatedUnit, true);
+					} else {
+						var unit = context.unit;
+						var updatedUnit = _Utils_update(
+							unit,
+							{behavior: $author$project$Types$WithoutHome});
+						return _Utils_Tuple2(updatedUnit, false);
+					}
+				} else {
+					var unit = context.unit;
+					var updatedUnit = _Utils_update(
+						unit,
+						{behavior: $author$project$Types$WithoutHome});
+					return _Utils_Tuple2(updatedUnit, false);
+				}
+			case 'CheckHomeBuildingExists':
+				var unit = context.unit;
+				var updatedUnit = _Utils_update(
+					unit,
+					{behavior: $author$project$Types$WithoutHome, homeBuilding: $elm$core$Maybe$Nothing});
+				return _Utils_Tuple2(updatedUnit, false);
+			default:
+				return _Utils_Tuple2(context.unit, false);
+		}
+	});
+var $author$project$BehaviorEngine$Actions$updatePassiveAwareness = function (context) {
+	var unit = context.unit;
+	var threatLevel = $author$project$BehaviorEngine$Types$NoThreat;
+	var damagedBuildings = A2(
+		$elm$core$List$map,
+		function ($) {
+			return $.id;
+		},
+		A2(
+			$elm$core$List$filter,
+			function (b) {
+				return _Utils_cmp(b.hp, b.maxHp) < 0;
+			},
+			context.buildings));
+	var buildingsWithGold = A2(
+		$elm$core$List$map,
+		function ($) {
+			return $.id;
+		},
+		A2(
+			$elm$core$List$filter,
+			function (b) {
+				return b.coffer > 0;
+			},
+			context.buildings));
+	var _v0 = function () {
+		var _v1 = unit.location;
+		if (_v1.$ === 'OnMap') {
+			var x = _v1.a;
+			var y = _v1.b;
+			return _Utils_Tuple2(x, y);
+		} else {
+			return _Utils_Tuple2(0, 0);
+		}
+	}();
+	var unitX = _v0.a;
+	var unitY = _v0.b;
+	return {buildingsWithGold: buildingsWithGold, damagedBuildings: damagedBuildings, enemyDistance: $elm$core$Maybe$Nothing, nearbyAllies: _List_Nil, nearestEnemy: $elm$core$Maybe$Nothing, nearestLoot: $elm$core$Maybe$Nothing, threatLevel: threatLevel};
+};
+var $author$project$BehaviorEngine$Interpreter$updateUnitBehavior = F3(
+	function (deltaSeconds, buildings, unit) {
+		var context = {awareness: $author$project$BehaviorEngine$Types$emptyAwarenessState, buildings: buildings, deltaSeconds: deltaSeconds, goals: _List_Nil, unit: unit};
+		var passiveData = $author$project$BehaviorEngine$Actions$updatePassiveAwareness(context);
+		var contextWithAwareness = _Utils_update(
+			context,
+			{
+				awareness: {activeTriggered: $elm$core$Maybe$Nothing, passiveData: passiveData}
+			});
+		var activeAwarenessTrigger = $author$project$BehaviorEngine$Actions$checkActiveAwareness(contextWithAwareness);
+		var contextWithActive = _Utils_update(
+			contextWithAwareness,
+			{
+				awareness: {activeTriggered: activeAwarenessTrigger, passiveData: passiveData}
+			});
+		var _v0 = function () {
+			if (activeAwarenessTrigger.$ === 'Just') {
+				var trigger = activeAwarenessTrigger.a;
+				return A2($author$project$BehaviorEngine$Interpreter$handleActiveTrigger, contextWithActive, trigger);
+			} else {
+				return $author$project$BehaviorEngine$Interpreter$executeNormalBehavior(contextWithActive);
+			}
+		}();
+		var finalUnit = _v0.a;
+		var needsPath = _v0.b;
+		return _Utils_Tuple2(finalUnit, needsPath);
+	});
+var $author$project$UnitBehavior$updateUnitBehavior = F3(
+	function (deltaSeconds, buildings, unit) {
+		return A3($author$project$BehaviorEngine$Interpreter$updateUnitBehavior, deltaSeconds, buildings, unit);
+	});
 var $author$project$GameHelpers$updateUnitMovement = F5(
 	function (gridConfig, mapConfig, occupancy, deltaSeconds, unit) {
 		var _v0 = unit.location;
@@ -8928,19 +9746,6 @@ var $author$project$Types$BuildingSelected = function (a) {
 	return {$: 'BuildingSelected', a: a};
 };
 var $author$project$GameStrings$buildingTypeTestBuilding = 'Test Building';
-var $author$project$Grid$getBuildingEntrance = function (building) {
-	var _v0 = building.size;
-	switch (_v0.$) {
-		case 'Small':
-			return _Utils_Tuple2(building.gridX, building.gridY);
-		case 'Medium':
-			return _Utils_Tuple2(building.gridX, building.gridY + 1);
-		case 'Large':
-			return _Utils_Tuple2(building.gridX + 1, building.gridY + 2);
-		default:
-			return _Utils_Tuple2(building.gridX + 1, building.gridY + 3);
-	}
-};
 var $author$project$GameStrings$suffixUnderConstruction = ' (under construction)';
 var $author$project$View$Viewport$viewBuilding = F2(
 	function (model, building) {

@@ -28,7 +28,12 @@
       "Bash(done)",
       "Bash(/tmp/contract_lines.sh:*)",
       "Bash(cat:*)",
-      "Bash(/tmp/replace_strings.sh:*)"
+      "Bash(/tmp/replace_strings.sh:*)",
+      "Bash(node tools/md-to-json.js:*)",
+      "Bash(node tools/json-to-elm.js:*)",
+      "Bash(npm install:*)",
+      "Bash(chmod:*)",
+      "Bash(./tools/build-behavior.sh:*)"
     ],
     "deny": [],
     "ask": []

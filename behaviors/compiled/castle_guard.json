@@ -1,0 +1,427 @@
+{
+  "behaviorId": "castle_guard_patrol",
+  "unitType": "Castle Guard",
+  "inherits": "CORE_BEHAVIORS",
+  "description": "Castle Guards protect the kingdom by patrolling between buildings and engaging monsters on sight. They follow a patrol route visiting 1-3 buildings, circle each one, then return to the castle to rest. Combat always takes priority - if a monster is spotted, the guard immediately engages until victory or death.",
+  "strategicBehaviors": [
+    {
+      "strategicId": "DefendTerritory",
+      "description": "",
+      "priority": "Normal",
+      "tacticalDelegates": [
+        "EngageMonster",
+        "PatrolRoute",
+        "ReturnToCastle"
+      ],
+      "awarenessTypes": [
+        "WatchForMonsters"
+      ],
+      "transitions": [
+        {
+          "condition": "home destroyed",
+          "target": "WithoutHome"
+        }
+      ]
+    }
+  ],
+  "tacticalBehaviors": [
+    {
+      "tacticalId": "RestInGarrison (Initial State)",
+      "description": "Sleep in castle garrison until healed",
+      "priority": "Background",
+      "operationalSequence": [
+        "Sleep",
+        "PlanPatrolRoute",
+        "ExitGarrison"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "HP = maxHP OR timer > 5s",
+      "failureCondition": "",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "PatrolRoute"
+        }
+      ]
+    },
+    {
+      "tacticalId": "PlanPatrolRoute",
+      "description": "Select 1-3 kingdom buildings to patrol",
+      "priority": "Normal",
+      "operationalSequence": [
+        "SelectPatrolBuildings",
+        "SetPatrolIndex"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Patrol route with 1-3 buildings created",
+      "failureCondition": "No buildings available",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "PatrolRoute"
+        },
+        {
+          "condition": "Failure",
+          "target": "ReturnToCastle"
+        }
+      ]
+    },
+    {
+      "tacticalId": "PatrolRoute",
+      "description": "Visit each building in patrol route sequentially",
+      "priority": "Normal",
+      "operationalSequence": [
+        "GetCurrentPatrolTarget",
+        "MoveToBuilding",
+        "CircleBuilding",
+        "IncrementPatrolIndex",
+        "If more buildings in route → Repeat from step 1",
+        "If route complete → ReturnToCastle"
+      ],
+      "awarenessTypes": [
+        "WatchForMonsters",
+        "ScanForDamage"
+      ],
+      "successCondition": "All buildings in patrol route visited",
+      "failureCondition": "Patrol target building destroyed",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "ReturnToCastle"
+        },
+        {
+          "condition": "Failure",
+          "target": "PlanPatrolRoute"
+        },
+        {
+          "condition": "Interrupted",
+          "target": "EngageMonster"
+        }
+      ]
+    },
+    {
+      "tacticalId": "CircleBuilding",
+      "description": "Walk a complete circle around target building perimeter",
+      "priority": "Normal",
+      "operationalSequence": [
+        "CalculateBuildingPerimeter",
+        "MoveToPerimeterPoint",
+        "CheckCircleComplete"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Full circle completed",
+      "failureCondition": "Building destroyed mid-circle",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "PatrolRoute"
+        },
+        {
+          "condition": "Failure",
+          "target": "PatrolRoute"
+        }
+      ]
+    },
+    {
+      "tacticalId": "EngageMonster",
+      "description": "Attack detected monster until defeated or guard dies",
+      "priority": "Critical",
+      "operationalSequence": [
+        "MoveToMonster",
+        "AttackMonster",
+        "CheckMonsterDefeated",
+        "If defeated → ResumePatrol",
+        "If not defeated → Repeat from step 1"
+      ],
+      "awarenessTypes": [
+        "TrackMonsterDistance"
+      ],
+      "successCondition": "Monster defeated",
+      "failureCondition": "Guard HP reaches 0",
+      "interruptible": false,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "ResumePatrol"
+        },
+        {
+          "condition": "Failure",
+          "target": "Dead"
+        }
+      ]
+    },
+    {
+      "tacticalId": "ResumePatrol",
+      "description": "Return to patrol after combat or interruption",
+      "priority": "Normal",
+      "operationalSequence": [
+        "CheckPatrolState",
+        "If patrol route exists → PatrolRoute",
+        "If no patrol route → PlanPatrolRoute"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Always succeeds",
+      "failureCondition": "",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "If patrol route exists",
+          "target": "PatrolRoute"
+        },
+        {
+          "condition": "If no route",
+          "target": "PlanPatrolRoute"
+        }
+      ]
+    },
+    {
+      "tacticalId": "ReturnToCastle",
+      "description": "Travel back to castle to rest",
+      "priority": "Normal",
+      "operationalSequence": [
+        "FindCastle",
+        "MoveToBuilding",
+        "EnterGarrison"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Entered castle garrison",
+      "failureCondition": "Castle destroyed",
+      "interruptible": true,
+      "transitions": [
+        {
+          "condition": "Success",
+          "target": "RestInGarrison"
+        },
+        {
+          "condition": "Failure",
+          "target": "WithoutHome"
+        }
+      ]
+    }
+  ],
+  "operationalBehaviors": [
+    {
+      "operationalId": "Sleep (from CORE)",
+      "description": "",
+      "action": "Sleep (heals 10% maxHP per second)",
+      "parameters": {},
+      "duration": "Until HP = maxHP OR 5 seconds minimum",
+      "successCondition": "HP = maxHP OR timer > 5s",
+      "failureCondition": "",
+      "sideEffects": [],
+      "result": []
+    },
+    {
+      "operationalId": "SelectPatrolBuildings",
+      "description": "Choose 1-3 kingdom buildings to patrol",
+      "action": "FindPlayerBuildings",
+      "parameters": {
+        "Min buildings": "1",
+        "Max buildings": "3",
+        "Exclude": "Castle (home building)"
+      },
+      "duration": null,
+      "successCondition": "1-3 buildings selected",
+      "failureCondition": "No buildings available (only castle exists)",
+      "sideEffects": [],
+      "result": [
+        "BuildingsSelected [id1, id2, id3]",
+        "NoBuildingsAvailable"
+      ]
+    },
+    {
+      "operationalId": "GetCurrentPatrolTarget",
+      "description": "Retrieve building at current patrol index",
+      "action": "LookupPatrolRoute",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "Building exists at index",
+      "failureCondition": "Index out of bounds",
+      "sideEffects": [],
+      "result": [
+        "BuildingFound buildingId",
+        "PatrolComplete"
+      ]
+    },
+    {
+      "operationalId": "MoveToBuilding",
+      "description": "Travel to target building entrance",
+      "action": "FollowPath",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "Within 32 pixels of building",
+      "failureCondition": "Path blocked, timeout (30s)",
+      "sideEffects": [
+        "Sets targetDestination, requests pathfinding"
+      ],
+      "result": []
+    },
+    {
+      "operationalId": "CirclePerimeter",
+      "description": "Walk around building perimeter",
+      "action": "FollowPerimeterPath",
+      "parameters": {
+        "buildingId": "Target building",
+        "perimeterPoints": "8 waypoints (N, NE, E, SE, S, SW, W, NW)",
+        "currentPointIndex": "Which waypoint we're on"
+      },
+      "duration": "Until all 8 points visited",
+      "successCondition": "Visited all perimeter points",
+      "failureCondition": "Building destroyed",
+      "sideEffects": [],
+      "result": [
+        "Arrived",
+        "CircleComplete",
+        "BuildingDestroyed"
+      ]
+    },
+    {
+      "operationalId": "IncrementPatrolIndex",
+      "description": "Advance to next building in patrol route",
+      "action": "IncrementCounter",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "",
+      "failureCondition": "",
+      "sideEffects": [
+        "patrolIndex += 1"
+      ],
+      "result": [
+        "Success",
+        "PatrolComplete"
+      ]
+    },
+    {
+      "operationalId": "CheckCircleComplete",
+      "description": "Verify if full perimeter circle completed",
+      "action": "CheckCounter",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "",
+      "failureCondition": "",
+      "sideEffects": [],
+      "result": [
+        "CircleComplete",
+        "ContinueCircle"
+      ]
+    },
+    {
+      "operationalId": "FindCastle",
+      "description": "Locate player's castle building",
+      "action": "FindBuildingByType",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "Castle found",
+      "failureCondition": "Castle destroyed",
+      "sideEffects": [
+        "Sets targetDestination to castle"
+      ],
+      "result": [
+        "BuildingFound castleId",
+        "NoBuildingFound"
+      ]
+    },
+    {
+      "operationalId": "MoveToMonster",
+      "description": "Approach monster to melee range",
+      "action": "FollowPath",
+      "parameters": {
+        "desiredDistance": "16 pixels (melee range)"
+      },
+      "duration": null,
+      "successCondition": "Within melee range of monster",
+      "failureCondition": "Monster disappeared, path blocked",
+      "sideEffects": [],
+      "result": [
+        "Arrived",
+        "TargetLost"
+      ]
+    },
+    {
+      "operationalId": "AttackMonster",
+      "description": "Deal damage to monster in melee range",
+      "action": "MeleeAttack",
+      "parameters": {
+        "damagePerHit": "10 HP",
+        "attackSpeed": "1.0 seconds per attack"
+      },
+      "duration": 1,
+      "successCondition": "Monster HP reduced",
+      "failureCondition": "Monster out of range, monster dead",
+      "sideEffects": [
+        "Reduces monster HP by 10 every 1.0s"
+      ],
+      "result": [
+        "MonsterDamaged",
+        "MonsterDefeated",
+        "MonsterOutOfRange"
+      ]
+    },
+    {
+      "operationalId": "CheckMonsterDefeated",
+      "description": "Verify if monster is dead",
+      "action": "CheckUnitHP",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "",
+      "failureCondition": "",
+      "sideEffects": [],
+      "result": [
+        "MonsterDefeated",
+        "MonsterAlive"
+      ]
+    },
+    {
+      "operationalId": "ExitGarrison (from CORE)",
+      "description": "Leave castle garrison onto map",
+      "action": "",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "Now on map at castle entrance",
+      "failureCondition": "",
+      "sideEffects": [],
+      "result": []
+    },
+    {
+      "operationalId": "EnterGarrison (from CORE)",
+      "description": "Enter castle garrison",
+      "action": "",
+      "parameters": {},
+      "duration": null,
+      "successCondition": "Now garrisoned in castle",
+      "failureCondition": "",
+      "sideEffects": [],
+      "result": []
+    }
+  ],
+  "awarenessTypes": {
+    "active": [
+      {
+        "awarenessId": "WatchForMonsters",
+        "description": "Continuously scan for enemy units",
+        "scanRadius": "unit.searchRadius (384 pixels)",
+        "triggerCondition": "Enemy unit within search radius",
+        "forcedBehavior": "EngageMonster",
+        "priority": "Critical",
+        "stores": []
+      }
+    ],
+    "passive": [
+      {
+        "awarenessId": "ScanForDamage",
+        "description": "Notice damaged buildings during patrol",
+        "stores": [
+          "List of buildings with HP < maxHP"
+        ],
+        "influences": [
+          "Building selection for patrol route (prioritize damaged)"
+        ]
+      }
+    ]
+  },
+  "stateData": {}
+}

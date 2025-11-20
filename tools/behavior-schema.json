@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Behavior Specification",
+  "description": "JSON schema for unit behavior definitions",
+  "type": "object",
+  "required": ["behaviorId", "unitType", "strategicBehaviors", "tacticalBehaviors", "operationalBehaviors"],
+  "properties": {
+    "behaviorId": {
+      "type": "string",
+      "description": "Unique identifier for this behavior set"
+    },
+    "unitType": {
+      "type": "string",
+      "description": "Type of unit this behavior applies to"
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent behavior to inherit from (e.g., CORE_BEHAVIORS)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the behavior"
+    },
+    "strategicBehaviors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["strategicId", "priority"],
+        "properties": {
+          "strategicId": {"type": "string"},
+          "description": {"type": "string"},
+          "priority": {"type": "string", "enum": ["Critical", "High", "Normal", "Low", "Background"]},
+          "tacticalDelegates": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "awarenessTypes": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": {"type": "string"},
+                "target": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "tacticalBehaviors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tacticalId", "priority"],
+        "properties": {
+          "tacticalId": {"type": "string"},
+          "description": {"type": "string"},
+          "priority": {"type": "string", "enum": ["Critical", "High", "Normal", "Low", "Background"]},
+          "operationalSequence": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "awarenessTypes": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "successCondition": {"type": "string"},
+          "failureCondition": {"type": "string"},
+          "interruptible": {"type": "boolean"},
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": {"type": "string"},
+                "target": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "operationalBehaviors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operationalId", "action"],
+        "properties": {
+          "operationalId": {"type": "string"},
+          "description": {"type": "string"},
+          "action": {"type": "string"},
+          "parameters": {"type": "object"},
+          "duration": {"type": ["string", "number", "null"]},
+          "successCondition": {"type": "string"},
+          "failureCondition": {"type": "string"},
+          "sideEffects": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "result": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "awarenessTypes": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "awarenessId": {"type": "string"},
+              "description": {"type": "string"},
+              "scanRadius": {"type": ["number", "string"]},
+              "triggerCondition": {"type": "string"},
+              "forcedBehavior": {"type": "string"},
+              "priority": {"type": "string", "enum": ["Critical", "High", "Normal", "Low", "Background"]},
+              "stores": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        },
+        "passive": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "awarenessId": {"type": "string"},
+              "description": {"type": "string"},
+              "stores": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "influences": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "stateData": {
+      "type": "object",
+      "description": "Additional state fields needed by this unit type",
+      "additionalProperties": {"type": "string"}
+    }
+  }
+}
