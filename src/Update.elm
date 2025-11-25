@@ -183,21 +183,18 @@ update msg model =
                             isCastle = template.name == GameStrings.buildingTypeCastle
                             ( buildingBehavior, buildingTags ) =
                                 if isCastle then
-                                    ( SpawnHouse, [ BuildingTag, ObjectiveTag ] )
+                                    ( GenerateGold, [ BuildingTag, ObjectiveTag ] )
                                 else
                                     ( UnderConstruction, [ BuildingTag ] )
                             initialDuration =
                                 case buildingBehavior of
-                                    SpawnHouse ->
-                                        30.0 + toFloat (modBy 15000 (model.nextBuildingId * 1000)) / 1000.0
                                     GenerateGold ->
-                                        15.0 + toFloat (modBy 30000 (model.nextBuildingId * 1000)) / 1000.0
+                                        15.0 + toFloat (modBy 15000 (model.nextBuildingId * 1000)) / 1000.0
                                     _ -> 0
                             initialGarrisonConfig =
                                 if isCastle then
                                     [ { unitType = GameStrings.unitTypeCastleGuard, maxCount = 2, currentCount = 1, spawnTimer = 0 }
                                     , { unitType = GameStrings.unitTypeTaxCollector, maxCount = 1, currentCount = 1, spawnTimer = 0 }
-                                    , { unitType = GameStrings.unitTypePeasant, maxCount = 3, currentCount = 1, spawnTimer = 0 }
                                     ]
                                 else
                                     []
@@ -236,7 +233,6 @@ update msg model =
                                     let
                                         unitsToCreate = [ ( GameStrings.unitTypeCastleGuard, model.nextUnitId )
                                             , ( GameStrings.unitTypeTaxCollector, model.nextUnitId + 1 )
-                                            , ( GameStrings.unitTypePeasant, model.nextUnitId + 2 )
                                             ]
                                     in
                                     ( List.map
@@ -244,7 +240,7 @@ update msg model =
                                             createHenchman unitType unitId model.nextBuildingId newBuilding
                                         )
                                         unitsToCreate
-                                    , model.nextUnitId + 3
+                                    , model.nextUnitId + 2
                                     )
                                 else
                                     ( [], model.nextUnitId )

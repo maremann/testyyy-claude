@@ -71,20 +71,15 @@ simulationTick delta model =
                     )
                     ( [], model.pathfindingOccupancy, [] )
                     model.units
-            ( updatedBuildings, buildingsNeedingHouseSpawn, henchmenToSpawn ) = List.foldl
-                    (\building ( accBuildings, accNeedingHouseSpawn, accHenchmenSpawn ) ->
+            ( updatedBuildings, henchmenToSpawn, goldGenerated ) = List.foldl
+                    (\building ( accBuildings, accHenchmenSpawn, accGold ) ->
                         let
-                            ( behaviorUpdatedBuilding, shouldSpawnHouse ) = updateBuildingBehavior deltaSeconds building
+                            ( behaviorUpdatedBuilding, buildingGold ) = updateBuildingBehavior deltaSeconds building
                             ( garrisonUpdatedBuilding, unitsToSpawn ) = updateGarrisonSpawning deltaSeconds behaviorUpdatedBuilding
-                            needsHouseSpawn =
-                                if shouldSpawnHouse then
-                                    garrisonUpdatedBuilding :: accNeedingHouseSpawn
-                                else
-                                    accNeedingHouseSpawn
                         in
-                        ( garrisonUpdatedBuilding :: accBuildings, needsHouseSpawn, unitsToSpawn ++ accHenchmenSpawn )
+                        ( garrisonUpdatedBuilding :: accBuildings, unitsToSpawn ++ accHenchmenSpawn, accGold + buildingGold )
                     )
-                    ( [], [], [] )
+                    ( [], [], 0 )
                     model.buildings
             ( newHenchmen, nextUnitIdAfterSpawning ) = List.foldl
                     (\( unitType, buildingId ) ( accUnits, currentUnitId ) ->
@@ -100,44 +95,6 @@ simulationTick delta model =
                     ( [], model.nextUnitId )
                     henchmenToSpawn
             allUnits = updatedUnits ++ newHenchmen
-            ( ( buildingsAfterHouseSpawn, buildingOccupancyAfterHouses ), ( pathfindingOccupancyAfterHouses, nextBuildingIdAfterHouses ) ) = List.foldl
-                    (\castleBuilding ( ( accBuildings, accBuildOcc ), ( accPfOcc, currentBuildingId ) ) ->
-                        case findAdjacentHouseLocation model.mapConfig model.gridConfig accBuildings accBuildOcc of
-                            Just ( gridX, gridY ) ->
-                                let
-                                    newHouse = { id = currentBuildingId
-                                        , owner = Player
-                                        , gridX = gridX
-                                        , gridY = gridY
-                                        , size = Medium
-                                        , hp = 500
-                                        , maxHp = 500
-                                        , garrisonSlots = 0
-                                        , garrisonOccupied = 0
-                                        , buildingType = GameStrings.buildingTypeHouse
-                                        , behavior = GenerateGold
-                                        , behaviorTimer = 0
-                                        , behaviorDuration = 15.0 + toFloat (modBy 30000 (currentBuildingId * 1000)) / 1000.0
-                                        , coffer = 0
-                                        , garrisonConfig = []
-                                        , activeRadius = 192
-                                        , searchRadius = 384
-                                        , tags = [ BuildingTag, CofferTag ]
-                                        }
-                                    newBuildOcc = addBuildingGridOccupancy newHouse accBuildOcc
-                                    newPfOcc = addBuildingOccupancy model.gridConfig newHouse accPfOcc
-                                in
-                                ( ( newHouse :: accBuildings, newBuildOcc ), ( newPfOcc, currentBuildingId + 1 ) )
-                            Nothing ->
-                                ( ( accBuildings, accBuildOcc ), ( accPfOcc, currentBuildingId ) )
-                    )
-                    ( ( updatedBuildings, model.buildingOccupancy ), ( updatedOccupancy, model.nextBuildingId ) )
-                    buildingsNeedingHouseSpawn
-            unitsAfterHouseSpawn =
-                if List.isEmpty buildingsNeedingHouseSpawn then
-                    allUnits
-                else
-                    recalculateAllPaths model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses allUnits
             buildingsAfterRepairs = List.map
                     (\building ->
                         let
@@ -160,7 +117,7 @@ simulationTick delta model =
                                                 isNear && canBuild && building.hp < building.maxHp
                                             _ -> False
                                     )
-                                    unitsAfterHouseSpawn
+                                    allUnits
                             hpGain = List.length repairingPeasants * 5
                             newHp = min building.maxHp (building.hp + hpGain)
                             isConstructionComplete =
@@ -181,33 +138,51 @@ simulationTick delta model =
                                         ( building.behavior, building.tags, building.behaviorDuration )
                                 else
                                     ( building.behavior, building.tags, building.behaviorDuration )
+                            newTimer =
+                                if isConstructionComplete then
+                                    0
+                                else
+                                    building.behaviorTimer
                         in
                         { building
                             | hp = newHp
                             , behavior = completedBehavior
                             , tags = completedTags
                             , behaviorDuration = completedDuration
-                            , behaviorTimer = 0
+                            , behaviorTimer = newTimer
                         }
                     )
-                    buildingsAfterHouseSpawn
+                    updatedBuildings
             newGameState =
                 if List.any (\b -> List.member ObjectiveTag b.tags && b.hp <= 0) buildingsAfterRepairs then
                     GameOver
                 else
                     model.gameState
+            -- Get IDs of units that need paths
+            unitIdsNeedingPaths = List.map .id unitsNeedingPaths
             unitsWithPaths = List.map
                     (\unit ->
-                        case ( unit.location, unit.targetDestination ) of
-                            ( OnMap x y, Just targetCell ) ->
-                                let
-                                    newPath =
-                                        calculateUnitPath model.gridConfig model.mapConfig pathfindingOccupancyAfterHouses x y targetCell
-                                in
-                                { unit | path = newPath }
-                            _ -> unit
+                        -- Only generate path if this unit is in unitsNeedingPaths
+                        if List.member unit.id unitIdsNeedingPaths then
+                            case ( unit.location, unit.targetDestination ) of
+                                ( OnMap x y, Just targetCell ) ->
+                                    let
+                                        newPath =
+                                            calculateUnitPath model.gridConfig model.mapConfig updatedOccupancy x y targetCell
+                                        _ = Debug.log "[SIM] PathGen"
+                                            { unitId = unit.id
+                                            , from = ( floor (x / 32), floor (y / 32) )
+                                            , to = targetCell
+                                            , pathLength = List.length newPath
+                                            , pathEmpty = List.isEmpty newPath
+                                            }
+                                    in
+                                    { unit | path = newPath }
+                                _ -> unit
+                        else
+                            unit
                     )
-                    unitsAfterHouseSpawn
+                    allUnits
         in
         { model
             | accumulatedTime = remainingTime
@@ -215,12 +190,13 @@ simulationTick delta model =
             , lastSimulationDeltas = newSimulationDeltas
             , units = unitsWithPaths
             , buildings = buildingsAfterRepairs
-            , buildingOccupancy = buildingOccupancyAfterHouses
-            , pathfindingOccupancy = pathfindingOccupancyAfterHouses
+            , buildingOccupancy = model.buildingOccupancy
+            , pathfindingOccupancy = updatedOccupancy
             , tooltipHover = updatedTooltipHover
             , nextUnitId = nextUnitIdAfterSpawning
-            , nextBuildingId = nextBuildingIdAfterHouses
+            , nextBuildingId = model.nextBuildingId
             , gameState = newGameState
+            , gold = model.gold + goldGenerated
         }
     else
         { model | accumulatedTime = newAccumulatedTime, tooltipHover = updatedTooltipHover }

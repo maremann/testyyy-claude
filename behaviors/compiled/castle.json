@@ -1,0 +1,74 @@
+{
+  "behaviorId": "castle_building",
+  "unitType": "Castle",
+  "inherits": "NONE",
+  "description": "The Castle is the kingdom's heart. It generates passive income (2 gold every 15-30 seconds) and spawns defenders into its garrison. There is only one castle per game. If destroyed (HP <= 0), the game ends.",
+  "strategicBehaviors": [
+    {
+      "strategicId": "Exist",
+      "description": "Castle exists and performs basic functions",
+      "priority": "Normal",
+      "tacticalDelegates": ["GenerateIncome"],
+      "awarenessTypes": [],
+      "transitions": []
+    }
+  ],
+  "tacticalBehaviors": [
+    {
+      "tacticalId": "GenerateIncome",
+      "description": "Generate passive gold for the player",
+      "priority": "Background",
+      "operationalSequence": [
+        "IncrementGoldTimer",
+        "AddGoldToPlayer"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Continuous (never completes)",
+      "failureCondition": "None",
+      "interruptible": true,
+      "transitions": []
+    }
+  ],
+  "operationalBehaviors": [
+    {
+      "operationalId": "IncrementGoldTimer",
+      "description": "Count time until next gold generation",
+      "action": "IncrementTimer",
+      "parameters": {
+        "timer": "building.behaviorTimer",
+        "deltaSeconds": "frame time"
+      },
+      "duration": 15,
+      "successCondition": "timer >= building.behaviorDuration",
+      "failureCondition": "None",
+      "sideEffects": [
+        "building.behaviorTimer += deltaSeconds"
+      ],
+      "result": [
+        "TimerComplete",
+        "Counting"
+      ]
+    },
+    {
+      "operationalId": "AddGoldToPlayer",
+      "description": "Generate gold directly to player's gold pool",
+      "action": "AddGoldToPlayer",
+      "parameters": {
+        "amount": "2 gold",
+        "target": "player.gold"
+      },
+      "duration": "Instant",
+      "successCondition": "Always",
+      "failureCondition": "None",
+      "sideEffects": [
+        "- player.gold += 2"
+      ],
+      "result": []
+    }
+  ],
+  "awarenessTypes": {
+    "active": [],
+    "passive": []
+  },
+  "stateData": {}
+}

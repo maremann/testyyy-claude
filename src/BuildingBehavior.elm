@@ -1,10 +1,42 @@
 module BuildingBehavior exposing (updateBuildingBehavior)
 
+import GameStrings
 import Types exposing (..)
 
--- Dummy implementation: No autonomous behavior
--- Returns (building, shouldSpawnHouse)
-updateBuildingBehavior : Float -> Building -> ( Building, Bool )
+
+{-| Update building behavior
+Returns: (updated building, gold generated)
+-}
+updateBuildingBehavior : Float -> Building -> ( Building, Int )
 updateBuildingBehavior deltaSeconds building =
-    -- No behavior processing - buildings just exist
-    ( building, False )
+    case building.buildingType of
+        _ ->
+            if building.buildingType == GameStrings.buildingTypeCastle then
+                updateCastleBehavior deltaSeconds building
+
+            else
+                -- Other buildings: no behavior yet
+                ( building, 0 )
+
+
+{-| Castle behavior: generate gold and manage garrison spawning
+-}
+updateCastleBehavior : Float -> Building -> ( Building, Int )
+updateCastleBehavior deltaSeconds building =
+    -- Gold generation
+    let
+        newGoldTimer =
+            building.behaviorTimer + deltaSeconds
+
+        ( buildingAfterGold, goldGenerated ) =
+            if newGoldTimer >= building.behaviorDuration then
+                -- Generate gold and reset timer
+                ( { building | behaviorTimer = 0 }, 2 )
+
+            else
+                -- Update timer
+                ( { building | behaviorTimer = newGoldTimer }, 0 )
+    in
+    -- Garrison spawning (handled separately in UnitBehavior.elm)
+    -- We just return the building with updated gold timer
+    ( buildingAfterGold, goldGenerated )

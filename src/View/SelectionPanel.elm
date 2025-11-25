@@ -1,4 +1,5 @@
 module View.SelectionPanel exposing (viewSelectionPanel)
+import BehaviorEngine.UnitStates as UnitStates
 import BuildingTemplates exposing (castleTemplate, houseTemplate, testBuildingTemplate, warriorsGuildTemplate)
 import GameStrings
 import Html exposing (Html, div, text)
@@ -7,6 +8,53 @@ import Html.Events exposing (on, onClick, onInput, onMouseLeave)
 import Json.Decode as D
 import Message exposing (Msg(..))
 import Types exposing (..)
+
+
+-- Helper Functions
+
+formatCastleGuardBehavior : UnitStates.CastleGuardPatrolState -> String
+formatCastleGuardBehavior state =
+    let
+        strategicStr = case state.currentStrategic of
+            UnitStates.DefendTerritory -> "Defend Territory"
+            UnitStates.WithoutHome -> "Without Home"
+
+        tacticalStr = case state.currentTactical of
+            Nothing -> "None"
+            Just UnitStates.RestInGarrison -> "Rest in Garrison"
+            Just UnitStates.PlanPatrolRoute -> "Plan Patrol"
+            Just UnitStates.PatrolRoute -> "Patrolling"
+            Just UnitStates.CircleBuilding -> "Circle Building"
+            Just UnitStates.EngageMonster -> "Engage Monster"
+            Just UnitStates.ResumePatrol -> "Resume Patrol"
+            Just UnitStates.ReturnToCastle -> "Return to Castle"
+            Just UnitStates.TacticalIdle -> "Idle"
+
+        operationalStr = case state.currentOperational of
+            Nothing -> "None"
+            Just UnitStates.Sleep -> "Sleeping"
+            Just UnitStates.SelectPatrolBuildings -> "Selecting Targets"
+            Just UnitStates.GetCurrentPatrolTarget -> "Getting Target"
+            Just UnitStates.MoveToBuilding -> "Moving"
+            Just UnitStates.CirclePerimeter -> "Circling"
+            Just UnitStates.IncrementPatrolIndex -> "Next Building"
+            Just UnitStates.CheckCircleComplete -> "Checking Circle"
+            Just UnitStates.FindCastle -> "Finding Castle"
+            Just UnitStates.MoveToMonster -> "Moving to Monster"
+            Just UnitStates.AttackMonster -> "Attacking"
+            Just UnitStates.CheckMonsterDefeated -> "Checking Monster"
+            Just UnitStates.ExitGarrison -> "Exiting Garrison"
+            Just UnitStates.EnterGarrison -> "Entering Garrison"
+            Just UnitStates.OperationalIdle -> "Idle"
+
+        patrolInfo = if List.isEmpty state.patrolRoute then
+                ""
+            else
+                " [" ++ String.fromInt (state.patrolIndex + 1) ++ "/" ++ String.fromInt (List.length state.patrolRoute) ++ "]"
+    in
+    strategicStr ++ " > " ++ tacticalStr ++ " > " ++ operationalStr ++ patrolInfo
+
+
 viewSelectionPanel : Model -> Float -> Html Msg
 viewSelectionPanel model panelWidth =
     let
@@ -478,7 +526,6 @@ viewSelectionPanel model panelWidth =
                                                     (D.map2 (\x y -> TooltipEnter ("behavior-" ++ (case building.behavior of
                                                         Idle -> GameStrings.buildingBehaviorIdle
                                                         UnderConstruction -> GameStrings.buildingBehaviorUnderConstruction
-                                                        SpawnHouse -> GameStrings.buildingBehaviorSpawnHouse
                                                         GenerateGold -> GameStrings.buildingBehaviorGenerateGold
                                                         BuildingDead -> GameStrings.unitBehaviorDead
                                                         BuildingDebugError msg -> "Error: " ++ msg
@@ -491,7 +538,6 @@ viewSelectionPanel model panelWidth =
                                                 [ text ("Behavior: " ++ (case building.behavior of
                                                     Idle -> GameStrings.buildingBehaviorIdle
                                                     UnderConstruction -> GameStrings.buildingBehaviorUnderConstruction
-                                                    SpawnHouse -> GameStrings.buildingBehaviorSpawnHouse
                                                     GenerateGold -> GameStrings.buildingBehaviorGenerateGold
                                                     BuildingDead -> GameStrings.unitBehaviorDead
                                                     BuildingDebugError msg -> "Error: " ++ msg
@@ -585,7 +631,7 @@ viewSelectionPanel model panelWidth =
                             [ div
                                 [ class "font-bold text-12"
                                 ]
-                                [ text unit.unitType ]
+                                [ text (unit.unitType ++ " #" ++ String.fromInt unit.id) ]
                             , div
                                 [ class "text-9 text-aaa flex gap-4"
                                 ]
@@ -645,6 +691,7 @@ viewSelectionPanel model panelWidth =
                                         CollectingTaxes -> GameStrings.unitBehaviorCollectingTaxes
                                         ReturnToCastle -> GameStrings.unitBehaviorReturningToCastle
                                         DeliveringGold -> GameStrings.unitBehaviorDeliveringGold
+                                        CastleGuardPatrol state -> formatCastleGuardBehavior state
                                         )) x y)
                                         (D.field "clientX" D.float)
                                         (D.field "clientY" D.float)
@@ -665,6 +712,7 @@ viewSelectionPanel model panelWidth =
                                     CollectingTaxes -> GameStrings.unitBehaviorCollectingTaxes
                                     ReturnToCastle -> GameStrings.unitBehaviorReturningToCastle
                                     DeliveringGold -> GameStrings.unitBehaviorDeliveringGold
+                                    CastleGuardPatrol state -> formatCastleGuardBehavior state
                                     ))
                                 ]
                             ]

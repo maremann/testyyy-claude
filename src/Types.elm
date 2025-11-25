@@ -1,5 +1,6 @@
 module Types exposing (..)
 import Dict exposing (Dict)
+import BehaviorEngine.UnitStates as UnitStates
 type alias TooltipState = { elementId : String
     , hoverTime : Float
     , mouseX : Float
@@ -68,10 +69,11 @@ type UnitBehavior
     | CollectingTaxes
     | ReturnToCastle
     | DeliveringGold
+    -- New behavior tree system
+    | CastleGuardPatrol UnitStates.CastleGuardPatrolState
 type BuildingBehavior
     = Idle
     | UnderConstruction
-    | SpawnHouse
     | GenerateGold
     | BuildingDead
     | BuildingDebugError String
