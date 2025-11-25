@@ -142,8 +142,8 @@ type alias InterruptState =
 function generateStrategicBehaviorType(spec) {
     const moduleName = toElmModuleName(spec.behaviorId);
 
-    const variants = spec.strategicBehaviors.map(s =>
-        `    | ${toElmTypeName(s.strategicId)}`
+    const variants = spec.strategicBehaviors.map((s, idx) =>
+        `    ${idx === 0 ? '=' : '|'} ${toElmTypeName(s.strategicId)}`
     ).join('\n');
 
     return `{-| Strategic behaviors for ${spec.unitType}
@@ -156,8 +156,8 @@ ${variants}
 function generateTacticalBehaviorType(spec) {
     const moduleName = toElmModuleName(spec.behaviorId);
 
-    const variants = spec.tacticalBehaviors.map(t =>
-        `    | ${toElmTypeName(t.tacticalId)}`
+    const variants = spec.tacticalBehaviors.map((t, idx) =>
+        `    ${idx === 0 ? '=' : '|'} ${toElmTypeName(t.tacticalId)}`
     ).join('\n');
 
     return `{-| Tactical behaviors for ${spec.unitType}
@@ -170,8 +170,8 @@ ${variants}
 function generateOperationalBehaviorType(spec) {
     const moduleName = toElmModuleName(spec.behaviorId);
 
-    const variants = spec.operationalBehaviors.map(o =>
-        `    | ${toElmTypeName(o.operationalId)}`
+    const variants = spec.operationalBehaviors.map((o, idx) =>
+        `    ${idx === 0 ? '=' : '|'} ${toElmTypeName(o.operationalId)}`
     ).join('\n');
 
     return `{-| Operational behaviors for ${spec.unitType}

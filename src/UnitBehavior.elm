@@ -24,7 +24,7 @@ updateGarrisonSpawning deltaSeconds building =
                         let
                             newTimer = slot.spawnTimer + deltaSeconds
                         in
-                        if newTimer >= 30.0 then
+                        if newTimer >= 10.0 then
                             ( { slot | spawnTimer = 0, currentCount = slot.currentCount + 1 } :: accConfig
                             , ( slot.unitType, building.id ) :: accSpawn
                             )

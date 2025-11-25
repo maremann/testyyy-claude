@@ -14,6 +14,9 @@ updateBuildingBehavior deltaSeconds building =
             if building.buildingType == GameStrings.buildingTypeCastle then
                 updateCastleBehavior deltaSeconds building
 
+            else if building.buildingType == GameStrings.buildingTypeHouse then
+                updateHouseBehavior deltaSeconds building
+
             else
                 -- Other buildings: no behavior yet
                 ( building, 0 )
@@ -40,3 +43,25 @@ updateCastleBehavior deltaSeconds building =
     -- Garrison spawning (handled separately in UnitBehavior.elm)
     -- We just return the building with updated gold timer
     ( buildingAfterGold, goldGenerated )
+
+
+{-| House behavior: accumulate gold in coffer
+-}
+updateHouseBehavior : Float -> Building -> ( Building, Int )
+updateHouseBehavior deltaSeconds building =
+    -- Gold accumulation
+    let
+        newGoldTimer =
+            building.behaviorTimer + deltaSeconds
+
+        buildingAfterGold =
+            if newGoldTimer >= building.behaviorDuration then
+                -- Add gold to coffer and reset timer
+                { building | behaviorTimer = 0, coffer = building.coffer + 2 }
+
+            else
+                -- Update timer
+                { building | behaviorTimer = newGoldTimer }
+    in
+    -- House doesn't generate gold for player directly (Tax Collectors collect from coffer)
+    ( buildingAfterGold, 0 )

@@ -1,0 +1,74 @@
+{
+  "behaviorId": "house_building",
+  "unitType": "House",
+  "inherits": "NONE",
+  "description": "The House is a small residential building that generates passive income. It accumulates gold in its coffer (2 gold every 15-30 seconds, randomized). Houses cannot be placed by the player and do not have a construction phase - they start at full HP when spawned by the game.",
+  "strategicBehaviors": [
+    {
+      "strategicId": "Exist",
+      "description": "House exists and performs basic functions",
+      "priority": "Normal",
+      "tacticalDelegates": ["GenerateIncome"],
+      "awarenessTypes": [],
+      "transitions": []
+    }
+  ],
+  "tacticalBehaviors": [
+    {
+      "tacticalId": "GenerateIncome",
+      "description": "Generate passive gold into the building's coffer",
+      "priority": "Background",
+      "operationalSequence": [
+        "IncrementGoldTimer",
+        "AddGoldToCoffer"
+      ],
+      "awarenessTypes": [],
+      "successCondition": "Continuous (never completes)",
+      "failureCondition": "None",
+      "interruptible": true,
+      "transitions": []
+    }
+  ],
+  "operationalBehaviors": [
+    {
+      "operationalId": "IncrementGoldTimer",
+      "description": "Count time until next gold generation",
+      "action": "IncrementTimer",
+      "parameters": {
+        "timer": "building.behaviorTimer",
+        "deltaSeconds": "frame time"
+      },
+      "duration": 15,
+      "successCondition": "timer >= building.behaviorDuration",
+      "failureCondition": "None",
+      "sideEffects": [
+        "building.behaviorTimer += deltaSeconds"
+      ],
+      "result": [
+        "TimerComplete",
+        "Counting"
+      ]
+    },
+    {
+      "operationalId": "AddGoldToCoffer",
+      "description": "Generate gold into the building's coffer",
+      "action": "AddGoldToCoffer",
+      "parameters": {
+        "amount": "2 gold",
+        "target": "building.coffer"
+      },
+      "duration": "Instant",
+      "successCondition": "Always",
+      "failureCondition": "None",
+      "sideEffects": [
+        "- building.coffer += 2"
+      ],
+      "result": []
+    }
+  ],
+  "awarenessTypes": {
+    "active": [],
+    "passive": []
+  },
+  "stateData": {}
+}

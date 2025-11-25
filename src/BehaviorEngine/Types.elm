@@ -1,7 +1,7 @@
 module BehaviorEngine.Types exposing (..)
 
 import Dict exposing (Dict)
-import Types exposing (Building, Unit, UnitBehavior)
+import Types exposing (Building, Unit)
 
 
 -- PRIORITY SYSTEM
@@ -62,6 +62,13 @@ type ActionResult
     | NoThreatDetected
     | Success
     | Failure String
+    -- Patrol-specific results
+    | PatrolRouteCreated (List Int)  -- building IDs selected
+    | PatrolComplete  -- All buildings visited
+    | CircleComplete  -- Perimeter circle finished
+    | PerimeterCalculated (List (Int, Int))  -- waypoints generated
+    | PatrolStateValid  -- Patrol route exists
+    | PatrolStateInvalid  -- No patrol route
 
 
 -- OPERATIONAL ACTIONS
@@ -83,6 +90,18 @@ type OperationalAction
     | DepositGold
     | AttackUnit Int  -- target unit id
     | PatrolArea
+    -- Castle Guard patrol actions
+    | SelectPatrolBuildings  -- Choose 1-3 buildings for patrol
+    | GetCurrentPatrolTarget  -- Get building at current patrol index
+    | CalculateBuildingPerimeter Int  -- Calculate perimeter waypoints for building
+    | CirclePerimeter  -- Navigate building perimeter
+    | IncrementPatrolIndex  -- Move to next building in patrol
+    | CheckCircleComplete  -- Verify perimeter circle is complete
+    | CheckPatrolState  -- Verify patrol route exists
+    -- Monster combat (stubbed - monsters don't exist yet)
+    | MoveToMonster Int  -- Move to monster for combat
+    | AttackMonster Int  -- Attack engaged monster
+    | CheckMonsterDefeated Int  -- Check if monster is dead
 
 
 -- TACTICAL ACTIONS (Higher level, delegate to operational)
@@ -375,6 +394,16 @@ operationalActionToString action =
         DepositGold -> "DepositGold"
         AttackUnit _ -> "AttackUnit"
         PatrolArea -> "PatrolArea"
+        SelectPatrolBuildings -> "SelectPatrolBuildings"
+        GetCurrentPatrolTarget -> "GetCurrentPatrolTarget"
+        CalculateBuildingPerimeter _ -> "CalculateBuildingPerimeter"
+        CirclePerimeter -> "CirclePerimeter"
+        IncrementPatrolIndex -> "IncrementPatrolIndex"
+        CheckCircleComplete -> "CheckCircleComplete"
+        CheckPatrolState -> "CheckPatrolState"
+        MoveToMonster _ -> "MoveToMonster"
+        AttackMonster _ -> "AttackMonster"
+        CheckMonsterDefeated _ -> "CheckMonsterDefeated"
 
 
 strategicActionToString : StrategicAction -> String

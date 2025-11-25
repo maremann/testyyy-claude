@@ -64,6 +64,38 @@ executeOperationalAction context action =
         PatrolArea ->
             executePatrolArea context
 
+        -- Castle Guard patrol actions
+        SelectPatrolBuildings ->
+            executeSelectPatrolBuildings context
+
+        GetCurrentPatrolTarget ->
+            executeGetCurrentPatrolTarget context
+
+        CalculateBuildingPerimeter buildingId ->
+            executeCalculateBuildingPerimeter context buildingId
+
+        CirclePerimeter ->
+            executeCirclePerimeter context
+
+        IncrementPatrolIndex ->
+            executeIncrementPatrolIndex context
+
+        CheckCircleComplete ->
+            executeCheckCircleComplete context
+
+        CheckPatrolState ->
+            executeCheckPatrolState context
+
+        -- Monster combat (stubbed)
+        MoveToMonster monsterId ->
+            executeMoveToMonster context monsterId
+
+        AttackMonster monsterId ->
+            executeAttackMonster context monsterId
+
+        CheckMonsterDefeated monsterId ->
+            executeCheckMonsterDefeated context monsterId
+
 
 -- ACTION IMPLEMENTATIONS
 
@@ -338,6 +370,137 @@ executeAttackUnit context targetId =
 executePatrolArea : BehaviorContext -> ( Unit, ActionResult, Bool )
 executePatrolArea context =
     -- Patrolling not implemented yet
+    ( context.unit, NoResult, False )
+
+
+-- CASTLE GUARD PATROL ACTIONS
+
+executeSelectPatrolBuildings : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeSelectPatrolBuildings context =
+    case context.unit.location of
+        OnMap x y ->
+            let
+                -- Get all player buildings (including castle)
+                availableBuildings =
+                    context.buildings
+                        |> List.filter (\b -> b.owner == Player)
+
+                -- Prioritize damaged buildings, then by distance
+                prioritizedBuildings =
+                    availableBuildings
+                        |> List.map (\b ->
+                            let
+                                buildGridSize = 64
+                                bx = toFloat b.gridX * toFloat buildGridSize + (toFloat (buildingSizeToGridCells b.size) * toFloat buildGridSize / 2)
+                                by = toFloat b.gridY * toFloat buildGridSize + (toFloat (buildingSizeToGridCells b.size) * toFloat buildGridSize / 2)
+                                dist = sqrt ((x - bx) ^ 2 + (y - by) ^ 2)
+                                isDamaged = b.hp < b.maxHp
+                                -- Prioritize: damaged first, then distant
+                                priority = if isDamaged then -1000 + dist else dist
+                            in
+                            ( b, priority )
+                        )
+                        |> List.sortBy Tuple.second
+                        |> List.map Tuple.first
+
+                -- Select 1-3 buildings (take top 3 by priority)
+                selectedBuildings = prioritizedBuildings
+                    |> List.take 3
+                    |> List.map .id
+            in
+            if List.isEmpty selectedBuildings then
+                ( context.unit, NoBuildingFound, False )
+            else
+                ( context.unit, PatrolRouteCreated selectedBuildings, False )
+
+        Garrisoned _ ->
+            ( context.unit, Failure "Cannot select patrol while garrisoned", False )
+
+
+executeGetCurrentPatrolTarget : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeGetCurrentPatrolTarget context =
+    -- This function will need access to patrol state, which is unit-specific
+    -- For now, return NoResult - will be handled in CastleGuard.elm with state access
+    ( context.unit, NoResult, False )
+
+
+executeCalculateBuildingPerimeter : BehaviorContext -> Int -> ( Unit, ActionResult, Bool )
+executeCalculateBuildingPerimeter context buildingId =
+    let
+        maybeBuilding = context.buildings
+            |> List.filter (\b -> b.id == buildingId)
+            |> List.head
+    in
+    case maybeBuilding of
+        Nothing ->
+            ( context.unit, NoBuildingFound, False )
+
+        Just building ->
+            let
+                buildGridSize = 64
+                centerX = building.gridX * buildGridSize + (buildingSizeToGridCells building.size * buildGridSize // 2)
+                centerY = building.gridY * buildGridSize + (buildingSizeToGridCells building.size * buildGridSize // 2)
+                radius = (buildingSizeToGridCells building.size * buildGridSize // 2) + 48  -- safety margin
+
+                -- 8 waypoints around perimeter (N, NE, E, SE, S, SW, W, NW)
+                waypoints =
+                    [ ( centerX, centerY - radius )  -- N
+                    , ( centerX + round (toFloat radius * 0.7), centerY - round (toFloat radius * 0.7) )  -- NE
+                    , ( centerX + radius, centerY )  -- E
+                    , ( centerX + round (toFloat radius * 0.7), centerY + round (toFloat radius * 0.7) )  -- SE
+                    , ( centerX, centerY + radius )  -- S
+                    , ( centerX - round (toFloat radius * 0.7), centerY + round (toFloat radius * 0.7) )  -- SW
+                    , ( centerX - radius, centerY )  -- W
+                    , ( centerX - round (toFloat radius * 0.7), centerY - round (toFloat radius * 0.7) )  -- NW
+                    ]
+            in
+            ( context.unit, PerimeterCalculated waypoints, False )
+
+
+executeCirclePerimeter : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeCirclePerimeter context =
+    -- This will need access to perimeter state - handled in CastleGuard.elm
+    ( context.unit, NoResult, False )
+
+
+executeIncrementPatrolIndex : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeIncrementPatrolIndex context =
+    -- State increment handled in CastleGuard.elm
+    ( context.unit, Success, False )
+
+
+executeCheckCircleComplete : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeCheckCircleComplete context =
+    -- State check handled in CastleGuard.elm
+    ( context.unit, NoResult, False )
+
+
+executeCheckPatrolState : BehaviorContext -> ( Unit, ActionResult, Bool )
+executeCheckPatrolState context =
+    -- State check handled in CastleGuard.elm
+    ( context.unit, NoResult, False )
+
+
+-- MONSTER COMBAT (STUBBED - Monsters don't exist in game yet)
+
+executeMoveToMonster : BehaviorContext -> Int -> ( Unit, ActionResult, Bool )
+executeMoveToMonster context monsterId =
+    -- TODO: Implement when monster system exists
+    -- Should find monster unit, path to melee range
+    ( context.unit, NoUnitFound, False )
+
+
+executeAttackMonster : BehaviorContext -> Int -> ( Unit, ActionResult, Bool )
+executeAttackMonster context monsterId =
+    -- TODO: Implement when monster/combat system exists
+    -- Should deal damage to monster every attack interval
+    ( context.unit, NoResult, False )
+
+
+executeCheckMonsterDefeated : BehaviorContext -> Int -> ( Unit, ActionResult, Bool )
+executeCheckMonsterDefeated context monsterId =
+    -- TODO: Implement when monster system exists
+    -- Should check if monster HP <= 0
     ( context.unit, NoResult, False )
 
 

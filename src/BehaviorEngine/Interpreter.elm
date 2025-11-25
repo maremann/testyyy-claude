@@ -4,6 +4,7 @@ module BehaviorEngine.Interpreter exposing
 
 import BehaviorEngine.Actions as Actions
 import BehaviorEngine.Types exposing (..)
+import BehaviorEngine.Units.CastleGuardPatrol as CastleGuardPatrol
 import GameHelpers exposing (exitGarrison)
 import Grid
 import Types exposing (..)
@@ -248,6 +249,14 @@ executeNormalBehavior context =
 
         DeliveringGold ->
             ( context.unit, False )
+
+        -- New behavior tree system
+        CastleGuardPatrol guardState ->
+            let
+                ( updatedUnit, updatedState, needsPath ) =
+                    CastleGuardPatrol.updateCastleGuardPatrol context guardState
+            in
+            ( { updatedUnit | behavior = CastleGuardPatrol updatedState }, needsPath )
 
 
 -- CONDITION EVALUATION (for future behavior tree use)

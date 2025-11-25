@@ -6,6 +6,7 @@ module GameHelpers exposing
     , recalculateAllPaths
     , updateUnitMovement
     )
+import BehaviorEngine.UnitStates as UnitStates
 import Dict exposing (Dict)
 import GameStrings
 import Grid exposing (getBuildingEntrance)
@@ -106,14 +107,19 @@ createHenchman : String -> Int -> Int -> Building -> Unit
 createHenchman unitType unitId buildingId homeBuilding =
     let
         ( hp, speed, tags ) =
-            if unitType == GameStrings.unitTypePeasant then
-                ( 50, 2.0, [ HenchmanTag ] )
-            else if unitType == GameStrings.unitTypeTaxCollector then
+            if unitType == GameStrings.unitTypeTaxCollector then
                 ( 50, 1.5, [ HenchmanTag ] )
             else if unitType == GameStrings.unitTypeCastleGuard then
                 ( 100, 2.0, [ HenchmanTag ] )
             else
                 ( 50, 2.0, [ HenchmanTag ] )
+
+        -- Initialize behavior based on unit type
+        initialBehavior =
+            if unitType == GameStrings.unitTypeCastleGuard then
+                CastleGuardPatrol UnitStates.initCastleGuardPatrolState
+            else
+                Sleeping
     in
     { id = unitId
     , owner = Player
@@ -125,7 +131,7 @@ createHenchman unitType unitId buildingId homeBuilding =
     , unitKind = Henchman
     , color = "#888"
     , path = []
-    , behavior = Sleeping
+    , behavior = initialBehavior
     , behaviorTimer = 0
     , behaviorDuration = 0
     , thinkingTimer = 0

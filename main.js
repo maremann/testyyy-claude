@@ -6203,10 +6203,10 @@ var $author$project$Types$DraggingMinimap = function (a) {
 var $author$project$Types$DraggingViewport = function (a) {
 	return {$: 'DraggingViewport', a: a};
 };
-var $author$project$Types$GenerateGold = {$: 'GenerateGold'};
 var $author$project$Types$ObjectiveTag = {$: 'ObjectiveTag'};
 var $author$project$Types$Player = {$: 'Player'};
 var $author$project$Types$Playing = {$: 'Playing'};
+var $author$project$Types$SpawnHouse = {$: 'SpawnHouse'};
 var $author$project$Types$UnderConstruction = {$: 'UnderConstruction'};
 var $author$project$Types$buildingSizeToGridCells = function (size) {
 	switch (size.$) {
@@ -7321,7 +7321,9 @@ var $author$project$GameHelpers$recalculateAllPaths = F4(
 var $elm$core$Basics$round = _Basics_round;
 var $author$project$Types$CofferTag = {$: 'CofferTag'};
 var $author$project$Types$GameOver = {$: 'GameOver'};
+var $author$project$Types$GenerateGold = {$: 'GenerateGold'};
 var $author$project$Types$GuildTag = {$: 'GuildTag'};
+var $author$project$Types$Medium = {$: 'Medium'};
 var $author$project$Types$Pause = {$: 'Pause'};
 var $author$project$Grid$getUnitPathfindingCells = F3(
 	function (gridConfig, worldX, worldY) {
@@ -7370,27 +7372,6 @@ var $author$project$Grid$addUnitOccupancy = F4(
 	});
 var $author$project$GameStrings$buildingTypeHouse = 'House';
 var $author$project$GameStrings$buildingTypeWarriorsGuild = 'Warrior\'s Guild';
-var $elm$core$Debug$log = _Debug_log;
-var $author$project$Grid$removeUnitOccupancy = F4(
-	function (gridConfig, worldX, worldY, occupancy) {
-		var decrementCell = F2(
-			function (cell, dict) {
-				return A3(
-					$elm$core$Dict$update,
-					cell,
-					function (maybeCount) {
-						if (maybeCount.$ === 'Just') {
-							var count = maybeCount.a;
-							return (count <= 1) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(count - 1);
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					},
-					dict);
-			});
-		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
-		return A3($elm$core$List$foldl, decrementCell, occupancy, cells);
-	});
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -7517,36 +7498,51 @@ var $elm$core$List$take = F2(
 	function (n, list) {
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
-var $author$project$BuildingBehavior$updateCastleBehavior = F2(
-	function (deltaSeconds, building) {
-		var newGoldTimer = building.behaviorTimer + deltaSeconds;
-		var _v0 = (_Utils_cmp(newGoldTimer, building.behaviorDuration) > -1) ? _Utils_Tuple2(
-			_Utils_update(
-				building,
-				{behaviorTimer: 0}),
-			2) : _Utils_Tuple2(
-			_Utils_update(
-				building,
-				{behaviorTimer: newGoldTimer}),
-			0);
-		var buildingAfterGold = _v0.a;
-		var goldGenerated = _v0.b;
-		return _Utils_Tuple2(buildingAfterGold, goldGenerated);
+var $author$project$Grid$findAdjacentHouseLocation = F4(
+	function (mapConfig, gridConfig, buildings, buildingOccupancy) {
+		var houseSize = $author$project$Types$Medium;
+		var adjacentCells = A2(
+			$elm$core$List$take,
+			100,
+			A2(
+				$elm$core$List$filter,
+				function (_v0) {
+					var gx = _v0.a;
+					var gy = _v0.b;
+					return A7($author$project$Grid$isValidBuildingPlacement, gx, gy, houseSize, mapConfig, gridConfig, buildingOccupancy, buildings);
+				},
+				A2(
+					$elm$core$List$concatMap,
+					function (b) {
+						return A2($author$project$Grid$getBuildingAreaCells, b, 1);
+					},
+					buildings)));
+		return $elm$core$List$head(adjacentCells);
 	});
-var $author$project$BuildingBehavior$updateHouseBehavior = F2(
-	function (deltaSeconds, building) {
-		var newGoldTimer = building.behaviorTimer + deltaSeconds;
-		var buildingAfterGold = (_Utils_cmp(newGoldTimer, building.behaviorDuration) > -1) ? _Utils_update(
-			building,
-			{behaviorTimer: 0, coffer: building.coffer + 2}) : _Utils_update(
-			building,
-			{behaviorTimer: newGoldTimer});
-		return _Utils_Tuple2(buildingAfterGold, 0);
+var $elm$core$Debug$log = _Debug_log;
+var $author$project$Grid$removeUnitOccupancy = F4(
+	function (gridConfig, worldX, worldY, occupancy) {
+		var decrementCell = F2(
+			function (cell, dict) {
+				return A3(
+					$elm$core$Dict$update,
+					cell,
+					function (maybeCount) {
+						if (maybeCount.$ === 'Just') {
+							var count = maybeCount.a;
+							return (count <= 1) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(count - 1);
+						} else {
+							return $elm$core$Maybe$Nothing;
+						}
+					},
+					dict);
+			});
+		var cells = A3($author$project$Grid$getUnitPathfindingCells, gridConfig, worldX, worldY);
+		return A3($elm$core$List$foldl, decrementCell, occupancy, cells);
 	});
 var $author$project$BuildingBehavior$updateBuildingBehavior = F2(
 	function (deltaSeconds, building) {
-		var _v0 = building.buildingType;
-		return _Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeCastle) ? A2($author$project$BuildingBehavior$updateCastleBehavior, deltaSeconds, building) : (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeHouse) ? A2($author$project$BuildingBehavior$updateHouseBehavior, deltaSeconds, building) : _Utils_Tuple2(building, 0));
+		return _Utils_Tuple2(building, false);
 	});
 var $author$project$UnitBehavior$updateGarrisonSpawning = F2(
 	function (deltaSeconds, building) {
@@ -7558,7 +7554,7 @@ var $author$project$UnitBehavior$updateGarrisonSpawning = F2(
 					var accSpawn = _v1.b;
 					if (_Utils_cmp(slot.currentCount, slot.maxCount) < 0) {
 						var newTimer = slot.spawnTimer + deltaSeconds;
-						return (newTimer >= 10.0) ? _Utils_Tuple2(
+						return (newTimer >= 30.0) ? _Utils_Tuple2(
 							A2(
 								$elm$core$List$cons,
 								_Utils_update(
@@ -8395,7 +8391,7 @@ var $author$project$BehaviorEngine$Units$CastleGuardPatrol$handleOperationalCirc
 					var result = _v4.b;
 					if (result.$ === 'Arrived') {
 						var newIndex = state.perimeterIndex + 1;
-						var circleComplete = newIndex >= 2;
+						var circleComplete = newIndex >= 8;
 						var _v6 = A2(
 							$elm$core$Debug$log,
 							'[CG] CirclePerimeter arrived',
@@ -8703,7 +8699,6 @@ var $author$project$BehaviorEngine$Units$CastleGuardPatrol$handleOperationalIncr
 			false);
 	});
 var $author$project$BehaviorEngine$UnitStates$CircleBuilding = {$: 'CircleBuilding'};
-var $author$project$BehaviorEngine$UnitStates$EnterGarrison = {$: 'EnterGarrison'};
 var $author$project$BehaviorEngine$Units$CastleGuardPatrol$handleOperationalMoveToBuilding = F2(
 	function (context, state) {
 		var _v0 = A2($author$project$BehaviorEngine$Actions$executeOperationalAction, context, $author$project$BehaviorEngine$Types$CheckArrival);
@@ -8711,42 +8706,7 @@ var $author$project$BehaviorEngine$Units$CastleGuardPatrol$handleOperationalMove
 		var result = _v0.b;
 		var needsPath = _v0.c;
 		if (result.$ === 'Arrived') {
-			var _v2 = state.currentTactical;
-			_v2$2:
-			while (true) {
-				if (_v2.$ === 'Just') {
-					switch (_v2.a.$) {
-						case 'PatrolRoute':
-							var _v3 = _v2.a;
-							var _v4 = A2($elm$core$Debug$log, '[CG] Arrived at building', 'Transitioning to CircleBuilding');
-							return _Utils_Tuple3(
-								updatedUnit,
-								_Utils_update(
-									state,
-									{
-										currentOperational: $elm$core$Maybe$Nothing,
-										currentTactical: $elm$core$Maybe$Just($author$project$BehaviorEngine$UnitStates$CircleBuilding)
-									}),
-								false);
-						case 'ReturnToCastle':
-							var _v5 = _v2.a;
-							var _v6 = A2($elm$core$Debug$log, '[CG] Arrived at castle', 'Transitioning to EnterGarrison');
-							return _Utils_Tuple3(
-								updatedUnit,
-								_Utils_update(
-									state,
-									{
-										currentOperational: $elm$core$Maybe$Just($author$project$BehaviorEngine$UnitStates$EnterGarrison)
-									}),
-								false);
-						default:
-							break _v2$2;
-					}
-				} else {
-					break _v2$2;
-				}
-			}
-			var _v7 = A2($elm$core$Debug$log, '[CG] Arrived at building (unknown tactical)', 'Defaulting to CircleBuilding');
+			var _v2 = A2($elm$core$Debug$log, '[CG] Arrived at building', 'Transitioning to CircleBuilding');
 			return _Utils_Tuple3(
 				updatedUnit,
 				_Utils_update(
@@ -8830,7 +8790,7 @@ var $author$project$BehaviorEngine$Units$CastleGuardPatrol$handleOperationalSlee
 		var result = _v0.b;
 		var needsPath = _v0.c;
 		var newTimer = updatedUnit.behaviorTimer + context.deltaSeconds;
-		return (newTimer >= 5.0) ? _Utils_Tuple3(
+		return ((newTimer >= 1.0) || (_Utils_cmp(updatedUnit.hp, updatedUnit.maxHp) > -1)) ? _Utils_Tuple3(
 			_Utils_update(
 				updatedUnit,
 				{behaviorTimer: 0}),
@@ -9526,9 +9486,9 @@ var $author$project$GameHelpers$updateUnitMovement = F5(
 var $author$project$Simulation$simulationTick = F2(
 	function (delta, model) {
 		var updatedTooltipHover = function () {
-			var _v22 = model.tooltipHover;
-			if (_v22.$ === 'Just') {
-				var tooltipState = _v22.a;
+			var _v30 = model.tooltipHover;
+			if (_v30.$ === 'Just') {
+				var tooltipState = _v30.a;
 				return $elm$core$Maybe$Just(
 					_Utils_update(
 						tooltipState,
@@ -9538,8 +9498,8 @@ var $author$project$Simulation$simulationTick = F2(
 			}
 		}();
 		var speedMultiplier = function () {
-			var _v21 = model.simulationSpeed;
-			switch (_v21.$) {
+			var _v29 = model.simulationSpeed;
+			switch (_v29.$) {
 				case 'Pause':
 					return 0;
 				case 'Speed1x':
@@ -9621,41 +9581,101 @@ var $author$project$Simulation$simulationTick = F2(
 				F2(
 					function (building, _v7) {
 						var accBuildings = _v7.a;
-						var accHenchmenSpawn = _v7.b;
-						var accGold = _v7.c;
+						var accNeedingHouseSpawn = _v7.b;
+						var accHenchmenSpawn = _v7.c;
 						var _v8 = A2($author$project$BuildingBehavior$updateBuildingBehavior, deltaSeconds, building);
 						var behaviorUpdatedBuilding = _v8.a;
-						var buildingGold = _v8.b;
+						var shouldSpawnHouse = _v8.b;
 						var _v9 = A2($author$project$UnitBehavior$updateGarrisonSpawning, deltaSeconds, behaviorUpdatedBuilding);
 						var garrisonUpdatedBuilding = _v9.a;
 						var unitsToSpawn = _v9.b;
+						var needsHouseSpawn = shouldSpawnHouse ? A2($elm$core$List$cons, garrisonUpdatedBuilding, accNeedingHouseSpawn) : accNeedingHouseSpawn;
 						return _Utils_Tuple3(
 							A2($elm$core$List$cons, garrisonUpdatedBuilding, accBuildings),
-							_Utils_ap(unitsToSpawn, accHenchmenSpawn),
-							accGold + buildingGold);
+							needsHouseSpawn,
+							_Utils_ap(unitsToSpawn, accHenchmenSpawn));
 					}),
-				_Utils_Tuple3(_List_Nil, _List_Nil, 0),
+				_Utils_Tuple3(_List_Nil, _List_Nil, _List_Nil),
 				model.buildings);
 			var updatedBuildings = _v6.a;
-			var henchmenToSpawn = _v6.b;
-			var goldGenerated = _v6.c;
+			var buildingsNeedingHouseSpawn = _v6.b;
+			var henchmenToSpawn = _v6.c;
 			var _v10 = A3(
 				$elm$core$List$foldl,
 				F2(
-					function (_v11, _v12) {
-						var unitType = _v11.a;
-						var buildingId = _v11.b;
-						var accUnits = _v12.a;
-						var currentUnitId = _v12.b;
-						var _v13 = $elm$core$List$head(
+					function (castleBuilding, _v13) {
+						var _v14 = _v13.a;
+						var accBuildings = _v14.a;
+						var accBuildOcc = _v14.b;
+						var _v15 = _v13.b;
+						var accPfOcc = _v15.a;
+						var currentBuildingId = _v15.b;
+						var _v16 = A4($author$project$Grid$findAdjacentHouseLocation, model.mapConfig, model.gridConfig, accBuildings, accBuildOcc);
+						if (_v16.$ === 'Just') {
+							var _v17 = _v16.a;
+							var gridX = _v17.a;
+							var gridY = _v17.b;
+							var newHouse = {
+								activeRadius: 192,
+								behavior: $author$project$Types$GenerateGold,
+								behaviorDuration: 15.0 + (A2($elm$core$Basics$modBy, 30000, currentBuildingId * 1000) / 1000.0),
+								behaviorTimer: 0,
+								buildingType: $author$project$GameStrings$buildingTypeHouse,
+								coffer: 0,
+								garrisonConfig: _List_Nil,
+								garrisonOccupied: 0,
+								garrisonSlots: 0,
+								gridX: gridX,
+								gridY: gridY,
+								hp: 500,
+								id: currentBuildingId,
+								maxHp: 500,
+								owner: $author$project$Types$Player,
+								searchRadius: 384,
+								size: $author$project$Types$Medium,
+								tags: _List_fromArray(
+									[$author$project$Types$BuildingTag, $author$project$Types$CofferTag])
+							};
+							var newPfOcc = A3($author$project$Grid$addBuildingOccupancy, model.gridConfig, newHouse, accPfOcc);
+							var newBuildOcc = A2($author$project$Grid$addBuildingGridOccupancy, newHouse, accBuildOcc);
+							return _Utils_Tuple2(
+								_Utils_Tuple2(
+									A2($elm$core$List$cons, newHouse, accBuildings),
+									newBuildOcc),
+								_Utils_Tuple2(newPfOcc, currentBuildingId + 1));
+						} else {
+							return _Utils_Tuple2(
+								_Utils_Tuple2(accBuildings, accBuildOcc),
+								_Utils_Tuple2(accPfOcc, currentBuildingId));
+						}
+					}),
+				_Utils_Tuple2(
+					_Utils_Tuple2(updatedBuildings, model.buildingOccupancy),
+					_Utils_Tuple2(updatedOccupancy, model.nextBuildingId)),
+				buildingsNeedingHouseSpawn);
+			var _v11 = _v10.a;
+			var buildingsAfterHouseSpawn = _v11.a;
+			var buildingOccupancyAfterHouses = _v11.b;
+			var _v12 = _v10.b;
+			var pathfindingOccupancyAfterHouses = _v12.a;
+			var nextBuildingIdAfterHouses = _v12.b;
+			var _v18 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (_v19, _v20) {
+						var unitType = _v19.a;
+						var buildingId = _v19.b;
+						var accUnits = _v20.a;
+						var currentUnitId = _v20.b;
+						var _v21 = $elm$core$List$head(
 							A2(
 								$elm$core$List$filter,
 								function (b) {
 									return _Utils_eq(b.id, buildingId);
 								},
 								updatedBuildings));
-						if (_v13.$ === 'Just') {
-							var homeBuilding = _v13.a;
+						if (_v21.$ === 'Just') {
+							var homeBuilding = _v21.a;
 							var newUnit = A4($author$project$GameHelpers$createHenchman, unitType, currentUnitId, buildingId, homeBuilding);
 							return _Utils_Tuple2(
 								A2($elm$core$List$cons, newUnit, accUnits),
@@ -9666,21 +9686,74 @@ var $author$project$Simulation$simulationTick = F2(
 					}),
 				_Utils_Tuple2(_List_Nil, model.nextUnitId),
 				henchmenToSpawn);
-			var newHenchmen = _v10.a;
-			var nextUnitIdAfterSpawning = _v10.b;
+			var newHenchmen = _v18.a;
+			var nextUnitIdAfterSpawning = _v18.b;
 			var allUnits = _Utils_ap(updatedUnits, newHenchmen);
+			var unitsAfterHouseSpawn = $elm$core$List$isEmpty(buildingsNeedingHouseSpawn) ? allUnits : A4($author$project$GameHelpers$recalculateAllPaths, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, allUnits);
+			var buildingsAfterRepairs = A2(
+				$elm$core$List$map,
+				function (building) {
+					var repairingPeasants = A2(
+						$elm$core$List$filter,
+						function (unit) {
+							var _v26 = _Utils_Tuple2(unit.behavior, unit.location);
+							if ((_v26.a.$ === 'Repairing') && (_v26.b.$ === 'OnMap')) {
+								var _v27 = _v26.a;
+								var _v28 = _v26.b;
+								var x = _v28.a;
+								var y = _v28.b;
+								var canBuild = unit.behaviorTimer >= 0.15;
+								var buildGridSize = 64;
+								var buildingMinX = building.gridX * buildGridSize;
+								var buildingMinY = building.gridY * buildGridSize;
+								var buildingSize = $author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize;
+								var buildingMaxX = buildingMinX + buildingSize;
+								var buildingMaxY = buildingMinY + buildingSize;
+								var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
+								return isNear && (canBuild && (_Utils_cmp(building.hp, building.maxHp) < 0));
+							} else {
+								return false;
+							}
+						},
+						unitsAfterHouseSpawn);
+					var hpGain = $elm$core$List$length(repairingPeasants) * 5;
+					var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
+					var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Types$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
+					var _v25 = isConstructionComplete ? (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeWarriorsGuild) ? _Utils_Tuple3(
+						$author$project$Types$GenerateGold,
+						_List_fromArray(
+							[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
+						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeHouse) ? _Utils_Tuple3(
+						$author$project$Types$GenerateGold,
+						_List_fromArray(
+							[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
+						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration))) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
+					var completedBehavior = _v25.a;
+					var completedTags = _v25.b;
+					var completedDuration = _v25.c;
+					return _Utils_update(
+						building,
+						{behavior: completedBehavior, behaviorDuration: completedDuration, behaviorTimer: 0, hp: newHp, tags: completedTags});
+				},
+				buildingsAfterHouseSpawn);
+			var newGameState = A2(
+				$elm$core$List$any,
+				function (b) {
+					return A2($elm$core$List$member, $author$project$Types$ObjectiveTag, b.tags) && (b.hp <= 0);
+				},
+				buildingsAfterRepairs) ? $author$project$Types$GameOver : model.gameState;
 			var unitsWithPaths = A2(
 				$elm$core$List$map,
 				function (unit) {
 					if (A2($elm$core$List$member, unit.id, unitIdsNeedingPaths)) {
-						var _v18 = _Utils_Tuple2(unit.location, unit.targetDestination);
-						if ((_v18.a.$ === 'OnMap') && (_v18.b.$ === 'Just')) {
-							var _v19 = _v18.a;
-							var x = _v19.a;
-							var y = _v19.b;
-							var targetCell = _v18.b.a;
-							var newPath = A6($author$project$Pathfinding$calculateUnitPath, model.gridConfig, model.mapConfig, updatedOccupancy, x, y, targetCell);
-							var _v20 = A2(
+						var _v22 = _Utils_Tuple2(unit.location, unit.targetDestination);
+						if ((_v22.a.$ === 'OnMap') && (_v22.b.$ === 'Just')) {
+							var _v23 = _v22.a;
+							var x = _v23.a;
+							var y = _v23.b;
+							var targetCell = _v22.b.a;
+							var newPath = A6($author$project$Pathfinding$calculateUnitPath, model.gridConfig, model.mapConfig, pathfindingOccupancyAfterHouses, x, y, targetCell);
+							var _v24 = A2(
 								$elm$core$Debug$log,
 								'[SIM] PathGen',
 								{
@@ -9702,63 +9775,10 @@ var $author$project$Simulation$simulationTick = F2(
 						return unit;
 					}
 				},
-				allUnits);
-			var buildingsAfterRepairs = A2(
-				$elm$core$List$map,
-				function (building) {
-					var repairingPeasants = A2(
-						$elm$core$List$filter,
-						function (unit) {
-							var _v15 = _Utils_Tuple2(unit.behavior, unit.location);
-							if ((_v15.a.$ === 'Repairing') && (_v15.b.$ === 'OnMap')) {
-								var _v16 = _v15.a;
-								var _v17 = _v15.b;
-								var x = _v17.a;
-								var y = _v17.b;
-								var canBuild = unit.behaviorTimer >= 0.15;
-								var buildGridSize = 64;
-								var buildingMinX = building.gridX * buildGridSize;
-								var buildingMinY = building.gridY * buildGridSize;
-								var buildingSize = $author$project$Types$buildingSizeToGridCells(building.size) * buildGridSize;
-								var buildingMaxX = buildingMinX + buildingSize;
-								var buildingMaxY = buildingMinY + buildingSize;
-								var isNear = ((_Utils_cmp(x, buildingMinX - 48) > -1) && (_Utils_cmp(x, buildingMaxX + 48) < 1)) && ((_Utils_cmp(y, buildingMinY - 48) > -1) && (_Utils_cmp(y, buildingMaxY + 48) < 1));
-								return isNear && (canBuild && (_Utils_cmp(building.hp, building.maxHp) < 0));
-							} else {
-								return false;
-							}
-						},
-						allUnits);
-					var hpGain = $elm$core$List$length(repairingPeasants) * 5;
-					var newHp = A2($elm$core$Basics$min, building.maxHp, building.hp + hpGain);
-					var isConstructionComplete = _Utils_eq(building.behavior, $author$project$Types$UnderConstruction) && (_Utils_cmp(newHp, building.maxHp) > -1);
-					var newTimer = isConstructionComplete ? 0 : building.behaviorTimer;
-					var _v14 = isConstructionComplete ? (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeWarriorsGuild) ? _Utils_Tuple3(
-						$author$project$Types$GenerateGold,
-						_List_fromArray(
-							[$author$project$Types$BuildingTag, $author$project$Types$GuildTag, $author$project$Types$CofferTag]),
-						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : (_Utils_eq(building.buildingType, $author$project$GameStrings$buildingTypeHouse) ? _Utils_Tuple3(
-						$author$project$Types$GenerateGold,
-						_List_fromArray(
-							[$author$project$Types$BuildingTag, $author$project$Types$CofferTag]),
-						15.0 + (A2($elm$core$Basics$modBy, 30000, building.id * 1000) / 1000.0)) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration))) : _Utils_Tuple3(building.behavior, building.tags, building.behaviorDuration);
-					var completedBehavior = _v14.a;
-					var completedTags = _v14.b;
-					var completedDuration = _v14.c;
-					return _Utils_update(
-						building,
-						{behavior: completedBehavior, behaviorDuration: completedDuration, behaviorTimer: newTimer, hp: newHp, tags: completedTags});
-				},
-				updatedBuildings);
-			var newGameState = A2(
-				$elm$core$List$any,
-				function (b) {
-					return A2($elm$core$List$member, $author$project$Types$ObjectiveTag, b.tags) && (b.hp <= 0);
-				},
-				buildingsAfterRepairs) ? $author$project$Types$GameOver : model.gameState;
+				unitsAfterHouseSpawn);
 			return _Utils_update(
 				model,
-				{accumulatedTime: remainingTime, buildingOccupancy: model.buildingOccupancy, buildings: buildingsAfterRepairs, gameState: newGameState, gold: model.gold + goldGenerated, lastSimulationDeltas: newSimulationDeltas, nextBuildingId: model.nextBuildingId, nextUnitId: nextUnitIdAfterSpawning, pathfindingOccupancy: updatedOccupancy, simulationFrameCount: model.simulationFrameCount + 1, tooltipHover: updatedTooltipHover, units: unitsWithPaths});
+				{accumulatedTime: remainingTime, buildingOccupancy: buildingOccupancyAfterHouses, buildings: buildingsAfterRepairs, gameState: newGameState, lastSimulationDeltas: newSimulationDeltas, nextBuildingId: nextBuildingIdAfterHouses, nextUnitId: nextUnitIdAfterSpawning, pathfindingOccupancy: pathfindingOccupancyAfterHouses, simulationFrameCount: model.simulationFrameCount + 1, tooltipHover: updatedTooltipHover, units: unitsWithPaths});
 		} else {
 			return _Utils_update(
 				model,
@@ -10018,7 +10038,7 @@ var $author$project$Update$update = F2(
 							0,
 							initialGarrisonConfig);
 						var _v10 = isCastle ? _Utils_Tuple2(
-							$author$project$Types$GenerateGold,
+							$author$project$Types$SpawnHouse,
 							_List_fromArray(
 								[$author$project$Types$BuildingTag, $author$project$Types$ObjectiveTag])) : _Utils_Tuple2(
 							$author$project$Types$UnderConstruction,
@@ -10027,10 +10047,13 @@ var $author$project$Update$update = F2(
 						var buildingBehavior = _v10.a;
 						var buildingTags = _v10.b;
 						var initialDuration = function () {
-							if (buildingBehavior.$ === 'GenerateGold') {
-								return 15.0 + (A2($elm$core$Basics$modBy, 15000, model.nextBuildingId * 1000) / 1000.0);
-							} else {
-								return 0;
+							switch (buildingBehavior.$) {
+								case 'SpawnHouse':
+									return 30.0 + (A2($elm$core$Basics$modBy, 15000, model.nextBuildingId * 1000) / 1000.0);
+								case 'GenerateGold':
+									return 15.0 + (A2($elm$core$Basics$modBy, 30000, model.nextBuildingId * 1000) / 1000.0);
+								default:
+									return 0;
 							}
 						}();
 						var newBuilding = {activeRadius: 192, behavior: buildingBehavior, behaviorDuration: initialDuration, behaviorTimer: 0, buildingType: template.name, coffer: 0, garrisonConfig: initialGarrisonConfig, garrisonOccupied: initialGarrisonOccupied, garrisonSlots: template.garrisonSlots, gridX: centeredGridX, gridY: centeredGridY, hp: initialHp, id: model.nextBuildingId, maxHp: template.maxHp, owner: $author$project$Types$Player, searchRadius: 384, size: template.size, tags: buildingTags};
@@ -11565,6 +11588,7 @@ var $author$project$Message$TooltipLeave = {$: 'TooltipLeave'};
 var $author$project$Types$VisualizationTab = {$: 'VisualizationTab'};
 var $author$project$GameStrings$buildingBehaviorGenerateGold = 'Generate Gold';
 var $author$project$GameStrings$buildingBehaviorIdle = 'Idle';
+var $author$project$GameStrings$buildingBehaviorSpawnHouse = 'Spawn House';
 var $author$project$GameStrings$buildingBehaviorUnderConstruction = 'Under Construction';
 var $author$project$Types$Huge = {$: 'Huge'};
 var $author$project$BuildingTemplates$castleTemplate = {cost: 10000, garrisonSlots: 6, maxHp: 5000, name: $author$project$GameStrings$buildingTypeCastle, size: $author$project$Types$Huge};
@@ -11731,7 +11755,6 @@ var $author$project$GameStrings$tagGuild = 'Guild';
 var $author$project$GameStrings$tagHenchman = 'Henchman';
 var $author$project$GameStrings$tagHero = 'Hero';
 var $author$project$GameStrings$tagObjective = 'Objective';
-var $author$project$Types$Medium = {$: 'Medium'};
 var $author$project$BuildingTemplates$testBuildingTemplate = {cost: 500, garrisonSlots: 5, maxHp: 500, name: $author$project$GameStrings$buildingTypeTestBuilding, size: $author$project$Types$Medium};
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $author$project$GameStrings$unitBehaviorCollectingTaxes = 'Collecting Taxes';
@@ -12733,6 +12756,8 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 																					return $author$project$GameStrings$buildingBehaviorIdle;
 																				case 'UnderConstruction':
 																					return $author$project$GameStrings$buildingBehaviorUnderConstruction;
+																				case 'SpawnHouse':
+																					return $author$project$GameStrings$buildingBehaviorSpawnHouse;
 																				case 'GenerateGold':
 																					return $author$project$GameStrings$buildingBehaviorGenerateGold;
 																				case 'BuildingDead':
@@ -12759,6 +12784,8 @@ var $author$project$View$SelectionPanel$viewSelectionPanel = F2(
 																	return $author$project$GameStrings$buildingBehaviorIdle;
 																case 'UnderConstruction':
 																	return $author$project$GameStrings$buildingBehaviorUnderConstruction;
+																case 'SpawnHouse':
+																	return $author$project$GameStrings$buildingBehaviorSpawnHouse;
 																case 'GenerateGold':
 																	return $author$project$GameStrings$buildingBehaviorGenerateGold;
 																case 'BuildingDead':

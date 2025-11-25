@@ -210,9 +210,7 @@ viewUnit model unit worldX worldY =
             , style "height" (String.fromFloat visualDiameter ++ "px")
             , style "background-color" unit.color
             ]
-            [ text (if unit.unitType == GameStrings.unitTypePeasant then
-                GameStrings.unitIconPeasant
-            else if unit.unitType == GameStrings.unitTypeTaxCollector then
+            [ text (if unit.unitType == GameStrings.unitTypeTaxCollector then
                 GameStrings.unitIconTaxCollector
             else if unit.unitType == GameStrings.unitTypeCastleGuard then
                 GameStrings.unitIconCastleGuard

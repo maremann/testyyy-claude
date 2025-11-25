@@ -33,7 +33,10 @@
       "Bash(node tools/json-to-elm.js:*)",
       "Bash(npm install:*)",
       "Bash(chmod:*)",
-      "Bash(./tools/build-behavior.sh:*)"
+      "Bash(./tools/build-behavior.sh:*)",
+      "Bash(git stash:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
