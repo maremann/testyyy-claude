@@ -31,13 +31,13 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 ## Tactical Behaviors
 
 ### RestInGarrison (Initial State)
-- **Description**: Sleep in castle garrison until healed
+- **Description**: Sleep in castle garrison for minimum rest period
 - **Priority**: Background
 - **Operational Sequence**:
-  1. Sleep (duration: until HP = maxHP OR 5 seconds minimum)
+  1. Sleep (duration: 5 seconds minimum)
   2. PlanPatrolRoute
   3. ExitGarrison
-- **Success**: HP = maxHP OR timer > 5s
+- **Success**: timer >= 5s
 - **Transitions**:
   - Success → PatrolRoute
 
@@ -80,14 +80,15 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 ---
 
 ### CircleBuilding
-- **Description**: Walk a complete circle around target building perimeter
+- **Description**: Walk around target building perimeter using random waypoints
 - **Priority**: Normal
 - **Operational Sequence**:
-  1. CalculateBuildingPerimeter (8 waypoints around building)
-  2. MoveToPerimeterPoint (for each waypoint in sequence)
-  3. CheckCircleComplete
-- **Duration**: Until all 8 perimeter points visited
-- **Success**: Full circle completed
+  1. GenerateRandomPerimeterWaypoint (pick random point around building)
+  2. MoveToPerimeterPoint (travel to waypoint)
+  3. Repeat until 2 waypoints visited
+  4. CheckCircleComplete
+- **Duration**: Until 2 perimeter waypoints visited
+- **Success**: Circle patrol completed (2 waypoints)
 - **Failure**: Building destroyed mid-circle
 - **Transitions**:
   - Success → PatrolRoute (advance to next building)
@@ -146,9 +147,9 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 ## Operational Behaviors
 
 ### Sleep (from CORE)
-- **Duration**: Until HP = maxHP OR 5 seconds minimum
+- **Duration**: 5 seconds minimum (always)
 - **Action**: Sleep (heals 10% maxHP per second)
-- **Success**: HP = maxHP OR timer > 5s
+- **Success**: timer >= 5s
 
 ---
 
@@ -196,34 +197,30 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 ---
 
 ### CirclePerimeter
-- **Description**: Walk around building perimeter
+- **Description**: Walk around building perimeter using random waypoints
 - **Action**: FollowPerimeterPath
 - **Parameters**:
   - buildingId: Target building
-  - perimeterPoints: 8 waypoints (N, NE, E, SE, S, SW, W, NW)
-  - currentPointIndex: Which waypoint we're on
+  - perimeterIndex: Current waypoint count (0-1)
 - **Waypoint Calculation**:
   ```
   Building center: (centerX, centerY)
   Building size: size (in grid cells)
-  Radius: (size * gridSize / 2) + 48 pixels (safety margin)
+  Radius: (size * gridSize / 2) + 64 pixels (distance from building)
 
-  Points (clockwise from North):
-  North:     (centerX, centerY - radius)
-  NorthEast: (centerX + radius*0.7, centerY - radius*0.7)
-  East:      (centerX + radius, centerY)
-  SouthEast: (centerX + radius*0.7, centerY + radius*0.7)
-  South:     (centerX, centerY + radius)
-  SouthWest: (centerX - radius*0.7, centerY + radius*0.7)
-  West:      (centerX - radius, centerY)
-  NorthWest: (centerX - radius*0.7, centerY - radius*0.7)
+  Random angle calculation (deterministic):
+  angle = (perimeterIndex * 73 + unit.id * 137) * 0.1
+
+  Waypoint position:
+  waypointX = centerX + radius * cos(angle)
+  waypointY = centerY + radius * sin(angle)
   ```
-- **Duration**: Until all 8 points visited
-- **Success**: Visited all perimeter points
+- **Duration**: Until 2 waypoints visited
+- **Success**: Visited 2 perimeter waypoints
 - **Failure**: Building destroyed
 - **Result**:
-  - Arrived (at current perimeter point, advance to next)
-  - CircleComplete (all 8 points visited)
+  - Arrived (at current waypoint, advance to next)
+  - CircleComplete (2 waypoints visited)
   - BuildingDestroyed
 
 ---
@@ -239,12 +236,12 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 ---
 
 ### CheckCircleComplete
-- **Description**: Verify if full perimeter circle completed
+- **Description**: Verify if perimeter patrol completed
 - **Action**: CheckCounter
-- **Parameters**: perimeterPointIndex (0-7)
+- **Parameters**: perimeterIndex (0-1)
 - **Result**:
-  - CircleComplete (index >= 8)
-  - ContinueCircle (index < 8)
+  - CircleComplete (index >= 2)
+  - ContinueCircle (index < 2)
 
 ---
 
@@ -361,7 +358,7 @@ Castle Guards protect the kingdom by patrolling between buildings and engaging m
 [Spawned in Castle]
     ↓
 Sleeping (RestInGarrison)
-    ↓ (HP full OR 5s timeout)
+    ↓ (5s minimum)
 PlanPatrolRoute (select 1-3 buildings)
     ↓
 ExitGarrison
@@ -372,7 +369,7 @@ GetCurrentPatrolTarget         │
     ↓                          │
 MoveToBuilding                 │
     ↓                          │
-CircleBuilding (8 waypoints)   │
+CircleBuilding (2 waypoints)   │
     ↓                          │
 More buildings? ───YES─────────┘
     │
@@ -424,8 +421,7 @@ Castle Guards need these additional state fields:
 type alias CastleGuardState =
     { patrolRoute : List Int  -- Building IDs to patrol
     , patrolIndex : Int        -- Current position in route (0-2)
-    , perimeterPoints : List (Int, Int)  -- 8 waypoints for current circle
-    , perimeterIndex : Int     -- Current waypoint (0-7)
+    , perimeterIndex : Int     -- Current waypoint count (0-1)
     , engagedMonster : Maybe Int  -- Monster currently fighting
     , patrolStateBeforeInterrupt : Maybe PatrolInterruptState  -- For resuming
     }
@@ -444,13 +440,13 @@ type alias PatrolInterruptState =
 ## Example Scenario
 
 **Initial State**: Guard spawns in castle
-1. **Sleeping** (5 seconds) → HP: 80/100 → 100/100
+1. **Sleeping** (5 seconds) → Heals while resting
 2. **PlanPatrolRoute** → Selects: [House #5, Warriors Guild #12, House #9]
 3. **ExitGarrison** → Appears at castle entrance
 4. **PatrolRoute begins**:
    - **GetCurrentPatrolTarget** → House #5
    - **MoveToBuilding** → Paths to House #5
-   - **CircleBuilding** → Walks perimeter (8 waypoints)
+   - **CircleBuilding** → Walks perimeter (2 random waypoints)
    - **IncrementPatrolIndex** → patrolIndex = 1
    - **GetCurrentPatrolTarget** → Warriors Guild #12
    - **MoveToBuilding** → Halfway there...
@@ -463,15 +459,15 @@ type alias PatrolInterruptState =
 6. **ResumePatrol**:
    - Restore: patrolIndex = 1, target = Warriors Guild #12
    - **MoveToBuilding** → Resume path to Warriors Guild
-   - **CircleBuilding** → Complete circle
+   - **CircleBuilding** → Complete circle (2 waypoints)
    - **IncrementPatrolIndex** → patrolIndex = 2
    - **GetCurrentPatrolTarget** → House #9
    - **MoveToBuilding** → Path to House #9
-   - **CircleBuilding** → Complete circle
+   - **CircleBuilding** → Complete circle (2 waypoints)
    - **PatrolComplete** → All buildings visited
 7. **ReturnToCastle** → Path back to castle
 8. **EnterGarrison** → Back in garrison
-9. **Sleeping** → Heal any damage, rest 5s minimum
+9. **Sleeping** → Heals any damage, rest 5s minimum
 10. Loop back to step 2 (plan new patrol)
 
 ---
@@ -483,7 +479,7 @@ type alias PatrolInterruptState =
 - [ ] Guard plans patrol route with 1-3 buildings
 - [ ] Guard exits garrison successfully
 - [ ] Guard paths to first building
-- [ ] Guard circles building (all 8 perimeter points)
+- [ ] Guard circles building (2 random perimeter waypoints)
 - [ ] Guard advances to next building in route
 - [ ] Guard completes full patrol route
 - [ ] Guard returns to castle after patrol
@@ -507,8 +503,9 @@ type alias PatrolInterruptState =
 
 **Why circle buildings?**
 - Visual feedback: player sees guard is "guarding"
-- Tactical: covers all approaches to building
-- Consistent behavior: predictable patrol pattern
+- Tactical: covers multiple approaches to building
+- Random waypoints: prevents completely predictable patterns
+- 2 waypoints: Quick patrol without being too brief
 
 **Why return to castle after patrol?**
 - Guards need rest (healing)

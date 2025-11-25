@@ -27,7 +27,7 @@
   "tacticalBehaviors": [
     {
       "tacticalId": "RestInGarrison (Initial State)",
-      "description": "Sleep in castle garrison until healed",
+      "description": "Sleep in castle garrison for minimum rest period",
       "priority": "Background",
       "operationalSequence": [
         "Sleep",
@@ -35,7 +35,7 @@
         "ExitGarrison"
       ],
       "awarenessTypes": [],
-      "successCondition": "HP = maxHP OR timer > 5s",
+      "successCondition": "timer >= 5s",
       "failureCondition": "",
       "interruptible": true,
       "transitions": [
@@ -104,15 +104,16 @@
     },
     {
       "tacticalId": "CircleBuilding",
-      "description": "Walk a complete circle around target building perimeter",
+      "description": "Walk around target building perimeter using random waypoints",
       "priority": "Normal",
       "operationalSequence": [
-        "CalculateBuildingPerimeter",
+        "GenerateRandomPerimeterWaypoint",
         "MoveToPerimeterPoint",
+        "Repeat until 2 waypoints visited",
         "CheckCircleComplete"
       ],
       "awarenessTypes": [],
-      "successCondition": "Full circle completed",
+      "successCondition": "Circle patrol completed (2 waypoints)",
       "failureCondition": "Building destroyed mid-circle",
       "interruptible": true,
       "transitions": [
@@ -209,8 +210,8 @@
       "description": "",
       "action": "Sleep (heals 10% maxHP per second)",
       "parameters": {},
-      "duration": "Until HP = maxHP OR 5 seconds minimum",
-      "successCondition": "HP = maxHP OR timer > 5s",
+      "duration": 5,
+      "successCondition": "timer >= 5s",
       "failureCondition": "",
       "sideEffects": [],
       "result": []
@@ -262,15 +263,14 @@
     },
     {
       "operationalId": "CirclePerimeter",
-      "description": "Walk around building perimeter",
+      "description": "Walk around building perimeter using random waypoints",
       "action": "FollowPerimeterPath",
       "parameters": {
         "buildingId": "Target building",
-        "perimeterPoints": "8 waypoints (N, NE, E, SE, S, SW, W, NW)",
-        "currentPointIndex": "Which waypoint we're on"
+        "perimeterIndex": "Current waypoint count (0-1)"
       },
-      "duration": "Until all 8 points visited",
-      "successCondition": "Visited all perimeter points",
+      "duration": "Until 2 waypoints visited",
+      "successCondition": "Visited 2 perimeter waypoints",
       "failureCondition": "Building destroyed",
       "sideEffects": [],
       "result": [
@@ -297,7 +297,7 @@
     },
     {
       "operationalId": "CheckCircleComplete",
-      "description": "Verify if full perimeter circle completed",
+      "description": "Verify if perimeter patrol completed",
       "action": "CheckCounter",
       "parameters": {},
       "duration": null,
